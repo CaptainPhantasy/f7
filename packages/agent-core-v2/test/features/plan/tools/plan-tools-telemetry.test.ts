@@ -27,7 +27,7 @@ import {
 const ACTIVE_PLAN: NonNullable<PlanData> = {
   id: 'test-plan',
   content: '# Plan\n\n- Inspect\n- Change\n- Verify',
-  path: '/tmp/kimi-plan.md',
+  path: '/tmp/floyd-plan.md',
 };
 
 const options = [
@@ -259,7 +259,7 @@ describe('AgentPlanService EnterPlanMode telemetry', () => {
             model: 'mock-model',
             outcome: 'auto_approved',
             protocol: 'openai',
-            provider_type: 'kimi',
+            provider_type: 'floyd',
           },
         });
       });

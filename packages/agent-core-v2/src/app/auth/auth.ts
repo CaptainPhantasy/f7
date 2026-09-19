@@ -1,14 +1,14 @@
-import { apiKeyEnvMissingMessage } from '@moonshot-ai/kimi-code-oauth/provider-credential';
+import { apiKeyEnvMissingMessage } from '@legacy-ai/floyd-code-oauth/provider-credential';
 import type {
   AuthManagedUsageResult,
   AuthManagedUserInfoResult,
   BearerTokenProvider,
-  KimiOAuthLoginOptions,
-  KimiOAuthLoginResult,
-  KimiOAuthLogoutResult,
-  KimiOAuthTokenRef,
-  KimiRegion,
-} from '@moonshot-ai/kimi-code-oauth';
+  FloydOAuthLoginOptions,
+  FloydOAuthLoginResult,
+  FloydOAuthLogoutResult,
+  FloydOAuthTokenRef,
+  FloydRegion,
+} from '@legacy-ai/floyd-code-oauth';
 import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
 import { Error2 } from '#/_base/errors/errors';
 
@@ -30,7 +30,7 @@ export interface AuthStatus {
 }
 
 export interface OAuthLoginOptions {
-  readonly region?: KimiRegion;
+  readonly region?: FloydRegion;
 }
 
 export interface IOAuthService {
@@ -46,7 +46,7 @@ export interface IOAuthService {
   getManagedUserInfo(provider?: string): Promise<AuthManagedUserInfoResult>;
   resolveTokenProvider(provider: string, oauthRef?: OAuthRef): BearerTokenProvider | undefined;
   getCachedAccessToken(provider: string, oauthRef?: OAuthRef): Promise<string | undefined>;
-  getRegion(): KimiRegion;
+  getRegion(): FloydRegion;
 }
 
 export const IOAuthService: ServiceIdentifier<IOAuthService> =
@@ -55,20 +55,20 @@ export const IOAuthService: ServiceIdentifier<IOAuthService> =
 export interface IOAuthToolkit {
   readonly _serviceBrand: undefined;
 
-  login(providerName?: string, options?: KimiOAuthLoginOptions): Promise<KimiOAuthLoginResult>;
-  logout(providerName?: string, oauthRef?: KimiOAuthTokenRef): Promise<KimiOAuthLogoutResult>;
+  login(providerName?: string, options?: FloydOAuthLoginOptions): Promise<FloydOAuthLoginResult>;
+  logout(providerName?: string, oauthRef?: FloydOAuthTokenRef): Promise<FloydOAuthLogoutResult>;
   getCachedAccessToken(
     providerName?: string,
-    oauthRef?: KimiOAuthTokenRef,
+    oauthRef?: FloydOAuthTokenRef,
   ): Promise<string | undefined>;
-  tokenProvider(providerName?: string, oauthRef?: KimiOAuthTokenRef): BearerTokenProvider;
+  tokenProvider(providerName?: string, oauthRef?: FloydOAuthTokenRef): BearerTokenProvider;
   getManagedUsage(
     providerName?: string,
-    options?: { readonly oauthRef?: KimiOAuthTokenRef; readonly baseUrl?: string },
+    options?: { readonly oauthRef?: FloydOAuthTokenRef; readonly baseUrl?: string },
   ): Promise<AuthManagedUsageResult>;
   getManagedUserInfo(
     providerName?: string,
-    options?: { readonly oauthRef?: KimiOAuthTokenRef; readonly baseUrl?: string },
+    options?: { readonly oauthRef?: FloydOAuthTokenRef; readonly baseUrl?: string },
   ): Promise<AuthManagedUserInfoResult>;
 }
 

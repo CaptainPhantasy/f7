@@ -3,33 +3,33 @@ import {
   readConfigFile,
   readConfigFileForUpdate,
   writeConfigFile,
-  type KimiConfig,
+  type FloydConfig,
   type OAuthRef,
 } from '#/config/index';
 import {
-  applyManagedKimiCodeConfig,
-  applyManagedKimiCodeLogoutConfig,
-  KIMI_CODE_PROVIDER_NAME,
-  KimiOAuthToolkit,
-  kimiRegionLoginHosts,
-  resolveKimiCodeLoginAuth,
-  resolveKimiCodeRuntimeAuth,
+  applyManagedFloydCodeConfig,
+  applyManagedFloydCodeLogoutConfig,
+  FLOYD_CODE_PROVIDER_NAME,
+  FloydOAuthToolkit,
+  floydRegionLoginHosts,
+  resolveFloydCodeLoginAuth,
+  resolveFloydCodeRuntimeAuth,
   type AuthManagedUsageResult,
   type AuthStatus,
   type BearerTokenProvider,
   type FetchCompleteFeedbackUploadResult,
   type FetchFeedbackUploadError,
   type FetchSubmitFeedbackResult,
-  type KimiHostIdentity,
-  type KimiOAuthLoginOptions,
-  type KimiRegion,
-  type ManagedKimiConfigShape,
+  type FloydHostIdentity,
+  type FloydOAuthLoginOptions,
+  type FloydRegion,
+  type ManagedFloydConfigShape,
   type OAuthRefreshOutcome,
-} from '@moonshot-ai/kimi-code-oauth';
+} from '@legacy-ai/floyd-code-oauth';
 
 import { mapOAuthTokenError } from '#/oauth-error';
 
-export interface KimiAuthSubmitFeedbackInput {
+export interface FloydAuthSubmitFeedbackInput {
   readonly content: string;
   readonly sessionId: string;
   readonly version: string;
@@ -39,52 +39,52 @@ export interface KimiAuthSubmitFeedbackInput {
   readonly info?: Record<string, unknown>;
 }
 
-export interface KimiAuthCreateFeedbackUploadUrlInput {
+export interface FloydAuthCreateFeedbackUploadUrlInput {
   readonly feedbackId: number;
   readonly filename: string;
   readonly size: number;
   readonly sha256: string;
 }
 
-export interface KimiAuthCompleteFeedbackUploadPart {
+export interface FloydAuthCompleteFeedbackUploadPart {
   readonly partNumber: number;
   readonly etag: string;
 }
 
-export interface KimiAuthCompleteFeedbackUploadInput {
+export interface FloydAuthCompleteFeedbackUploadInput {
   readonly uploadId: number;
-  readonly parts: readonly KimiAuthCompleteFeedbackUploadPart[];
+  readonly parts: readonly FloydAuthCompleteFeedbackUploadPart[];
 }
 
-export interface KimiAuthFeedbackUploadPart {
+export interface FloydAuthFeedbackUploadPart {
   readonly partNumber: number;
   readonly url: string;
   readonly method: string;
   readonly size: number;
 }
 
-export interface KimiAuthCreateFeedbackUploadUrlOk {
+export interface FloydAuthCreateFeedbackUploadUrlOk {
   readonly kind: 'ok';
   readonly uploadId: number;
-  readonly parts: readonly KimiAuthFeedbackUploadPart[];
+  readonly parts: readonly FloydAuthFeedbackUploadPart[];
 }
 
-export type KimiAuthCreateFeedbackUploadUrlResult =
-  | KimiAuthCreateFeedbackUploadUrlOk
+export type FloydAuthCreateFeedbackUploadUrlResult =
+  | FloydAuthCreateFeedbackUploadUrlOk
   | FetchFeedbackUploadError;
 
-export type KimiAuthLoginOptions = Omit<KimiOAuthLoginOptions, 'provisionConfig'> & {
+export type FloydAuthLoginOptions = Omit<FloydOAuthLoginOptions, 'provisionConfig'> & {
   /**
    * Explicit region choice from the login UI ('mainland-cn' / 'global'). Maps
    * to the region profile's OAuth/API hosts — including for 'mainland-cn', so
    * switching back overrides a persisted global login. Yields to
-   * `KIMI_CODE_OAUTH_HOST` / `KIMI_CODE_BASE_URL` env overrides and to
+   * `FLOYD_CODE_OAUTH_HOST` / `FLOYD_CODE_BASE_URL` env overrides and to
    * explicit `oauthHost` / `baseUrl` options.
    */
-  readonly region?: KimiRegion;
+  readonly region?: FloydRegion;
 };
 
-export interface KimiAuthLoginResult {
+export interface FloydAuthLoginResult {
   readonly providerName: string;
   readonly ok: true;
   readonly defaultModel: string;
@@ -92,26 +92,26 @@ export interface KimiAuthLoginResult {
   readonly configPath?: string | undefined;
 }
 
-export interface KimiAuthLogoutResult {
+export interface FloydAuthLogoutResult {
   readonly providerName: string;
   readonly ok: true;
 }
 
-export interface KimiAuthFacadeOptions {
+export interface FloydAuthFacadeOptions {
   readonly homeDir: string;
   readonly configPath: string;
-  readonly identity?: KimiHostIdentity | undefined;
-  readonly onConfigUpdated?: ((config: KimiConfig) => void) | undefined;
+  readonly identity?: FloydHostIdentity | undefined;
+  readonly onConfigUpdated?: ((config: FloydConfig) => void) | undefined;
   readonly onRefresh?: ((outcome: OAuthRefreshOutcome) => void) | undefined;
 }
 
-type SDKManagedConfig = KimiConfig & ManagedKimiConfigShape;
+type SDKManagedConfig = FloydConfig & ManagedFloydConfigShape;
 
-export class KimiAuthFacade {
-  private readonly toolkit: KimiOAuthToolkit<SDKManagedConfig>;
+export class FloydAuthFacade {
+  private readonly toolkit: FloydOAuthToolkit<SDKManagedConfig>;
 
-  constructor(private readonly options: KimiAuthFacadeOptions) {
-    this.toolkit = new KimiOAuthToolkit<SDKManagedConfig>({
+  constructor(private readonly options: FloydAuthFacadeOptions) {
+    this.toolkit = new FloydOAuthToolkit<SDKManagedConfig>({
       homeDir: options.homeDir,
       identity: options.identity,
       onRefresh: options.onRefresh,
@@ -123,8 +123,8 @@ export class KimiAuthFacade {
         write: async (config) => {
           await writeConfigFile(options.configPath, config);
         },
-        apply: applyManagedKimiCodeConfig,
-        remove: applyManagedKimiCodeLogoutConfig,
+        apply: applyManagedFloydCodeConfig,
+        remove: applyManagedFloydCodeLogoutConfig,
       },
     });
   }
@@ -134,13 +134,13 @@ export class KimiAuthFacade {
   }
 
   async login(
-    providerName: string | undefined = KIMI_CODE_PROVIDER_NAME,
-    options: KimiAuthLoginOptions = {},
-  ): Promise<KimiAuthLoginResult> {
+    providerName: string | undefined = FLOYD_CODE_PROVIDER_NAME,
+    options: FloydAuthLoginOptions = {},
+  ): Promise<FloydAuthLoginResult> {
     const { region, ...loginOptions } = options;
-    const regionHosts = region === undefined ? undefined : kimiRegionLoginHosts(region);
+    const regionHosts = region === undefined ? undefined : floydRegionLoginHosts(region);
     const auth = this.resolveManagedAuth(providerName);
-    const loginAuth = resolveKimiCodeLoginAuth({
+    const loginAuth = resolveFloydCodeLoginAuth({
       configuredBaseUrl: auth.baseUrl,
       configuredOAuthRef: auth.oauthRef,
       requestedBaseUrl: loginOptions.baseUrl ?? regionHosts?.baseUrl,
@@ -154,7 +154,7 @@ export class KimiAuthFacade {
       provisionConfig: true,
     });
     if (result.provision === undefined) {
-      throw new Error('Kimi auth login did not provision model config.');
+      throw new Error('Floyd auth login did not provision model config.');
     }
     const updated = readConfigFile(this.options.configPath);
     this.options.onConfigUpdated?.(updated);
@@ -167,7 +167,7 @@ export class KimiAuthFacade {
     };
   }
 
-  async logout(providerName?: string | undefined): Promise<KimiAuthLogoutResult> {
+  async logout(providerName?: string | undefined): Promise<FloydAuthLogoutResult> {
     const result = await this.toolkit.logout(
       providerName,
       this.resolveRuntimeManagedAuth(providerName).oauthRef,
@@ -189,7 +189,7 @@ export class KimiAuthFacade {
   }
 
   async submitFeedback(
-    input: KimiAuthSubmitFeedbackInput,
+    input: FloydAuthSubmitFeedbackInput,
     providerName?: string | undefined,
   ): Promise<FetchSubmitFeedbackResult> {
     const auth = this.resolveRuntimeManagedAuth(providerName);
@@ -212,9 +212,9 @@ export class KimiAuthFacade {
   }
 
   async createFeedbackUploadUrl(
-    input: KimiAuthCreateFeedbackUploadUrlInput,
+    input: FloydAuthCreateFeedbackUploadUrlInput,
     providerName?: string | undefined,
-  ): Promise<KimiAuthCreateFeedbackUploadUrlResult> {
+  ): Promise<FloydAuthCreateFeedbackUploadUrlResult> {
     const auth = this.resolveRuntimeManagedAuth(providerName);
     const result = await this.toolkit.createFeedbackUploadUrl(
       {
@@ -243,7 +243,7 @@ export class KimiAuthFacade {
   }
 
   async completeFeedbackUpload(
-    input: KimiAuthCompleteFeedbackUploadInput,
+    input: FloydAuthCompleteFeedbackUploadInput,
     providerName?: string | undefined,
   ): Promise<FetchCompleteFeedbackUploadResult> {
     const auth = this.resolveRuntimeManagedAuth(providerName);
@@ -283,7 +283,7 @@ export class KimiAuthFacade {
         try {
           return await provider.getAccessToken(options);
         } catch (error) {
-          // Classify OAuth token failures into the public KimiError protocol;
+          // Classify OAuth token failures into the public FloydError protocol;
           // unrecognized errors are rethrown raw (see mapOAuthTokenError).
           throw mapOAuthTokenError(error, providerName) ?? error;
         }
@@ -295,7 +295,7 @@ export class KimiAuthFacade {
     readonly oauthRef?: OAuthRef | undefined;
     readonly baseUrl?: string | undefined;
   } {
-    const name = providerName ?? KIMI_CODE_PROVIDER_NAME;
+    const name = providerName ?? FLOYD_CODE_PROVIDER_NAME;
     // Read path: token/status resolution must work off a degraded config
     // instead of failing the session when an unrelated section is broken.
     // Write paths (the toolkit's configAdapter.read) stay strict.
@@ -312,7 +312,7 @@ export class KimiAuthFacade {
     readonly baseUrl?: string | undefined;
   } {
     const auth = this.resolveManagedAuth(providerName);
-    return resolveKimiCodeRuntimeAuth({
+    return resolveFloydCodeRuntimeAuth({
       configuredBaseUrl: auth.baseUrl,
       configuredOAuthRef: auth.oauthRef,
     });
@@ -322,9 +322,9 @@ export class KimiAuthFacade {
     providerName: string | undefined,
     oauthRef?: OAuthRef | undefined,
   ): OAuthRef | undefined {
-    if ((providerName ?? KIMI_CODE_PROVIDER_NAME) !== KIMI_CODE_PROVIDER_NAME) return oauthRef;
+    if ((providerName ?? FLOYD_CODE_PROVIDER_NAME) !== FLOYD_CODE_PROVIDER_NAME) return oauthRef;
     const auth = this.resolveManagedAuth(providerName);
-    return resolveKimiCodeRuntimeAuth({
+    return resolveFloydCodeRuntimeAuth({
       configuredBaseUrl: auth.baseUrl,
       configuredOAuthRef: oauthRef ?? auth.oauthRef,
     }).oauthRef;

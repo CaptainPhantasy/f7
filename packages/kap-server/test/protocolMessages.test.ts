@@ -71,7 +71,7 @@ const sessionInfo = {
   updated_at: TS,
   busy: false,
   metadata: { cwd: '/repo' },
-  agent_config: { model: 'kimi-k2' },
+  agent_config: { model: 'floyd-k2' },
   usage: {
     input_tokens: 0,
     output_tokens: 0,
@@ -280,7 +280,7 @@ const workspace = {
 const config = {
   type: 'config',
   ...globalScope,
-  config: { model: 'kimi-k2' },
+  config: { model: 'floyd-k2' },
 };
 
 const configWarning = {

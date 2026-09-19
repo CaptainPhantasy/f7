@@ -26,13 +26,13 @@ import {
   type ISessionMediaStore,
   type ITelemetryService,
   type PromptFileAttachment,
-} from '@moonshot-ai/agent-core-v2';
-import { sniffMediaFromMagic } from '@moonshot-ai/agent-core-v2/agent/media/file-type';
+} from '@legacy-ai/agent-core-v2';
+import { sniffMediaFromMagic } from '@legacy-ai/agent-core-v2/agent/media/file-type';
 import {
   IMAGE_MIME_BY_SUFFIX,
   VIDEO_MIME_BY_SUFFIX,
-} from '@moonshot-ai/agent-core-v2/agent/media/mediaRef';
-import { isSensitiveFile } from '@moonshot-ai/agent-core-v2/tool/path-access';
+} from '@legacy-ai/agent-core-v2/agent/media/mediaRef';
+import { isSensitiveFile } from '@legacy-ai/agent-core-v2/tool/path-access';
 
 import type { PromptSubmission } from '../protocol/rest-prompt';
 

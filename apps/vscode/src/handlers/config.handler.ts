@@ -1,15 +1,15 @@
 import * as vscode from "vscode";
 import {
   effectiveModelAlias,
-  type KimiConfig as SdkKimiConfig,
+  type FloydConfig as SdkFloydConfig,
   type ModelAlias,
   type ProviderType,
   type ThinkingEffort,
-} from "@moonshot-ai/kimi-code-sdk";
+} from "@legacy-ai/floyd-code-sdk";
 
 import { Methods } from "../../shared/bridge";
 import type {
-  KimiConfig as WebviewKimiConfig,
+  FloydConfig as WebviewFloydConfig,
   ModelConfig,
   SlashCommandInfo,
 } from "../../shared/legacy-sdk";
@@ -80,11 +80,11 @@ const getExtensionConfig: Handler<void, ExtensionConfig> = async () => {
 };
 
 const openSettings: Handler<void, { ok: boolean }> = async () => {
-  await vscode.commands.executeCommand("workbench.action.openSettings", "kimi");
+  await vscode.commands.executeCommand("workbench.action.openSettings", "floyd");
   return { ok: true };
 };
 
-const getModels: Handler<void, WebviewKimiConfig> = async (_, ctx) => {
+const getModels: Handler<void, WebviewFloydConfig> = async (_, ctx) => {
   const config = await ctx.harness.getConfig({ reload: true });
   return toWebviewConfig(config);
 };
@@ -130,7 +130,7 @@ export const configHandlers = {
   [Methods.ReloadWebview]: reloadWebview,
 } as Record<string, Handler<any, any>>;
 
-export function toWebviewConfig(config: SdkKimiConfig): WebviewKimiConfig {
+export function toWebviewConfig(config: SdkFloydConfig): WebviewFloydConfig {
   const models: ModelConfig[] = Object.entries(config.models ?? {})
     // Resolve with the provider type the way saveConfig does: without it the
     // Anthropic fallback profile never matches, and the webview's effort

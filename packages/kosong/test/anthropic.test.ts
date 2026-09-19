@@ -92,7 +92,7 @@ describe('Anthropic model profile matching', () => {
     expect(matchUnknownClaudeProfile(model)).toEqual(LATEST_OPUS_PROFILE);
   });
 
-  it.each(['k3', 'kimi-for-coding', 'glm-5.2', 'deepseek-v4-pro', 'Example Compatible Model'])(
+  it.each(['k3', 'floyd-for-coding', 'glm-5.2', 'deepseek-v4-pro', 'Example Compatible Model'])(
     'does not claim the unknown-Claude fallback for %s',
     (model) => {
       expect(matchUnknownClaudeProfile(model)).toBeUndefined();
@@ -100,7 +100,7 @@ describe('Anthropic model profile matching', () => {
   );
 
   // A malformed config entry (e.g. an unquoted dotted TOML key like
-  // `[models.kimi-k2.7-code]`) parses into a nested object that lacks the
+  // `[models.floyd-k2.7-code]`) parses into a nested object that lacks the
   // top-level `model` field. The v2 config schema marks `model` optional, so
   // the entry reaches profile matching with `undefined` — the matcher must
   // degrade to "no profile" instead of crashing the whole getModels call.
@@ -191,7 +191,7 @@ async function collectAnthropicStreamParts(
 ): Promise<StreamedMessagePart[]> {
   const create = vi.fn().mockResolvedValue(mockStream(events));
   const provider = new AnthropicChatProvider({
-    model: 'kimi-for-coding',
+    model: 'floyd-for-coding',
     apiKey: '',
     stream: true,
     clientFactory: () => ({ messages: { create } }) as never,
@@ -314,7 +314,7 @@ describe('betaApi', () => {
 
   it('routes to client.beta.messages.create with betas in the body and no beta header', async () => {
     const provider = new AnthropicChatProvider({
-      model: 'kimi-for-coding',
+      model: 'floyd-for-coding',
       apiKey: 'test-key',
       defaultMaxTokens: 1024,
       stream: false,
@@ -329,7 +329,7 @@ describe('betaApi', () => {
 
   it('keeps beta features in the anthropic-beta header when betaApi is off', async () => {
     const provider = new AnthropicChatProvider({
-      model: 'kimi-for-coding',
+      model: 'floyd-for-coding',
       apiKey: 'test-key',
       defaultMaxTokens: 1024,
       stream: false,
@@ -451,7 +451,7 @@ describe('withThinkingKeep (context_management)', () => {
 
   it('forces the beta endpoint even when constructed with betaApi: false', async () => {
     const provider = new AnthropicChatProvider({
-      model: 'kimi-for-coding',
+      model: 'floyd-for-coding',
       apiKey: 'test-key',
       defaultMaxTokens: 1024,
       stream: false,
@@ -983,9 +983,9 @@ describe('AnthropicChatProvider', () => {
       ];
       const body = await captureRequestBody(provider, '', [], history);
 
-      // Non-data video references (moonshot `ms://` file ids carried over from a
-      // kimi turn, or http URLs) are emitted as url-source video blocks — the
-      // kimi anthropic endpoint resolves them server-side, exactly like image
+      // Non-data video references (legacy `ms://` file ids carried over from a
+      // floyd turn, or http URLs) are emitted as url-source video blocks — the
+      // floyd anthropic endpoint resolves them server-side, exactly like image
       // url sources.
       expect(body['messages']).toEqual([
         {
@@ -1729,7 +1729,7 @@ describe('AnthropicChatProvider', () => {
 
       // Unsigned thinking must still be PRESERVED for non-Claude models,
       // emitted without a `signature` field. Anthropic-compatible backends
-      // (e.g. Kimi) reject a tool-call turn whose thinking is missing
+      // (e.g. Floyd) reject a tool-call turn whose thinking is missing
       // ("reasoning_content is missing").
       expect(messages[1]).toEqual({
         role: 'assistant',
@@ -1884,7 +1884,7 @@ describe('AnthropicChatProvider', () => {
     it('unsigned thinking is preserved before a tool_use block', async () => {
       // Reproduces the real failure: a streamed assistant turn whose thinking
       // arrived without a signature_delta, followed by a tool_use. Dropping the
-      // thinking made Kimi reject the *next* request with
+      // thinking made Floyd reject the *next* request with
       // "thinking is enabled but reasoning_content is missing".
       const provider = createProvider();
       const history: Message[] = [
@@ -2153,13 +2153,13 @@ describe('AnthropicChatProvider', () => {
       expect(body['output_config']).toEqual({ effort: 'max' });
     });
 
-    it('Kimi thinking mode sends concrete effort without budget conversion', async () => {
+    it('Floyd thinking mode sends concrete effort without budget conversion', async () => {
       const provider = new AnthropicChatProvider({
-        model: 'kimi-for-coding',
+        model: 'floyd-for-coding',
         apiKey: 'test-key',
         defaultMaxTokens: 1024,
         stream: false,
-        kimiThinking: true,
+        floydThinking: true,
       }).withThinking('max');
       const body = await captureRequestBody(provider, '', [], thinkHistory);
 
@@ -2167,13 +2167,13 @@ describe('AnthropicChatProvider', () => {
       expect(body['output_config']).toEqual({ effort: 'max' });
     });
 
-    it('Kimi thinking mode passes concrete efforts through and omits only on', async () => {
+    it('Floyd thinking mode passes concrete efforts through and omits only on', async () => {
       const provider = new AnthropicChatProvider({
-        model: 'kimi-for-coding',
+        model: 'floyd-for-coding',
         apiKey: 'test-key',
         defaultMaxTokens: 1024,
         stream: false,
-        kimiThinking: true,
+        floydThinking: true,
       });
       for (const requested of ['xhigh', 'medium', 'on'] as const) {
         const body = await captureRequestBody(provider.withThinking(requested), '', [], thinkHistory);
@@ -2184,13 +2184,13 @@ describe('AnthropicChatProvider', () => {
       }
     });
 
-    it('Kimi thinking mode keeps thinking off clean', async () => {
+    it('Floyd thinking mode keeps thinking off clean', async () => {
       const provider = new AnthropicChatProvider({
-        model: 'kimi-for-coding',
+        model: 'floyd-for-coding',
         apiKey: 'test-key',
         defaultMaxTokens: 1024,
         stream: false,
-        kimiThinking: true,
+        floydThinking: true,
       }).withThinking('off');
       const body = await captureRequestBody(provider, '', [], thinkHistory);
 
@@ -2198,13 +2198,13 @@ describe('AnthropicChatProvider', () => {
       expect(body['output_config']).toBeUndefined();
     });
 
-    it('thinkingEffort reads back Kimi concrete efforts and boolean on', () => {
+    it('thinkingEffort reads back Floyd concrete efforts and boolean on', () => {
       const provider = new AnthropicChatProvider({
-        model: 'kimi-for-coding',
+        model: 'floyd-for-coding',
         apiKey: 'test-key',
         defaultMaxTokens: 1024,
         stream: false,
-        kimiThinking: true,
+        floydThinking: true,
       });
       expect(provider.withThinking('max').thinkingEffort).toBe('max');
       expect(provider.withThinking('xhigh').thinkingEffort).toBe('xhigh');

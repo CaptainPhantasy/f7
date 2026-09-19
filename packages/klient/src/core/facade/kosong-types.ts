@@ -5,13 +5,13 @@
  * `providerService`/`modelService` wire formats.
  */
 
-import type { Message } from '@moonshot-ai/agent-core-v2/llm-adapter/contract/message';
+import type { Message } from '@legacy-ai/agent-core-v2/llm-adapter/contract/message';
 import type {
   StreamedMessagePart,
   ToolDescription as Tool,
-} from '@moonshot-ai/agent-core-v2/human/llm/message';
-import type { TokenUsage } from '@moonshot-ai/agent-core-v2/human/llm/usage';
-import type { ResponseFormat } from '@moonshot-ai/agent-core-v2/human/llm/response-format';
+} from '@legacy-ai/agent-core-v2/human/llm/message';
+import type { TokenUsage } from '@legacy-ai/agent-core-v2/human/llm/usage';
+import type { ResponseFormat } from '@legacy-ai/agent-core-v2/human/llm/response-format';
 
 // ---------------------------------------------------------------------------
 // Provider auth

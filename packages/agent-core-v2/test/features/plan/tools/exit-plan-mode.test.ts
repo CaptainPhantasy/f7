@@ -32,7 +32,7 @@ function planService(): IAgentPlanService {
       ({
         id: 'test-plan',
         content: '# Plan',
-        path: '/tmp/kimi-plan.md',
+        path: '/tmp/floyd-plan.md',
       } satisfies NonNullable<PlanData>),
   };
 }
@@ -263,7 +263,7 @@ describe('ExitPlanMode option output', () => {
     const service: IAgentPlanService = {
       ...planService(),
       recordRevision,
-      status: async () => ({ id: 'test-plan', content: '   ', path: '/tmp/kimi-plan.md' }),
+      status: async () => ({ id: 'test-plan', content: '   ', path: '/tmp/floyd-plan.md' }),
     };
 
     const result = await executeTool(

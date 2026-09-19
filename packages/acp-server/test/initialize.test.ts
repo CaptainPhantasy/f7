@@ -141,8 +141,8 @@ describe('acp-server initialize handshake', () => {
         const stream = ndJsonStream(Writable.toWeb(toClient), Readable.toWeb(toAgent));
         const server = await runAcpServerWithStream(stream, {
           homeDir,
-          terminalAuthEnv: { KIMI_CODE_HOME: '/tmp/sandbox' },
-          terminalAuthLegacyCommand: '/opt/kimi/bin/kimi',
+          terminalAuthEnv: { FLOYD_CODE_HOME: '/tmp/sandbox' },
+          terminalAuthLegacyCommand: '/opt/floyd/bin/floyd',
         });
 
         toAgent.write(
@@ -165,11 +165,11 @@ describe('acp-server initialize handshake', () => {
         };
         expect(method.type).toBe('terminal');
         expect(method.args).toEqual(['--login']);
-        expect(method.env).toEqual({ KIMI_CODE_HOME: '/tmp/sandbox' });
+        expect(method.env).toEqual({ FLOYD_CODE_HOME: '/tmp/sandbox' });
         expect(method._meta?.['terminal-auth']).toMatchObject({
-          command: '/opt/kimi/bin/kimi',
+          command: '/opt/floyd/bin/floyd',
           args: ['login'],
-          env: { KIMI_CODE_HOME: '/tmp/sandbox' },
+          env: { FLOYD_CODE_HOME: '/tmp/sandbox' },
         });
 
         await server.close();

@@ -4,23 +4,23 @@ import {
   daemonFileRefFromPart as engineRefFromPart,
   matchSingleMediaPathTag as engineMatchTag,
   parseDaemonFileUrl as engineParse,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import {
   daemonFileRefFromPairingPart as mirrorRefFromPart,
   matchMediaPathTagText as mirrorMatchTag,
   parseDaemonFileRef as mirrorParse,
   type MediaRefPart,
-} from '@moonshot-ai/transcript';
-import type { ContentPart } from '@moonshot-ai/agent-core-v2/human/llm/message';
+} from '@legacy-ai/transcript';
+import type { ContentPart } from '@legacy-ai/agent-core-v2/human/llm/message';
 
 const URLS = [
-  'kimi-file://f_1?path=%2Fcache%2Fshot.png',
-  'kimi-file://f_1',
-  'kimi-file://f_1?path=',
-  'kimi-file://?path=%2Fcache%2Fshot.png',
-  'kimi-file://f_1?path=%2Fcache%2Fa%20%26%20%22b%22%20%3Cc%3E.png',
-  'kimi-file://f_1?path=%zz',
-  'kimi-file://',
+  'floyd-file://f_1?path=%2Fcache%2Fshot.png',
+  'floyd-file://f_1',
+  'floyd-file://f_1?path=',
+  'floyd-file://?path=%2Fcache%2Fshot.png',
+  'floyd-file://f_1?path=%2Fcache%2Fa%20%26%20%22b%22%20%3Cc%3E.png',
+  'floyd-file://f_1?path=%zz',
+  'floyd-file://',
   'https://example.com/shot.png',
   '',
 ];
@@ -58,9 +58,9 @@ describe('standalone media path tag matching parity', () => {
 });
 
 const PARTS: ReadonlyArray<MediaRefPart> = [
-  { type: 'image_url', imageUrl: { url: 'kimi-file://f_1?path=%2Fcache%2Fshot.png' } },
-  { type: 'video_url', videoUrl: { url: 'kimi-file://f_3?path=%2Fcache%2Fclip.mp4' } },
-  { type: 'image_url', imageUrl: { url: 'kimi-file://f_1' } },
+  { type: 'image_url', imageUrl: { url: 'floyd-file://f_1?path=%2Fcache%2Fshot.png' } },
+  { type: 'video_url', videoUrl: { url: 'floyd-file://f_3?path=%2Fcache%2Fclip.mp4' } },
+  { type: 'image_url', imageUrl: { url: 'floyd-file://f_1' } },
   { type: 'image_url', imageUrl: { url: 'https://example.com/shot.png' } },
   { type: 'text', text: '<image path="/cache/shot.png"></image>' },
   { type: 'text', text: 'hello' },

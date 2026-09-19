@@ -10,21 +10,21 @@
 import type {
   ApprovalRequest,
   ApprovalResponse,
-} from '@moonshot-ai/agent-core-v2/agent/interaction/approval';
+} from '@legacy-ai/agent-core-v2/agent/interaction/approval';
 import type {
   Interaction,
   InteractionKind,
-} from '@moonshot-ai/agent-core-v2/human/interaction/interaction';
+} from '@legacy-ai/agent-core-v2/human/interaction/interaction';
 import type {
   QuestionRequest,
   QuestionResult,
-} from '@moonshot-ai/agent-core-v2/agent/interaction/question';
+} from '@legacy-ai/agent-core-v2/agent/interaction/question';
 import type {
   AgentMeta,
   SessionMeta,
   SessionMetaPatch,
-} from '@moonshot-ai/agent-core-v2/session/sessionMetadata/sessionMetadata';
-import type { SkillSummary } from '@moonshot-ai/agent-core-v2/features/skill/catalog/types';
+} from '@legacy-ai/agent-core-v2/session/sessionMetadata/sessionMetadata';
+import type { SkillSummary } from '@legacy-ai/agent-core-v2/features/skill/catalog/types';
 
 import type { ScopeRef } from '../channel.js';
 import type { McpServerConfig } from '../../contract/mcp.js';

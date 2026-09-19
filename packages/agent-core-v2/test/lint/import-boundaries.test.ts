@@ -7,7 +7,7 @@ const atHuman = (sub: string, file: string): string => `${SRC_ROOT}/human/${sub}
 const atAdapter = (sub: string, file: string): string => `${SRC_ROOT}/llm-adapter/${sub}/${file}`;
 
 const KOSONG_IMPORT = ['#', 'kosong', 'contract', 'message'].join('/');
-const KOSONG_SELF_IMPORT = ['@moonshot-ai/agent-core-v2', 'kosong', 'contract', 'message'].join('/');
+const KOSONG_SELF_IMPORT = ['@legacy-ai/agent-core-v2', 'kosong', 'contract', 'message'].join('/');
 
 describe('check-import-boundaries', () => {
   it('flags a literal #/kosong/ import (the deleted kernel)', () => {
@@ -90,7 +90,7 @@ describe('check-import-boundaries', () => {
 
   it('allows llm-adapter to import the human implementation', () => {
     const violations = checkSource(
-      `import { createOpenAIRequester } from '#human/llm/requester/bases/openai/requester';\nimport { kimiProvider } from '#human/llm-kimi/provider';`,
+      `import { createOpenAIRequester } from '#human/llm/requester/bases/openai/requester';\nimport { floydProvider } from '#human/llm-floyd/provider';`,
       atAdapter('protocol', 'protocolAdapterRegistry.ts'),
     );
     expect(violations).toHaveLength(0);
@@ -98,7 +98,7 @@ describe('check-import-boundaries', () => {
 
   it('flags a package-self human implementation import outside llm-adapter', () => {
     const violations = checkSource(
-      `import { createOpenAIRequester } from '@moonshot-ai/agent-core-v2/human/llm/requester/bases/openai/requester';`,
+      `import { createOpenAIRequester } from '@legacy-ai/agent-core-v2/human/llm/requester/bases/openai/requester';`,
       at('agent', 'loop.ts'),
     );
     expect(violations).toHaveLength(1);
@@ -108,7 +108,7 @@ describe('check-import-boundaries', () => {
   it('flags a trait importing a protocol format module', () => {
     const violations = checkSource(
       `import { CONTEXT_MANAGEMENT_BETA } from '#/llm/requester/bases/anthropic/format';`,
-      atHuman('llm-kimi', 'trait.ts'),
+      atHuman('llm-floyd', 'trait.ts'),
     );
     expect(violations).toHaveLength(1);
     expect(violations[0]?.message).toMatch(/format and trait never import each other/);
@@ -135,7 +135,7 @@ describe('check-import-boundaries', () => {
   it('allows a trait importing the protocol contract', () => {
     const violations = checkSource(
       `import type { OpenAIWireToolCall } from '#/llm/requester/bases/openai/contract';`,
-      atHuman('llm-kimi', 'trait.ts'),
+      atHuman('llm-floyd', 'trait.ts'),
     );
     expect(violations).toHaveLength(0);
   });
@@ -152,7 +152,7 @@ describe('check-import-boundaries', () => {
   it('flags human code outside bases importing a protocol lower module', () => {
     const violations = checkSource(
       `import { lowerMessage } from '#/llm/requester/bases/openai/lower';`,
-      atHuman('llm-kimi', 'provider.ts'),
+      atHuman('llm-floyd', 'provider.ts'),
     );
     expect(violations).toHaveLength(1);
     expect(violations[0]?.message).toMatch(/internal to the requester pipeline/);
@@ -184,7 +184,7 @@ describe('check-import-boundaries', () => {
 
   it('allows sibling-package imports outside kosong', () => {
     const violations = checkSource(
-      `import { something } from '@moonshot-ai/kaos';`,
+      `import { something } from '@legacy-ai/kaos';`,
       at('log', 'log.ts'),
     );
     expect(violations).toHaveLength(0);

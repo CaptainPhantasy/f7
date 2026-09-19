@@ -2,7 +2,7 @@
  * Scenario: untrusted Webview RPC messages cross into the VS Code extension host.
  * Responsibilities: validate requests, preserve public model metadata, omit private paths, and recover visibly from persisted state errors.
  * Wiring: the real BridgeHandler and handlers; VS Code and the public Node SDK harness boundary are replaced.
- * Run: pnpm --filter kimi-code exec vitest run --config vitest.config.ts test/bridge-handler.test.ts
+ * Run: pnpm --filter floyd-code exec vitest run --config vitest.config.ts test/bridge-handler.test.ts
  */
 import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -22,7 +22,7 @@ const host = vi.hoisted(() => {
     dispose: vi.fn(),
   };
   const harness = {
-    homeDir: "/tmp/kimi-code-test-home",
+    homeDir: "/tmp/floyd-code-test-home",
     close: vi.fn(async () => undefined),
     getConfig: vi.fn(),
     setConfig: vi.fn(async () => undefined),
@@ -55,7 +55,7 @@ const host = vi.hoisted(() => {
     Uri,
     watcher,
     harness,
-    createKimiHarness: vi.fn(() => harness),
+    createFloydHarness: vi.fn(() => harness),
     showWarningMessage,
     workspaceFolders: [] as Array<{ uri: Uri }>,
   };
@@ -74,11 +74,11 @@ vi.mock("vscode", () => ({
   window: { showWarningMessage: host.showWarningMessage },
 }));
 
-vi.mock("@moonshot-ai/kimi-code-sdk", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@moonshot-ai/kimi-code-sdk")>();
+vi.mock("@legacy-ai/floyd-code-sdk", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@legacy-ai/floyd-code-sdk")>();
   return {
     ...original,
-    createKimiHarness: () => host.createKimiHarness(),
+    createFloydHarness: () => host.createFloydHarness(),
   };
 });
 
@@ -89,14 +89,14 @@ let writeLog: Mock<(message: string) => void>;
 let workspaceState: { get: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), "kimi-vscode-bridge-"));
+  root = await mkdtemp(join(tmpdir(), "floyd-vscode-bridge-"));
   host.workspaceFolders.splice(0, host.workspaceFolders.length, { uri: new host.Uri(root) });
   showLogs = vi.fn();
   writeLog = vi.fn();
   host.harness.resumeSession.mockReset();
   host.harness.getConfig.mockReset();
   host.harness.getConfig.mockResolvedValue({ models: {} });
-  host.createKimiHarness.mockImplementation(() => host.harness);
+  host.createFloydHarness.mockImplementation(() => host.harness);
   host.showWarningMessage.mockReset();
   host.showWarningMessage.mockResolvedValue(undefined);
   workspaceState = { get: vi.fn((_key, fallback) => fallback), update: vi.fn() };
@@ -130,11 +130,11 @@ describe("Engine startup", () => {
   }
 
   it("surfaces the failure when the engine cannot start", () => {
-    host.createKimiHarness.mockImplementationOnce(() => {
+    host.createFloydHarness.mockImplementationOnce(() => {
       throw new Error("engine boom");
     });
 
-    expect(constructBridge).toThrow(/^Failed to start the Kimi engine: engine boom\.$/);
+    expect(constructBridge).toThrow(/^Failed to start the Floyd engine: engine boom\.$/);
   });
 });
 
@@ -312,14 +312,14 @@ describe("Webview RPC boundary (validates requests before host dispatch)", () =>
       {
         id: "session-1",
         workDir: root,
-        sessionDir: "/private/kimi/sessions/session-1",
+        sessionDir: "/private/floyd/sessions/session-1",
         updatedAt: 123,
         title: "Visible title",
       },
     ] as never);
 
     const result = await bridge.handle(
-      { id: "rpc-1", method: Methods.GetKimiSessions },
+      { id: "rpc-1", method: Methods.GetFloydSessions },
       "view-1",
     );
 
@@ -327,20 +327,20 @@ describe("Webview RPC boundary (validates requests before host dispatch)", () =>
       id: "rpc-1",
       result: [{ id: "session-1", workDir: root, updatedAt: 123, brief: "Visible title" }],
     });
-    expect(JSON.stringify(result)).not.toContain("/private/kimi/sessions");
+    expect(JSON.stringify(result)).not.toContain("/private/floyd/sessions");
   });
 
   it("does not expose the session storage path when forking a session", async () => {
     const source = {
       id: "session-1",
       workDir: root,
-      sessionDir: "/private/kimi/sessions/session-1",
+      sessionDir: "/private/floyd/sessions/session-1",
       updatedAt: 123,
     };
     const target = {
       id: "session-2",
       workDir: root,
-      sessionDir: "/private/kimi/sessions/session-2",
+      sessionDir: "/private/floyd/sessions/session-2",
       updatedAt: 124,
     };
     host.harness.listSessions.mockResolvedValueOnce([source] as never);
@@ -349,27 +349,27 @@ describe("Webview RPC boundary (validates requests before host dispatch)", () =>
     const result = await bridge.handle(
       {
         id: "rpc-1",
-        method: Methods.ForkKimiSession,
+        method: Methods.ForkFloydSession,
         params: { sessionId: "session-1", turnIndex: 0 },
       },
       "view-1",
     );
 
     expect(result).toEqual({ id: "rpc-1", result: { sessionId: "session-2" } });
-    expect(JSON.stringify(result)).not.toContain("/private/kimi/sessions");
+    expect(JSON.stringify(result)).not.toContain("/private/floyd/sessions");
   });
 
   it("runs a fork through the active session cancellation boundary", async () => {
     const source = {
       id: "session-1",
       workDir: root,
-      sessionDir: "/private/kimi/sessions/session-1",
+      sessionDir: "/private/floyd/sessions/session-1",
       updatedAt: 123,
     };
     const target = {
       id: "session-2",
       workDir: root,
-      sessionDir: "/private/kimi/sessions/session-2",
+      sessionDir: "/private/floyd/sessions/session-2",
       updatedAt: 124,
     };
     const runExclusiveAfterCancelling = vi.fn(async <T>(action: () => Promise<T>) => action());
@@ -382,7 +382,7 @@ describe("Webview RPC boundary (validates requests before host dispatch)", () =>
     const result = await bridge.handle(
       {
         id: "rpc-1",
-        method: Methods.ForkKimiSession,
+        method: Methods.ForkFloydSession,
         params: { sessionId: "session-1", turnIndex: 0 },
       },
       "view-1",
@@ -407,7 +407,7 @@ describe("Webview RPC boundary (validates requests before host dispatch)", () =>
     const result = await bridge.handle(
       {
         id: "rpc-1",
-        method: Methods.ForkKimiSession,
+        method: Methods.ForkFloydSession,
         params: { sessionId: "session-1", turnIndex: 0 },
       },
       "view-1",
@@ -441,8 +441,8 @@ describe("Webview RPC boundary (validates requests before host dispatch)", () =>
     const result = await bridge.handle(
       {
         id: "rpc-1",
-        method: Methods.LoadKimiSessionHistory,
-        params: { kimiSessionId: "session-1" },
+        method: Methods.LoadFloydSessionHistory,
+        params: { floydSessionId: "session-1" },
       },
       "view-1",
     );
@@ -467,8 +467,8 @@ describe("Webview RPC boundary (validates requests before host dispatch)", () =>
     const failed = await bridge.handle(
       {
         id: "rpc-1",
-        method: Methods.LoadKimiSessionHistory,
-        params: { kimiSessionId: "session-1" },
+        method: Methods.LoadFloydSessionHistory,
+        params: { floydSessionId: "session-1" },
       },
       "view-1",
     );
@@ -522,7 +522,7 @@ describe("Registered working directories", () => {
 
 describe("Webview config saves (thinking effort persistence parity with the TUI)", () => {
   const effortModel = {
-    provider: "managed:kimi-code",
+    provider: "managed:floyd-code",
     model: "reasoning",
     supportEfforts: ["low", "high", "max"],
     defaultEffort: "high",
@@ -530,9 +530,9 @@ describe("Webview config saves (thinking effort persistence parity with the TUI)
 
   function mockConfig(thinking?: { enabled: boolean; effort?: string }) {
     host.harness.getConfig.mockResolvedValue({
-      defaultModel: "kimi/reasoning",
+      defaultModel: "floyd/reasoning",
       thinking,
-      models: { "kimi/reasoning": effortModel },
+      models: { "floyd/reasoning": effortModel },
     } as never);
   }
 
@@ -540,13 +540,13 @@ describe("Webview config saves (thinking effort persistence parity with the TUI)
     mockConfig();
 
     const result = await bridge.handle(
-      { id: "rpc-1", method: Methods.SaveConfig, params: { model: "kimi/reasoning", thinking: true, effort: "high" } },
+      { id: "rpc-1", method: Methods.SaveConfig, params: { model: "floyd/reasoning", thinking: true, effort: "high" } },
       "view-1",
     );
 
     expect(result).toEqual({ id: "rpc-1", result: { ok: true } });
     expect(host.harness.setConfig).toHaveBeenCalledWith({
-      defaultModel: "kimi/reasoning",
+      defaultModel: "floyd/reasoning",
       thinking: { enabled: true, effort: "high" },
     });
   });
@@ -555,29 +555,29 @@ describe("Webview config saves (thinking effort persistence parity with the TUI)
     mockConfig();
 
     await bridge.handle(
-      { id: "rpc-1", method: Methods.SaveConfig, params: { model: "kimi/reasoning", thinking: true, effort: "max" } },
+      { id: "rpc-1", method: Methods.SaveConfig, params: { model: "floyd/reasoning", thinking: true, effort: "max" } },
       "view-1",
     );
 
     expect(host.harness.setConfig).toHaveBeenCalledWith({
-      defaultModel: "kimi/reasoning",
+      defaultModel: "floyd/reasoning",
       thinking: { enabled: true },
     });
   });
 
   it("persists the top tier when the model's delivered default is the top tier", async () => {
     host.harness.getConfig.mockResolvedValue({
-      defaultModel: "kimi/reasoning",
-      models: { "kimi/reasoning": { ...effortModel, defaultEffort: "max" } },
+      defaultModel: "floyd/reasoning",
+      models: { "floyd/reasoning": { ...effortModel, defaultEffort: "max" } },
     } as never);
 
     await bridge.handle(
-      { id: "rpc-1", method: Methods.SaveConfig, params: { model: "kimi/reasoning", thinking: true, effort: "max" } },
+      { id: "rpc-1", method: Methods.SaveConfig, params: { model: "floyd/reasoning", thinking: true, effort: "max" } },
       "view-1",
     );
 
     expect(host.harness.setConfig).toHaveBeenCalledWith({
-      defaultModel: "kimi/reasoning",
+      defaultModel: "floyd/reasoning",
       thinking: { enabled: true, effort: "max" },
     });
   });
@@ -619,12 +619,12 @@ describe("Webview config saves (thinking effort persistence parity with the TUI)
     mockConfig({ enabled: false, effort: "low" });
 
     await bridge.handle(
-      { id: "rpc-1", method: Methods.SaveConfig, params: { model: "kimi/reasoning", thinking: true, effort: "high", effortChanged: false } },
+      { id: "rpc-1", method: Methods.SaveConfig, params: { model: "floyd/reasoning", thinking: true, effort: "high", effortChanged: false } },
       "view-1",
     );
 
     expect(host.harness.setConfig).toHaveBeenCalledWith({
-      defaultModel: "kimi/reasoning",
+      defaultModel: "floyd/reasoning",
       thinking: { enabled: true },
     });
   });
@@ -633,7 +633,7 @@ describe("Webview config saves (thinking effort persistence parity with the TUI)
     mockConfig({ enabled: true, effort: "high" });
 
     await bridge.handle(
-      { id: "rpc-1", method: Methods.SaveConfig, params: { model: "kimi/reasoning", thinking: true, effort: "high" } },
+      { id: "rpc-1", method: Methods.SaveConfig, params: { model: "floyd/reasoning", thinking: true, effort: "high" } },
       "view-1",
     );
 
@@ -646,7 +646,7 @@ function createResumedSession(id: string, workDir: string) {
   const summary = {
     id,
     workDir,
-    sessionDir: join("/private/kimi/sessions", id),
+    sessionDir: join("/private/floyd/sessions", id),
     createdAt: 1,
     updatedAt: 2,
     metadata: { vscode_legacy_approval: { yolo: false, afk: false } },

@@ -5,12 +5,12 @@ import { join } from 'node:path';
 
 import {
   FileTokenStorage,
-  KIMI_CODE_PROVIDER_NAME,
-  resolveKimiTokenStorageName,
+  FLOYD_CODE_PROVIDER_NAME,
+  resolveFloydTokenStorageName,
   type TokenInfo,
-} from '@moonshot-ai/kimi-code-oauth';
-import { remoteControlLockPath, RemoteControlAlreadyRunningError, type RemoteControlManager } from '@moonshot-ai/remote-control';
-import type { ITelemetryService } from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/floyd-code-oauth';
+import { remoteControlLockPath, RemoteControlAlreadyRunningError, type RemoteControlManager } from '@legacy-ai/remote-control';
+import type { ITelemetryService } from '@legacy-ai/agent-core-v2';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer, type RawData, type WebSocket } from 'ws';
 
@@ -52,9 +52,9 @@ describe('server-v2 /api/v1/remote-control', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-rc-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-rc-'));
     await new FileTokenStorage(join(home, 'credentials')).save(
-      resolveKimiTokenStorageName({ providerName: KIMI_CODE_PROVIDER_NAME }),
+      resolveFloydTokenStorageName({ providerName: FLOYD_CODE_PROVIDER_NAME }),
       TOKEN,
     );
     server = await startServer({
@@ -88,7 +88,7 @@ describe('server-v2 /api/v1/remote-control', () => {
 
   it('starts and stops the tunnel at runtime, dedupes concurrent enables, and tracks relay-initiated shutdown', async () => {
     const relay = await startRegisterAckRelay();
-    vi.stubEnv('KIMI_CODE_REMOTE_CONTROL_RELAY_URL', `http://127.0.0.1:${relay.port}`);
+    vi.stubEnv('FLOYD_CODE_REMOTE_CONTROL_RELAY_URL', `http://127.0.0.1:${relay.port}`);
 
     const initial = await authedFetch(server as RunningServer, base, '/api/v1/remote-control');
     const initialBody = (await initial.json()) as Envelope<RemoteControlStatusWire>;
@@ -165,7 +165,7 @@ describe('server-v2 /api/v1/remote-control', () => {
         nonce: 'other-process',
         local_origin: 'http://127.0.0.1:58627',
         device_id: 'other-device',
-        url: 'https://code-rc.kimi.com/devices/other-device/',
+        url: 'https://code-rc.floyd.com/devices/other-device/',
         started_at: Date.now(),
       }),
     );

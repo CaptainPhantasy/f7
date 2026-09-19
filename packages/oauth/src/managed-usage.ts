@@ -4,33 +4,33 @@ import { readApiErrorMessage } from './api-error';
 import { isRecord } from './utils';
 
 const MANAGED_PREFIX = 'managed:';
-const KIMI_CODE_PLATFORM_ID = 'kimi-code';
-export const DEFAULT_KIMI_CODE_BASE_URL = 'https://api.kimi.com/coding/v1';
-export const GLOBAL_KIMI_CODE_BASE_URL = 'https://api.kimi.ai/coding/v1';
+const FLOYD_CODE_PLATFORM_ID = 'floyd-code';
+export const DEFAULT_FLOYD_CODE_BASE_URL = 'https://api.floyd.com/coding/v1';
+export const GLOBAL_FLOYD_CODE_BASE_URL = 'https://api.floyd.ai/coding/v1';
 
-export function isManagedKimiCode(providerKey?: string | null): boolean {
+export function isManagedFloydCode(providerKey?: string | null): boolean {
   if (!providerKey) return false;
   if (!providerKey.startsWith(MANAGED_PREFIX)) return false;
-  return providerKey.slice(MANAGED_PREFIX.length) === KIMI_CODE_PLATFORM_ID;
+  return providerKey.slice(MANAGED_PREFIX.length) === FLOYD_CODE_PLATFORM_ID;
 }
 
-export function kimiCodeBaseUrl(): string {
-  return (process.env['KIMI_CODE_BASE_URL'] ?? DEFAULT_KIMI_CODE_BASE_URL).replace(/\/+$/, '');
+export function floydCodeBaseUrl(): string {
+  return (process.env['FLOYD_CODE_BASE_URL'] ?? DEFAULT_FLOYD_CODE_BASE_URL).replace(/\/+$/, '');
 }
 
-export function kimiCodeUsageUrl(): string {
-  return `${kimiCodeBaseUrl()}/usages`;
+export function floydCodeUsageUrl(): string {
+  return `${floydCodeBaseUrl()}/usages`;
 }
 
-export function isManagedKimiCodeBaseUrl(baseUrl: string | undefined): boolean {
+export function isManagedFloydCodeBaseUrl(baseUrl: string | undefined): boolean {
   if (baseUrl === undefined) return false;
   const candidate = parseNormalizedUrl(baseUrl);
   if (candidate === undefined) return false;
-  const envOverride = process.env['KIMI_CODE_BASE_URL'];
+  const envOverride = process.env['FLOYD_CODE_BASE_URL'];
   const managed =
     envOverride !== undefined
       ? [envOverride]
-      : [DEFAULT_KIMI_CODE_BASE_URL, GLOBAL_KIMI_CODE_BASE_URL];
+      : [DEFAULT_FLOYD_CODE_BASE_URL, GLOBAL_FLOYD_CODE_BASE_URL];
   return managed.some((url) => parseNormalizedUrl(url) === candidate);
 }
 
@@ -238,7 +238,7 @@ export async function fetchManagedUsage(
         status === 401
           ? 'Authorization failed. Please check your API key (try /login).'
           : status === 404
-            ? 'Usage endpoint not available. Try Kimi For Coding.'
+            ? 'Usage endpoint not available. Try Floyd For Coding.'
             : `Failed to fetch usage: HTTP ${String(status)}`;
       return { kind: 'error', status, message: await readApiErrorMessage(res, hint) };
     }

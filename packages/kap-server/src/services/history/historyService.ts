@@ -7,7 +7,7 @@ import {
   IWireService,
   MAIN_AGENT_ID,
   type Scope,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 
 import {
   historyResponseSchema,

@@ -2,27 +2,27 @@ import { randomUUID } from 'node:crypto';
 
 import {
   DeviceCodeTimeoutError,
-  KIMI_CODE_PLATFORM_ID,
-  KIMI_CODE_PROVIDER_NAME,
-  KimiOAuthToolkit,
-  kimiCodeBaseUrl,
-  kimiRegionLoginHosts,
+  FLOYD_CODE_PLATFORM_ID,
+  FLOYD_CODE_PROVIDER_NAME,
+  FloydOAuthToolkit,
+  floydCodeBaseUrl,
+  floydRegionLoginHosts,
   OAuthError,
-  applyManagedKimiCodeConfig,
-  clearManagedKimiCodeConfig,
-  fetchManagedKimiCodeModels,
-  resolveKimiCodeLoginAuth,
-  resolveKimiCodeOAuthRef,
-  resolveKimiCodeRuntimeAuth,
-  resolveKimiRegion,
+  applyManagedFloydCodeConfig,
+  clearManagedFloydCodeConfig,
+  fetchManagedFloydCodeModels,
+  resolveFloydCodeLoginAuth,
+  resolveFloydCodeOAuthRef,
+  resolveFloydCodeRuntimeAuth,
+  resolveFloydRegion,
   type AuthManagedUserInfoResult,
   type AuthManagedUsageResult,
   type BearerTokenProvider,
   type DeviceAuthorization,
-  type KimiRegion,
-  type ManagedKimiConfigShape,
-} from '@moonshot-ai/kimi-code-oauth';
-import { declaredProviderCredential } from '@moonshot-ai/kimi-code-oauth/provider-credential';
+  type FloydRegion,
+  type ManagedFloydConfigShape,
+} from '@legacy-ai/floyd-code-oauth';
+import { declaredProviderCredential } from '@legacy-ai/floyd-code-oauth/provider-credential';
 import type {
   OAuthFlowSnapshot,
   OAuthFlowStart,
@@ -122,7 +122,7 @@ export class OAuthService extends Disposable implements IOAuthService {
   }
 
   async startLogin(
-    provider = KIMI_CODE_PROVIDER_NAME,
+    provider = FLOYD_CODE_PROVIDER_NAME,
     options: OAuthLoginOptions = {},
   ): Promise<OAuthFlowStart> {
     this.log.info('oauth startLogin: enter', { provider });
@@ -221,13 +221,13 @@ export class OAuthService extends Disposable implements IOAuthService {
     return this.toFlowStart(state, device);
   }
 
-  getFlow(provider = KIMI_CODE_PROVIDER_NAME): OAuthFlowSnapshot | undefined {
+  getFlow(provider = FLOYD_CODE_PROVIDER_NAME): OAuthFlowSnapshot | undefined {
     const state = this.flows.get(provider);
     if (state === undefined || state.device === undefined) return undefined;
     return this.toSnapshot(state, state.device);
   }
 
-  cancelLogin(provider = KIMI_CODE_PROVIDER_NAME): Promise<OAuthLoginCancelResponse> {
+  cancelLogin(provider = FLOYD_CODE_PROVIDER_NAME): Promise<OAuthLoginCancelResponse> {
     const state = this.flows.get(provider);
     if (state === undefined || state.status !== 'pending') {
       return Promise.resolve({ cancelled: false, status: state?.status ?? 'cancelled' });
@@ -237,9 +237,9 @@ export class OAuthService extends Disposable implements IOAuthService {
     return Promise.resolve({ cancelled: true, status: 'cancelled' });
   }
 
-  async logout(provider = KIMI_CODE_PROVIDER_NAME): Promise<OAuthLogoutResponse> {
+  async logout(provider = FLOYD_CODE_PROVIDER_NAME): Promise<OAuthLogoutResponse> {
     const oauthRef =
-      provider === KIMI_CODE_PROVIDER_NAME
+      provider === FLOYD_CODE_PROVIDER_NAME
         ? this.resolveRuntimeOAuthRef(provider)
         : this.readOAuthRefOptional(provider);
     const result = await this.toolkit.logout(provider, oauthRef);
@@ -248,7 +248,7 @@ export class OAuthService extends Disposable implements IOAuthService {
     return { logged_out: true, provider: result.providerName };
   }
 
-  async status(provider = KIMI_CODE_PROVIDER_NAME): Promise<AuthStatus> {
+  async status(provider = FLOYD_CODE_PROVIDER_NAME): Promise<AuthStatus> {
     this.log.info('oauth status: enter', { provider });
     const oauthRef = this.readOAuthRefOptional(provider);
     try {
@@ -272,9 +272,9 @@ export class OAuthService extends Disposable implements IOAuthService {
     return this.toolkit.getCachedAccessToken(provider, this.resolveRuntimeOAuthRef(provider, oauthRef));
   }
 
-  getManagedUsage(provider = KIMI_CODE_PROVIDER_NAME): Promise<AuthManagedUsageResult> {
+  getManagedUsage(provider = FLOYD_CODE_PROVIDER_NAME): Promise<AuthManagedUsageResult> {
     const configured = this.providerService.get(provider);
-    const auth = resolveKimiCodeRuntimeAuth({
+    const auth = resolveFloydCodeRuntimeAuth({
       configuredBaseUrl: configured?.baseUrl,
       configuredOAuthRef: configured?.oauth,
     });
@@ -284,9 +284,9 @@ export class OAuthService extends Disposable implements IOAuthService {
     });
   }
 
-  getManagedUserInfo(provider = KIMI_CODE_PROVIDER_NAME): Promise<AuthManagedUserInfoResult> {
+  getManagedUserInfo(provider = FLOYD_CODE_PROVIDER_NAME): Promise<AuthManagedUserInfoResult> {
     const configured = this.providerService.get(provider);
-    const auth = resolveKimiCodeRuntimeAuth({
+    const auth = resolveFloydCodeRuntimeAuth({
       configuredBaseUrl: configured?.baseUrl,
       configuredOAuthRef: configured?.oauth,
     });
@@ -322,33 +322,33 @@ export class OAuthService extends Disposable implements IOAuthService {
       await this.config.reload();
     } catch (error) {
       failed.push({
-        provider: KIMI_CODE_PROVIDER_NAME,
+        provider: FLOYD_CODE_PROVIDER_NAME,
         reason: error instanceof Error ? error.message : String(error),
       });
       finish();
       throw error;
     }
     const current = this.readUserConfigShape();
-    const provider = current.providers[KIMI_CODE_PROVIDER_NAME];
+    const provider = current.providers[FLOYD_CODE_PROVIDER_NAME];
     if (!isOAuthCatalogProvider(provider)) {
       return finish();
     }
 
     try {
-      const declared = declaredProviderCredential(provider, KIMI_CODE_PROVIDER_NAME);
+      const declared = declaredProviderCredential(provider, FLOYD_CODE_PROVIDER_NAME);
       if (declared.kind === 'conflict') throw new Error(declared.message);
-      const auth = resolveKimiCodeRuntimeAuth({
+      const auth = resolveFloydCodeRuntimeAuth({
         configuredBaseUrl: provider.baseUrl,
         configuredOAuthRef: provider.oauth,
       });
-      const tokenProvider = this.resolveTokenProvider(KIMI_CODE_PROVIDER_NAME, auth.oauthRef);
+      const tokenProvider = this.resolveTokenProvider(FLOYD_CODE_PROVIDER_NAME, auth.oauthRef);
       if (tokenProvider === undefined) {
         throw new Error2(ErrorCodes.AUTH_TOKEN_MISSING, 'OAuth token provider is not configured.', {
-          details: { provider_id: KIMI_CODE_PROVIDER_NAME },
+          details: { provider_id: FLOYD_CODE_PROVIDER_NAME },
         });
       }
       const token = await tokenProvider.getAccessToken();
-      const models = await fetchManagedKimiCodeModels({
+      const models = await fetchManagedFloydCodeModels({
         accessToken: token,
         baseUrl: auth.baseUrl,
       });
@@ -358,7 +358,7 @@ export class OAuthService extends Disposable implements IOAuthService {
 
       await this.config.reload();
       const fresh = this.readUserConfigShape();
-      const freshProvider = fresh.providers[KIMI_CODE_PROVIDER_NAME];
+      const freshProvider = fresh.providers[FLOYD_CODE_PROVIDER_NAME];
       if (!isOAuthCatalogProvider(freshProvider)) {
         return finish();
       }
@@ -372,7 +372,7 @@ export class OAuthService extends Disposable implements IOAuthService {
       }
 
       const next = structuredClone(fresh);
-      applyManagedKimiCodeConfig(next, {
+      applyManagedFloydCodeConfig(next, {
         models,
         baseUrl: auth.baseUrl,
         oauthKey: auth.oauthRef.key,
@@ -382,18 +382,18 @@ export class OAuthService extends Disposable implements IOAuthService {
       const refreshedAliasKeys = providerRefreshAliasKeys(
         fresh,
         next,
-        KIMI_CODE_PROVIDER_NAME,
-        `${KIMI_CODE_PLATFORM_ID}/`,
+        FLOYD_CODE_PROVIDER_NAME,
+        `${FLOYD_CODE_PLATFORM_ID}/`,
       );
       restoreProviderAliases(
         next,
-        preserveUserProviderAliases(fresh, KIMI_CODE_PROVIDER_NAME, refreshedAliasKeys),
+        preserveUserProviderAliases(fresh, FLOYD_CODE_PROVIDER_NAME, refreshedAliasKeys),
       );
       restoreDefaultSelection(next, fresh.defaultModel, fresh.thinking?.enabled);
       clampDanglingDefault(next);
 
-      if (providerModelsEqual(fresh, next, KIMI_CODE_PROVIDER_NAME, refreshedAliasKeys)) {
-        unchanged.push(KIMI_CODE_PROVIDER_NAME);
+      if (providerModelsEqual(fresh, next, FLOYD_CODE_PROVIDER_NAME, refreshedAliasKeys)) {
+        unchanged.push(FLOYD_CODE_PROVIDER_NAME);
       } else {
         const { added, removed } = computeChanges(
           collectModelIdsForAliases(fresh, refreshedAliasKeys),
@@ -404,15 +404,15 @@ export class OAuthService extends Disposable implements IOAuthService {
         await this.config.replace(DEFAULT_MODEL_SECTION, next.defaultModel);
         await this.config.replace(THINKING_SECTION, next.thinking);
         changed.push({
-          provider_id: KIMI_CODE_PROVIDER_NAME,
-          provider_name: 'Kimi Code',
+          provider_id: FLOYD_CODE_PROVIDER_NAME,
+          provider_name: 'Floyd Code',
           added,
           removed,
         });
       }
     } catch (error) {
       failed.push({
-        provider: KIMI_CODE_PROVIDER_NAME,
+        provider: FLOYD_CODE_PROVIDER_NAME,
         reason: error instanceof Error ? error.message : String(error),
       });
     }
@@ -424,50 +424,50 @@ export class OAuthService extends Disposable implements IOAuthService {
     return result;
   }
 
-  private readUserConfigShape(): ManagedKimiConfigShape {
+  private readUserConfigShape(): ManagedFloydConfigShape {
     const providers =
       this.config.inspect<Record<string, ProviderConfig>>(PROVIDERS_SECTION).userValue ?? {};
     const models = this.config.inspect<Record<string, ModelRecord>>(MODELS_SECTION).userValue ?? {};
     const services =
-      this.config.inspect<ManagedKimiConfigShape['services']>(SERVICES_SECTION).userValue;
+      this.config.inspect<ManagedFloydConfigShape['services']>(SERVICES_SECTION).userValue;
     const defaultModel = this.config.inspect<string>(DEFAULT_MODEL_SECTION).userValue;
     const thinking =
-      this.config.inspect<ManagedKimiConfigShape['thinking']>(THINKING_SECTION).userValue;
+      this.config.inspect<ManagedFloydConfigShape['thinking']>(THINKING_SECTION).userValue;
     return {
-      providers: { ...providers } as ManagedKimiConfigShape['providers'],
-      models: { ...models } as ManagedKimiConfigShape['models'],
+      providers: { ...providers } as ManagedFloydConfigShape['providers'],
+      models: { ...models } as ManagedFloydConfigShape['models'],
       services: services === undefined ? undefined : { ...services },
       defaultModel,
       thinking: thinking === undefined ? undefined : { ...thinking },
     };
   }
 
-  getRegion(): KimiRegion {
-    const oauth = this.providerService.get(KIMI_CODE_PROVIDER_NAME)?.oauth;
-    return resolveKimiRegion({
+  getRegion(): FloydRegion {
+    const oauth = this.providerService.get(FLOYD_CODE_PROVIDER_NAME)?.oauth;
+    return resolveFloydRegion({
       configuredOAuthHost: oauth?.oauthHost,
       configuredOAuthKey: oauth?.key,
       readMarker:
-        (this.bootstrap.getEnv('KIMI_CODE_REGION_MARKER') ??
-          process.env['KIMI_CODE_REGION_MARKER']) !== 'off',
+        (this.bootstrap.getEnv('FLOYD_CODE_REGION_MARKER') ??
+          process.env['FLOYD_CODE_REGION_MARKER']) !== 'off',
       homeDir: this.bootstrap.homeDir,
     });
   }
 
   private resolveLoginAuth(
     provider: string,
-    region?: KimiRegion,
+    region?: FloydRegion,
   ): {
     readonly oauthRef: OAuthRef | undefined;
     readonly baseUrl: string | undefined;
     readonly oauthHost: string | undefined;
   } {
     const config = this.providerService.get(provider);
-    if (provider !== KIMI_CODE_PROVIDER_NAME) {
+    if (provider !== FLOYD_CODE_PROVIDER_NAME) {
       return { oauthRef: config?.oauth, baseUrl: undefined, oauthHost: undefined };
     }
-    const hosts = region === undefined ? undefined : kimiRegionLoginHosts(region);
-    const loginAuth = resolveKimiCodeLoginAuth({
+    const hosts = region === undefined ? undefined : floydRegionLoginHosts(region);
+    const loginAuth = resolveFloydCodeLoginAuth({
       configuredBaseUrl: config?.baseUrl,
       configuredOAuthRef: config?.oauth,
       requestedBaseUrl: hosts?.baseUrl,
@@ -475,7 +475,7 @@ export class OAuthService extends Disposable implements IOAuthService {
     });
     const oauthRef =
       loginAuth.oauthRef ??
-      resolveKimiCodeOAuthRef({
+      resolveFloydCodeOAuthRef({
         oauthHost: loginAuth.oauthHost,
         baseUrl: loginAuth.baseUrl,
       });
@@ -491,9 +491,9 @@ export class OAuthService extends Disposable implements IOAuthService {
   }
 
   private resolveRuntimeOAuthRef(provider: string, oauthRef?: OAuthRef): OAuthRef | undefined {
-    if (provider !== KIMI_CODE_PROVIDER_NAME) return oauthRef;
+    if (provider !== FLOYD_CODE_PROVIDER_NAME) return oauthRef;
     const config = this.providerService.get(provider);
-    return resolveKimiCodeRuntimeAuth({
+    return resolveFloydCodeRuntimeAuth({
       configuredBaseUrl: config?.baseUrl,
       configuredOAuthRef: oauthRef ?? config?.oauth,
     }).oauthRef;
@@ -536,7 +536,7 @@ export class OAuthService extends Disposable implements IOAuthService {
     try {
       await this.provisionProvider(state.provider, state.oauthRef, state.loginBaseUrl);
       if (this.flows.get(state.provider) !== state) return;
-      if (state.provider === KIMI_CODE_PROVIDER_NAME) {
+      if (state.provider === FLOYD_CODE_PROVIDER_NAME) {
         await this.refreshOAuthProviderModelsBestEffort(state.provider);
       }
     } catch (error) {
@@ -556,11 +556,11 @@ export class OAuthService extends Disposable implements IOAuthService {
     oauthRef: OAuthRef | undefined,
     loginBaseUrl: string | undefined,
   ): Promise<void> {
-    if (oauthRef === undefined && provider !== KIMI_CODE_PROVIDER_NAME) return;
+    if (oauthRef === undefined && provider !== FLOYD_CODE_PROVIDER_NAME) return;
     const baseUrl =
-      loginBaseUrl ?? this.providerService.get(provider)?.baseUrl ?? kimiCodeBaseUrl();
+      loginBaseUrl ?? this.providerService.get(provider)?.baseUrl ?? floydCodeBaseUrl();
     await this.providerService.set(provider, {
-      type: 'kimi',
+      type: 'floyd',
       baseUrl,
       apiKey: '',
       oauth: oauthRef,
@@ -578,9 +578,9 @@ export class OAuthService extends Disposable implements IOAuthService {
   }
 
   private async deprovisionProvider(provider: string): Promise<void> {
-    if (provider !== KIMI_CODE_PROVIDER_NAME) return;
+    if (provider !== FLOYD_CODE_PROVIDER_NAME) return;
     const next = structuredClone(this.readUserConfigShape());
-    const cleanup = clearManagedKimiCodeConfig(next);
+    const cleanup = clearManagedFloydCodeConfig(next);
     if (
       !cleanup.removedProvider &&
       cleanup.removedModels.length === 0 &&
@@ -801,7 +801,7 @@ function isOAuthCatalogProvider(
 }
 
 function collectModelIdsForAliases(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   aliasKeys: ReadonlySet<string>,
 ): Set<string> {
   const ids = new Set<string>();
@@ -812,7 +812,7 @@ function collectModelIdsForAliases(
   return ids;
 }
 
-function providerAliasKeys(config: ManagedKimiConfigShape, providerId: string): Set<string> {
+function providerAliasKeys(config: ManagedFloydConfigShape, providerId: string): Set<string> {
   const keys = new Set<string>();
   for (const [alias, model] of Object.entries(config.models ?? {})) {
     if ((model as ManagedModel).provider === providerId) keys.add(alias);
@@ -821,7 +821,7 @@ function providerAliasKeys(config: ManagedKimiConfigShape, providerId: string): 
 }
 
 function generatedProviderAliasKeys(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   providerId: string,
   aliasPrefix: string,
 ): Set<string> {
@@ -850,8 +850,8 @@ function computeChanges(
 }
 
 function providerModelsEqual(
-  config: ManagedKimiConfigShape,
-  nextConfig: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
+  nextConfig: ManagedFloydConfigShape,
   providerId: string,
   aliasKeys: ReadonlySet<string>,
 ): boolean {
@@ -862,7 +862,7 @@ function providerModelsEqual(
 }
 
 function providerModelSnapshot(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   providerId: string,
   aliasKeys: ReadonlySet<string>,
 ): string {
@@ -884,8 +884,8 @@ function providerModelSnapshot(
 }
 
 function providerRefreshAliasKeys(
-  config: ManagedKimiConfigShape,
-  nextConfig: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
+  nextConfig: ManagedFloydConfigShape,
   providerId: string,
   aliasPrefix: string,
 ): Set<string> {
@@ -895,7 +895,7 @@ function providerRefreshAliasKeys(
 }
 
 function preserveUserProviderAliases(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   providerId: string,
   refreshedAliasKeys: ReadonlySet<string>,
 ): Record<string, ManagedModel> {
@@ -909,18 +909,18 @@ function preserveUserProviderAliases(
 }
 
 function restoreProviderAliases(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   aliases: Record<string, ManagedModel>,
 ): void {
   if (Object.keys(aliases).length === 0) return;
   config.models = {
     ...config.models,
     ...aliases,
-  } as ManagedKimiConfigShape['models'];
+  } as ManagedFloydConfigShape['models'];
 }
 
 function restoreDefaultSelection(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   defaultModel: string | undefined,
   defaultEnabled: boolean | undefined,
 ): void {
@@ -933,7 +933,7 @@ function restoreDefaultSelection(
   }
 }
 
-function clampDanglingDefault(config: ManagedKimiConfigShape): void {
+function clampDanglingDefault(config: ManagedFloydConfigShape): void {
   if (config.defaultModel !== undefined && config.models?.[config.defaultModel] === undefined) {
     config.defaultModel = undefined;
     config.thinking = undefined;
@@ -941,13 +941,13 @@ function clampDanglingDefault(config: ManagedKimiConfigShape): void {
 }
 
 function managedModel(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   alias: string,
 ): ManagedModel | undefined {
   return config.models?.[alias] as ManagedModel | undefined;
 }
 
-class OAuthToolkitService extends KimiOAuthToolkit implements IOAuthToolkit {
+class OAuthToolkitService extends FloydOAuthToolkit implements IOAuthToolkit {
   declare readonly _serviceBrand: undefined;
   constructor(@IBootstrapService bootstrap: IBootstrapService) {
     super({ homeDir: bootstrap.homeDir, identity: bootstrap.clientIdentity });

@@ -1,10 +1,10 @@
 import { randomBytes } from 'node:crypto';
 
 import {
-  KIMI_REGION_PROFILES,
-  kimiRegionProfile,
-  resolveKimiRegion,
-} from '@moonshot-ai/kimi-code-oauth';
+  FLOYD_REGION_PROFILES,
+  floydRegionProfile,
+  resolveFloydRegion,
+} from '@legacy-ai/floyd-code-oauth';
 
 import { isAbortError } from '#/_base/utils/abort';
 import type { IFileSystemStorageService } from '#/persistence/interface/storage';
@@ -47,7 +47,7 @@ export interface CloudTransportOptions {
   readonly now?: () => number;
 }
 
-export const TELEMETRY_ENDPOINT = KIMI_REGION_PROFILES['mainland-cn'].telemetryEndpoint;
+export const TELEMETRY_ENDPOINT = FLOYD_REGION_PROFILES['mainland-cn'].telemetryEndpoint;
 export const SERVER_EVENT_PREFIX = 'kfc_';
 export const USER_ID_PREFIX = 'kfc_device_id_';
 export const DISK_EVENT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -62,8 +62,8 @@ const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
 function defaultTelemetryEndpoint(homeDir?: string, readMarker = true): string {
-  return kimiRegionProfile(
-    resolveKimiRegion({ readMarker, homeDir }),
+  return floydRegionProfile(
+    resolveFloydRegion({ readMarker, homeDir }),
   ).telemetryEndpoint;
 }
 
@@ -85,7 +85,7 @@ export class CloudTransport {
       options.endpoint ??
       defaultTelemetryEndpoint(
         options.homeDir,
-        options.readMarker ?? process.env['KIMI_CODE_REGION_MARKER'] !== 'off',
+        options.readMarker ?? process.env['FLOYD_CODE_REGION_MARKER'] !== 'off',
       );
     this.getAccessToken = options.getAccessToken ?? null;
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);

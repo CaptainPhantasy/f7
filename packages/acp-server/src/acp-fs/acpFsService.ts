@@ -25,7 +25,7 @@ import {
   LifecycleScope,
   registerScopedService,
   ScopeActivation,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 
 import { IAcpConnection } from './acpConnection';
 

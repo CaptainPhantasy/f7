@@ -42,9 +42,9 @@ describe('planConfigWriteback', () => {
   });
 
   it('keeps the trailing comment of a changed statement', () => {
-    const text = 'default_model = "kimi-k2"   # pick one\n';
-    const result = edit(text, 'default_model', 'kimi-k2', 'kimi-k3', { default_model: 'kimi-k3' });
-    expect(result).toBe('default_model = "kimi-k3"   # pick one\n');
+    const text = 'default_model = "floyd-k2"   # pick one\n';
+    const result = edit(text, 'default_model', 'floyd-k2', 'floyd-k3', { default_model: 'floyd-k3' });
+    expect(result).toBe('default_model = "floyd-k3"   # pick one\n');
   });
 
   it('appends a new key after the last statement of its block, before trailing trivia', () => {
@@ -316,7 +316,7 @@ describe('ConfigService key-level writeback', () => {
   let homeDir: string;
 
   beforeEach(() => {
-    homeDir = mkdtempSync(join(tmpdir(), 'kimi-v2-keyedit-'));
+    homeDir = mkdtempSync(join(tmpdir(), 'floyd-v2-keyedit-'));
   });
 
   afterEach(() => {

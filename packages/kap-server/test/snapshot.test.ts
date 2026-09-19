@@ -25,7 +25,7 @@ import {
   agentContextOf,
   getLiveSessionById,
   resumeSessionById,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import { sessionSnapshotResponseSchema } from '../src/protocol/rest-snapshot';
 import { emptySessionUsage } from '../src/protocol/session';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -67,7 +67,7 @@ describe('server-v2 snapshot route enrichment', () => {
           IAgentProfileService,
           {
             getModelCapabilities: () => ({ max_input_tokens: 262144 }),
-            getModel: () => 'kimi-for-test',
+            getModel: () => 'floyd-for-test',
           },
         ],
         [
@@ -218,7 +218,7 @@ describe('server-v2 snapshot route enrichment', () => {
       context_tokens: 4321,
       context_limit: 262144,
     });
-    expect(snap.session.agent_config.model).toBe('kimi-for-test');
+    expect(snap.session.agent_config.model).toBe('floyd-for-test');
     expect(snap.subagents).toEqual([
       expect.objectContaining({
         id: 'agent-1',
@@ -363,7 +363,7 @@ describe('server-v2 GET /api/v1/sessions/:id/snapshot', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-snapshot-test-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-snapshot-test-'));
     server = await startServer({ hostIdentity: TEST_HOST_IDENTITY, host: '127.0.0.1', port: 0, homeDir: home, logLevel: 'silent' });
     base = `http://127.0.0.1:${server.port}`;
   });
@@ -448,7 +448,7 @@ describe('server-v2 GET /api/v1/sessions/:id/snapshot', () => {
     await ensureMainAgent(sid);
     const session = getLiveSessionById(server!.core.accessor, sid);
     const main = session!.accessor.get(IAgentLifecycleService).handleOf('main')!;
-    await main.accessor.get(ISessionUsageService).record(agentContextOf(main), 'kimi-for-test', {
+    await main.accessor.get(ISessionUsageService).record(agentContextOf(main), 'floyd-for-test', {
       inputOther: 120,
       output: 34,
       inputCacheRead: 56,

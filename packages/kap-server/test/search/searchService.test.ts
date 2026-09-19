@@ -12,10 +12,10 @@ import type {
   ILogService,
   ISessionIndex,
   SessionSummary,
-} from '@moonshot-ai/agent-core-v2';
-import { DATABASE_SECTION } from '@moonshot-ai/agent-core-v2';
-import { MiniDb } from '@moonshot-ai/minidb';
-import { TranscriptStore, type TranscriptOperation } from '@moonshot-ai/transcript';
+} from '@legacy-ai/agent-core-v2';
+import { DATABASE_SECTION } from '@legacy-ai/agent-core-v2';
+import { MiniDb } from '@legacy-ai/minidb';
+import { TranscriptStore, type TranscriptOperation } from '@legacy-ai/transcript';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchIndexCore, type SyncSessionInput } from '../../src/search/indexCore';
@@ -265,7 +265,7 @@ describe('GlobalSearchService', () => {
   const services: GlobalSearchService[] = [];
 
   beforeEach(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-kap-search-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-kap-search-'));
   });
 
   afterEach(async () => {
@@ -2614,7 +2614,7 @@ describe('GlobalSearchService', () => {
       await flush();
       expect(drained).toBe(false);
 
-      const homeB = await mkdtemp(join(tmpdir(), 'kimi-kap-search-drain-'));
+      const homeB = await mkdtemp(join(tmpdir(), 'floyd-kap-search-drain-'));
       try {
         const b = await setupBlockedService(homeB);
         b.service.dispose();
@@ -2645,7 +2645,7 @@ describe('search worker host (stage 4)', () => {
   const hosts: SearchWorkerHost[] = [];
 
   beforeEach(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-kap-search-worker-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-kap-search-worker-'));
   });
 
   afterEach(async () => {
@@ -3137,7 +3137,7 @@ describe('search lifecycle diagnostics (stage 5)', () => {
   const hosts: SearchWorkerHost[] = [];
 
   beforeEach(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-kap-search-lifecycle-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-kap-search-lifecycle-'));
   });
 
   afterEach(async () => {

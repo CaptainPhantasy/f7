@@ -20,17 +20,17 @@ import {
   PluginChanged,
   logSeed,
   resolveConfigPath,
-  resolveKimiHome,
+  resolveFloydHome,
   resolveLoggingConfig,
   type ConfigDiagnostic,
   type Scope,
   type ScopeSeed,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import {
-  createKimiDefaultHeaders,
-  kimiRegionProfile,
-  type KimiHostIdentity,
-} from '@moonshot-ai/kimi-code-oauth';
+  createFloydDefaultHeaders,
+  floydRegionProfile,
+  type FloydHostIdentity,
+} from '@legacy-ai/floyd-code-oauth';
 import { createAsyncApiDocument } from './protocol/asyncapi';
 import Fastify, { type FastifyInstance } from 'fastify';
 
@@ -83,7 +83,7 @@ import { ProjectionService } from './services/projection';
 import { ModelCatalogRefreshScheduler } from './services/modelCatalog/modelCatalogRefreshScheduler';
 import { startConfigChangedPublisher } from './services/config/configChangedPublisher';
 import { createAuthFailureLimiter } from './middleware/rateLimit';
-import { createRemoteControlManager } from '@moonshot-ai/remote-control';
+import { createRemoteControlManager } from '@legacy-ai/remote-control';
 
 import { createAuthTokenService, type IAuthTokenService } from './services/auth/authTokenService';
 import { createCredentialValidator } from './services/auth/credentials';
@@ -92,7 +92,7 @@ import { createTokenStore } from './services/auth/tokenStore';
 
 import { drainGlobalSearchDisposals, IGlobalSearchService } from './search/searchService';
 
-export interface ServerHostIdentity extends KimiHostIdentity {
+export interface ServerHostIdentity extends FloydHostIdentity {
   readonly displayName?: string;
   readonly replyStyleGuide?: string;
 }
@@ -142,7 +142,7 @@ const DEFAULT_PORT = 58627;
 export async function startServer(opts: ServerStartOptions): Promise<RunningServer> {
   const host = opts.host ?? DEFAULT_HOST;
   const port = opts.port ?? DEFAULT_PORT;
-  const homeDir = resolveKimiHome(opts.homeDir);
+  const homeDir = resolveFloydHome(opts.homeDir);
   const serverVersion = opts.serverVersion ?? getServerVersion();
   const registry = createInstanceRegistry({
     instancesDir: opts.instancesDir ?? join(homeDir, 'server', 'instances'),
@@ -200,7 +200,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     homeDir,
     localOrigin: () => `http://${localOriginHost}:${boundPort}`,
     localServerToken: () => authTokenService.getToken(),
-    clientVersion: `kimi-code/${serverVersion}`,
+    clientVersion: `floyd-code/${serverVersion}`,
     stderr: {
       write: (text) => {
         logger.warn(String(text).trimEnd());
@@ -215,7 +215,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
       env: opts.env,
       clientIdentity: opts.hostIdentity,
       args: {
-        requestHeaders: createKimiDefaultHeaders({ homeDir, ...opts.hostIdentity }),
+        requestHeaders: createFloydDefaultHeaders({ homeDir, ...opts.hostIdentity }),
         skillDirs: opts.skillDirs,
         displayName: opts.hostIdentity.displayName,
         replyStyleGuide: opts.hostIdentity.replyStyleGuide,
@@ -244,7 +244,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     if (!passwordConfigured) {
       logger.warn(
         { host, exposureClass },
-        'binding non-loopback host with token-only auth (no KIMI_CODE_PASSWORD) — the bearer token printed in the startup banner is the only credential protecting this server',
+        'binding non-loopback host with token-only auth (no FLOYD_CODE_PASSWORD) — the bearer token printed in the startup banner is the only credential protecting this server',
       );
     }
   }
@@ -398,9 +398,9 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     await app.register(swagger, {
       openapi: {
         info: {
-          title: 'Kimi Code Server API',
+          title: 'Floyd Code Server API',
           description:
-            'REST API for the Kimi Code local server. All JSON responses are wrapped in a uniform envelope `{ code, msg, data, request_id }`.',
+            'REST API for the Floyd Code local server. All JSON responses are wrapped in a uniform envelope `{ code, msg, data, request_id }`.',
           version: serverVersion,
         },
         tags: [
@@ -444,15 +444,15 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     enableTerminals,
     guiStore,
     pluginMarketplaceUrl: (() => {
-      const configured = opts.pluginMarketplaceUrl ?? process.env['KIMI_CODE_PLUGIN_MARKETPLACE_URL'];
+      const configured = opts.pluginMarketplaceUrl ?? process.env['FLOYD_CODE_PLUGIN_MARKETPLACE_URL'];
       if (configured !== undefined) return () => configured;
       return () =>
-        `${kimiRegionProfile(core.accessor.get(IOAuthService).getRegion()).cdnBase}/plugins/marketplace.json`;
+        `${floydRegionProfile(core.accessor.get(IOAuthService).getRegion()).cdnBase}/plugins/marketplace.json`;
     })(),
     pluginMarketplaceIsDefault:
       opts.pluginMarketplaceUrl === undefined &&
-      (process.env['KIMI_CODE_PLUGIN_MARKETPLACE_URL'] === undefined ||
-        process.env['KIMI_CODE_PLUGIN_MARKETPLACE_FROM_DEV_SERVER'] === '1'),
+      (process.env['FLOYD_CODE_PLUGIN_MARKETPLACE_URL'] === undefined ||
+        process.env['FLOYD_CODE_PLUGIN_MARKETPLACE_FROM_DEV_SERVER'] === '1'),
     remoteControl: {
       service: remoteControlManager,
       staticEnableError:

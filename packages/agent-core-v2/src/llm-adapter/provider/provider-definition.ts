@@ -4,12 +4,12 @@ import type { ProtocolEndpoint, ProviderConnection } from '#human/llm/protocol/c
 import type { ProtocolTraitFor } from '#human/llm/provider/definition';
 import type { LlmErrorClassifier } from '#human/llm/requester/requester';
 import {
-  kimiAnthropicTrait,
-  kimiConnection,
-  kimiOpenAITrait,
-  KIMI_DEFAULT_BASE_URL,
-} from '#human/llm-kimi/trait';
-import { classifyKimiQuotaError } from '#human/llm-kimi/errors';
+  floydAnthropicTrait,
+  floydConnection,
+  floydOpenAITrait,
+  FLOYD_DEFAULT_BASE_URL,
+} from '#human/llm-floyd/trait';
+import { classifyFloydQuotaError } from '#human/llm-floyd/errors';
 
 import type { Protocol } from '../protocol/protocol';
 import type { ModelSource } from './provider';
@@ -40,10 +40,10 @@ export const vertexConnection: ProviderConnection = {
   endpoint: () => vertexEndpoint,
 };
 
-export const kimiEndpoint: ProtocolEndpoint = {
-  apiKeyEnv: 'KIMI_API_KEY',
-  baseUrlEnv: 'KIMI_BASE_URL',
-  defaultBaseUrl: KIMI_DEFAULT_BASE_URL,
+export const floydEndpoint: ProtocolEndpoint = {
+  apiKeyEnv: 'FLOYD_API_KEY',
+  baseUrlEnv: 'FLOYD_BASE_URL',
+  defaultBaseUrl: FLOYD_DEFAULT_BASE_URL,
 };
 
 export interface ProviderDefinition<N extends Protocol = Protocol> {
@@ -222,33 +222,33 @@ registerProviderDefinition({
 });
 
 registerProviderDefinition({
-  id: 'kimi',
+  id: 'floyd',
   baseProtocol: 'openai',
-  trait: kimiOpenAITrait,
-  connection: kimiConnection,
-  classifyError: classifyKimiQuotaError,
-  endpoint: kimiEndpoint,
+  trait: floydOpenAITrait,
+  connection: floydConnection,
+  classifyError: classifyFloydQuotaError,
+  endpoint: floydEndpoint,
   hostHeaders: 'full',
   modelSource: 'oauth-catalog',
 });
 
 registerProviderDefinition({
-  id: 'kimi',
+  id: 'floyd',
   baseProtocol: 'anthropic',
-  trait: kimiAnthropicTrait,
-  connection: kimiConnection,
-  classifyError: classifyKimiQuotaError,
-  endpoint: kimiEndpoint,
+  trait: floydAnthropicTrait,
+  connection: floydConnection,
+  classifyError: classifyFloydQuotaError,
+  endpoint: floydEndpoint,
   hostHeaders: 'full',
   modelSource: 'oauth-catalog',
 });
 
 registerProviderDefinition({
-  id: 'kimi',
+  id: 'floyd',
   baseProtocol: 'openai_responses',
-  connection: kimiConnection,
-  classifyError: classifyKimiQuotaError,
-  endpoint: kimiEndpoint,
+  connection: floydConnection,
+  classifyError: classifyFloydQuotaError,
+  endpoint: floydEndpoint,
   hostHeaders: 'full',
   modelSource: 'oauth-catalog',
 });

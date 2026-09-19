@@ -13,7 +13,7 @@ import {
   type IAgentScopeHandle,
   type Scope,
   type WireRecord,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 
 import { ensureMainAgent } from '../../transport/mainAgent';
 import type { Message, MessageRole } from '../../protocol/message';

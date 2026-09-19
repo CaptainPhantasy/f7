@@ -1,6 +1,6 @@
 import { basename } from 'node:path';
 
-import type { IDisposable, Workspace } from '@moonshot-ai/agent-core-v2';
+import type { IDisposable, Workspace } from '@legacy-ai/agent-core-v2';
 
 import { serverMessageSchema, type ServerMessage, type WorkspaceInfo } from '../../../protocol/messages';
 import type { WsV3CoreEvent, WsV3GlobalSource, WsV3Logger } from './wsV3Deps';

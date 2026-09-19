@@ -7,7 +7,7 @@ import {
   IEventBus,
   IAgentLifecycleService,
   getLiveSessionById,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { WebSocket } from 'ws';
 
@@ -36,7 +36,7 @@ interface Conn {
 
 function openConn(url: string, token: string): Promise<Conn> {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket(url, [`kimi-code.bearer.${token}`]);
+    const ws = new WebSocket(url, [`floyd-code.bearer.${token}`]);
     const frames: Frame[] = [];
     const waiters: Array<(f: Frame) => void> = [];
     const closed = new Promise<void>((res) => ws.on('close', () => res()));
@@ -106,7 +106,7 @@ describe('server-v2 /api/v1/ws resync', () => {
   let wsUrl: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-wsv1-test-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-wsv1-test-'));
     server = await startServer({ hostIdentity: TEST_HOST_IDENTITY, host: '127.0.0.1', port: 0, homeDir: home, logLevel: 'silent' });
     base = `http://127.0.0.1:${server.port}`;
     wsUrl = `ws://127.0.0.1:${server.port}/api/v1/ws`;

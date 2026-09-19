@@ -30,8 +30,8 @@ import {
   type ISessionScopeHandle,
   type Scope,
   type SessionSummary,
-} from '@moonshot-ai/agent-core-v2';
-import { SessionMetaUpdated } from '@moonshot-ai/agent-core-v2/session/sessionMetadata/sessionMetaEvents';
+} from '@legacy-ai/agent-core-v2';
+import { SessionMetaUpdated } from '@legacy-ai/agent-core-v2/session/sessionMetadata/sessionMetaEvents';
 import { ErrorCode } from '../protocol/error-codes';
 import { pageResponseSchema } from '../protocol/pagination';
 import { toProtocolMessage } from '../services/messages/messageProjection';

@@ -1,4 +1,4 @@
-import type { KimiRegion } from '@moonshot-ai/kimi-code-oauth';
+import type { FloydRegion } from '@legacy-ai/floyd-code-oauth';
 
 import type { IPluginService } from '#/app/plugin/plugin';
 import type { IHostProcessService } from '#/os/interface/hostProcess';
@@ -6,7 +6,7 @@ import type { IHostProcessService } from '#/os/interface/hostProcess';
 export interface CapabilityEntryContext {
   readonly platform: NodeJS.Platform;
   readonly arch: string;
-  readonly kimiHomeDir: string;
+  readonly floydHomeDir: string;
   readonly userHomeDir: string;
   readonly plugins: IPluginService;
   readonly hostProcess: IHostProcessService;
@@ -15,5 +15,5 @@ export interface CapabilityEntryContext {
   readonly webbridgeBaseUrl?: string;
   readonly detectProbeTimeoutMs?: number;
   readonly commandTimeoutMs?: number;
-  readonly resolveRegion?: () => KimiRegion | Promise<KimiRegion>;
+  readonly resolveRegion?: () => FloydRegion | Promise<FloydRegion>;
 }

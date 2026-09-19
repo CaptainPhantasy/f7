@@ -1,15 +1,15 @@
 import { readApiErrorMessage } from './api-error';
 import { isRecord } from './utils';
-import { parseKimiCodeCustomHeaders } from './identity';
-import { parseSupportsThinkingType, parseThinkEfforts } from './managed-kimi-code';
-import { MANAGED_KIMI_MODEL_FIELDS, mergeRefreshedModelAlias } from './model-alias-merge';
+import { parseFloydCodeCustomHeaders } from './identity';
+import { parseSupportsThinkingType, parseThinkEfforts } from './managed-floyd-code';
+import { MANAGED_FLOYD_MODEL_FIELDS, mergeRefreshedModelAlias } from './model-alias-merge';
 import type {
-  ManagedKimiCodeModelInfo,
-  ManagedKimiConfigShape,
-  ManagedKimiModelAlias,
-} from './managed-kimi-code';
+  ManagedFloydCodeModelInfo,
+  ManagedFloydConfigShape,
+  ManagedFloydModelAlias,
+} from './managed-floyd-code';
 
-export type { ManagedKimiConfigShape };
+export type { ManagedFloydConfigShape };
 
 export interface OpenPlatformDefinition {
   readonly id: string;
@@ -21,18 +21,18 @@ export interface OpenPlatformDefinition {
 
 export const OPEN_PLATFORMS: readonly OpenPlatformDefinition[] = [
   {
-    id: 'moonshot-cn',
-    name: 'Kimi Platform (API key · platform.kimi.com)',
-    baseUrl: 'https://api.moonshot.cn/v1',
-    consoleUrl: 'https://platform.kimi.com',
-    allowedPrefixes: ['kimi-k'],
+    id: 'legacy-cn',
+    name: 'Floyd Platform (API key · platform.floyd.com)',
+    baseUrl: 'https://api.legacy.cn/v1',
+    consoleUrl: 'https://platform.floyd.com',
+    allowedPrefixes: ['floyd-k'],
   },
   {
-    id: 'moonshot-ai',
-    name: 'Kimi Platform (API key · platform.kimi.ai)',
-    baseUrl: 'https://api.moonshot.ai/v1',
-    consoleUrl: 'https://platform.kimi.ai',
-    allowedPrefixes: ['kimi-k'],
+    id: 'legacy-ai',
+    name: 'Floyd Platform (API key · platform.floyd.ai)',
+    baseUrl: 'https://api.legacy.ai/v1',
+    consoleUrl: 'https://platform.floyd.ai',
+    allowedPrefixes: ['floyd-k'],
   },
 ];
 
@@ -44,7 +44,7 @@ export function isOpenPlatformId(id: string): boolean {
   return OPEN_PLATFORMS.some((p) => p.id === id);
 }
 
-function toModelInfo(item: unknown): ManagedKimiCodeModelInfo | undefined {
+function toModelInfo(item: unknown): ManagedFloydCodeModelInfo | undefined {
   if (!isRecord(item) || typeof item['id'] !== 'string' || item['id'].length === 0) {
     return undefined;
   }
@@ -75,7 +75,7 @@ function toModelInfo(item: unknown): ManagedKimiCodeModelInfo | undefined {
   };
 }
 
-export function capabilitiesForModel(model: ManagedKimiCodeModelInfo): string[] | undefined {
+export function capabilitiesForModel(model: ManagedFloydCodeModelInfo): string[] | undefined {
   const caps = new Set<string>();
   // supports_thinking_type is the full three-state declaration and wins over
   // the legacy supports_reasoning boolean; absent (older servers) falls back.
@@ -113,10 +113,10 @@ export async function fetchOpenPlatformModels(
   apiKey: string,
   fetchImpl: typeof fetch = fetch,
   signal?: AbortSignal,
-): Promise<ManagedKimiCodeModelInfo[]> {
+): Promise<ManagedFloydCodeModelInfo[]> {
   const res = await fetchImpl(`${platform.baseUrl.replace(/\/+$/, '')}/models`, {
     headers: {
-      ...parseKimiCodeCustomHeaders(),
+      ...parseFloydCodeCustomHeaders(),
       Authorization: `Bearer ${apiKey}`,
       Accept: 'application/json',
     },
@@ -134,13 +134,13 @@ export async function fetchOpenPlatformModels(
   }
   return payload['data']
     .map((item) => toModelInfo(item))
-    .filter((item): item is ManagedKimiCodeModelInfo => item !== undefined);
+    .filter((item): item is ManagedFloydCodeModelInfo => item !== undefined);
 }
 
 export function filterModelsByPrefix(
-  models: ManagedKimiCodeModelInfo[],
+  models: ManagedFloydCodeModelInfo[],
   platform: OpenPlatformDefinition,
-): ManagedKimiCodeModelInfo[] {
+): ManagedFloydCodeModelInfo[] {
   if (!platform.allowedPrefixes || platform.allowedPrefixes.length === 0) {
     return models;
   }
@@ -154,11 +154,11 @@ export interface ApplyOpenPlatformResult {
 }
 
 export function applyOpenPlatformConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   options: {
     readonly platform: OpenPlatformDefinition;
-    readonly models: readonly ManagedKimiCodeModelInfo[];
-    readonly selectedModel: ManagedKimiCodeModelInfo;
+    readonly models: readonly ManagedFloydCodeModelInfo[];
+    readonly selectedModel: ManagedFloydCodeModelInfo;
     readonly thinking: boolean;
     /** Concrete thinking effort to persist (e.g. 'low'/'high'/'max'). Omit
      * for boolean models, where thinking is simply enabled with no effort. */
@@ -184,7 +184,7 @@ export function applyOpenPlatformConfig(
   } = (existing ?? {}) as Record<string, unknown>;
   config.providers[providerKey] = {
     ...preserved,
-    type: 'kimi',
+    type: 'floyd',
     baseUrl: options.platform.baseUrl,
     ...options.credential,
   };
@@ -204,7 +204,7 @@ export function applyOpenPlatformConfig(
   for (const model of options.models) {
     const aliasKey = `${providerKey}/${model.id}`;
     const existing = isRecord(existingModels[aliasKey]) ? existingModels[aliasKey] : {};
-    const remoteAlias: ManagedKimiModelAlias = {
+    const remoteAlias: ManagedFloydModelAlias = {
       provider: providerKey,
       model: model.id,
       maxContextSize: model.contextLength,
@@ -216,7 +216,7 @@ export function applyOpenPlatformConfig(
     existingModels[aliasKey] = mergeRefreshedModelAlias(
       existing,
       remoteAlias,
-      MANAGED_KIMI_MODEL_FIELDS,
+      MANAGED_FLOYD_MODEL_FIELDS,
     );
   }
 
@@ -232,7 +232,7 @@ export function applyOpenPlatformConfig(
 }
 
 export function removeOpenPlatformConfig(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   platformId: string,
 ): void {
   delete config.providers[platformId];

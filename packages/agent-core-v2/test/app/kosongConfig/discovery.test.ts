@@ -1,4 +1,4 @@
-import { KIMI_CODE_PROVIDER_NAME } from '@moonshot-ai/kimi-code-oauth';
+import { FLOYD_CODE_PROVIDER_NAME } from '@legacy-ai/floyd-code-oauth';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createScopedTestHost } from '#/_base/di/test';
@@ -80,11 +80,11 @@ async function createHost(
     [ILogService, stubLogService()],
     [
       IBootstrapService,
-      stubBootstrap('/tmp/kimi-home', {}, { requestHeaders: { 'User-Agent': 'kimi-test/1.0' } }),
+      stubBootstrap('/tmp/floyd-home', {}, { requestHeaders: { 'User-Agent': 'floyd-test/1.0' } }),
     ],
     [
       IAgentIdentity,
-      stubAgentIdentity({ hostRequestHeaders: { 'User-Agent': 'kimi-test/1.0' } }),
+      stubAgentIdentity({ hostRequestHeaders: { 'User-Agent': 'floyd-test/1.0' } }),
     ],
   ]);
   const providers = host.app.accessor.get(IProviderService);
@@ -217,10 +217,10 @@ describe('refreshProviderModels write behavior', () => {
     const { host, discovery } = await createHost(
       {
         providers: {
-          [KIMI_CODE_PROVIDER_NAME]: {
-            type: 'kimi',
+          [FLOYD_CODE_PROVIDER_NAME]: {
+            type: 'floyd',
             baseUrl: 'https://api.example.test/v1',
-            oauth: { storage: 'file', key: 'oauth/kimi-code' },
+            oauth: { storage: 'file', key: 'oauth/floyd-code' },
           },
         },
         models: {},
@@ -240,10 +240,10 @@ describe('refreshProviderModels write behavior', () => {
           json: async () => ({
             data: [
               {
-                id: 'kimi-k2',
+                id: 'floyd-k2',
                 context_length: 131072,
                 supports_reasoning: true,
-                display_name: 'Kimi K2',
+                display_name: 'Floyd K2',
               },
             ],
           }),
@@ -301,7 +301,7 @@ describe('refreshProviderModels write behavior', () => {
       expect(fetchMock).toHaveBeenCalledWith(
         'https://registry.example.test/api.json',
         expect.objectContaining({
-          headers: expect.objectContaining({ 'User-Agent': 'kimi-test/1.0' }),
+          headers: expect.objectContaining({ 'User-Agent': 'floyd-test/1.0' }),
         }),
       );
     } finally {
@@ -311,19 +311,19 @@ describe('refreshProviderModels write behavior', () => {
 
   it('refreshes a hand-configured API-key provider at the managed endpoint', async () => {
     const baseUrl = 'https://api.managed.example.test/coding/v1';
-    vi.stubEnv('KIMI_CODE_BASE_URL', baseUrl);
+    vi.stubEnv('FLOYD_CODE_BASE_URL', baseUrl);
     const fetchMock = vi.fn(
       async () =>
         new Response(
           JSON.stringify({
             data: [
               {
-                id: 'kimi-k2',
+                id: 'floyd-k2',
                 context_length: 262144,
                 supports_reasoning: true,
                 display_name: 'Fresh K2',
               },
-              { id: 'kimi-k2.5', context_length: 131072 },
+              { id: 'floyd-k2.5', context_length: 131072 },
             ],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
@@ -333,24 +333,24 @@ describe('refreshProviderModels write behavior', () => {
 
     const { host, config, discovery, events, providers, models } = await createHost({
       providers: {
-        'my-kimi': { type: 'kimi', baseUrl, apiKey: 'sk-distributed-key' },
+        'my-floyd': { type: 'floyd', baseUrl, apiKey: 'sk-distributed-key' },
       },
       models: {
-        'my-kimi/kimi-k2': {
-          provider: 'my-kimi',
-          model: 'kimi-k2',
+        'my-floyd/floyd-k2': {
+          provider: 'my-floyd',
+          model: 'floyd-k2',
           maxContextSize: 262144,
           displayName: 'Old K2',
         },
       },
-      defaultModel: 'my-kimi/kimi-k2',
+      defaultModel: 'my-floyd/floyd-k2',
     });
     try {
       const result = await discovery.refreshProviderModels({ scope: 'all' });
 
       expect(result.failed).toEqual([]);
       expect(result.changed).toEqual([
-        { provider_id: 'my-kimi', provider_name: 'my-kimi', added: 1, removed: 0 },
+        { provider_id: 'my-floyd', provider_name: 'my-floyd', added: 1, removed: 0 },
       ]);
       expect(events.published).toEqual([
         expect.objectContaining({ type: 'event.model_catalog.changed' }),
@@ -361,15 +361,15 @@ describe('refreshProviderModels write behavior', () => {
           headers: expect.objectContaining({ Authorization: 'Bearer sk-distributed-key' }),
         }),
       );
-      expect(providers.list()['my-kimi']).toEqual({
-        type: 'kimi',
+      expect(providers.list()['my-floyd']).toEqual({
+        type: 'floyd',
         baseUrl,
         apiKey: 'sk-distributed-key',
       });
       const modelRecords = models.list();
-      expect(modelRecords['my-kimi/kimi-k2']?.displayName).toBe('Fresh K2');
-      expect(modelRecords['my-kimi/kimi-k2.5']).toBeDefined();
-      expect(config.get<string>('defaultModel')).toBe('my-kimi/kimi-k2');
+      expect(modelRecords['my-floyd/floyd-k2']?.displayName).toBe('Fresh K2');
+      expect(modelRecords['my-floyd/floyd-k2.5']).toBeDefined();
+      expect(config.get<string>('defaultModel')).toBe('my-floyd/floyd-k2');
     } finally {
       host.dispose();
     }
@@ -377,12 +377,12 @@ describe('refreshProviderModels write behavior', () => {
 
   it('clears a stale defaultModel whose alias upstream dropped', async () => {
     const baseUrl = 'https://api.managed.example.test/coding/v1';
-    vi.stubEnv('KIMI_CODE_BASE_URL', baseUrl);
+    vi.stubEnv('FLOYD_CODE_BASE_URL', baseUrl);
     const fetchMock = vi.fn(
       async () =>
         new Response(
           JSON.stringify({
-            data: [{ id: 'kimi-k3', context_length: 1048576, supports_reasoning: true }],
+            data: [{ id: 'floyd-k3', context_length: 1048576, supports_reasoning: true }],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -391,17 +391,17 @@ describe('refreshProviderModels write behavior', () => {
 
     const { host, config, discovery, models } = await createHost({
       providers: {
-        'my-kimi': { type: 'kimi', baseUrl, apiKey: 'sk-distributed-key' },
+        'my-floyd': { type: 'floyd', baseUrl, apiKey: 'sk-distributed-key' },
       },
       models: {
-        'my-kimi/kimi-k2': {
-          provider: 'my-kimi',
-          model: 'kimi-k2',
+        'my-floyd/floyd-k2': {
+          provider: 'my-floyd',
+          model: 'floyd-k2',
           maxContextSize: 262144,
           displayName: 'Old K2',
         },
       },
-      defaultModel: 'my-kimi/kimi-k2',
+      defaultModel: 'my-floyd/floyd-k2',
       thinking: { enabled: true },
     });
     try {
@@ -409,13 +409,13 @@ describe('refreshProviderModels write behavior', () => {
 
       expect(result.failed).toEqual([]);
       expect(result.changed).toEqual([
-        { provider_id: 'my-kimi', provider_name: 'my-kimi', added: 1, removed: 1 },
+        { provider_id: 'my-floyd', provider_name: 'my-floyd', added: 1, removed: 1 },
       ]);
       expect(config.get('defaultModel')).toBeUndefined();
       expect(config.get('thinking')).toBeUndefined();
       const modelRecords = models.list();
-      expect(modelRecords['my-kimi/kimi-k3']).toBeDefined();
-      expect(modelRecords['my-kimi/kimi-k2']).toBeUndefined();
+      expect(modelRecords['my-floyd/floyd-k3']).toBeDefined();
+      expect(modelRecords['my-floyd/floyd-k2']).toBeUndefined();
     } finally {
       host.dispose();
     }
@@ -423,12 +423,12 @@ describe('refreshProviderModels write behavior', () => {
 
   it('leaves the subagent model pool untouched when a refresh drops its default alias', async () => {
     const baseUrl = 'https://api.managed.example.test/coding/v1';
-    vi.stubEnv('KIMI_CODE_BASE_URL', baseUrl);
+    vi.stubEnv('FLOYD_CODE_BASE_URL', baseUrl);
     const fetchMock = vi.fn(
       async () =>
         new Response(
           JSON.stringify({
-            data: [{ id: 'kimi-k3', context_length: 1048576, supports_reasoning: true }],
+            data: [{ id: 'floyd-k3', context_length: 1048576, supports_reasoning: true }],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -437,25 +437,25 @@ describe('refreshProviderModels write behavior', () => {
 
     const { host, config, discovery } = await createHost({
       providers: {
-        'my-kimi': { type: 'kimi', baseUrl, apiKey: 'sk-distributed-key' },
+        'my-floyd': { type: 'floyd', baseUrl, apiKey: 'sk-distributed-key' },
       },
       models: {
-        'my-kimi/kimi-k2': { provider: 'my-kimi', model: 'kimi-k2', maxContextSize: 262144 },
+        'my-floyd/floyd-k2': { provider: 'my-floyd', model: 'floyd-k2', maxContextSize: 262144 },
       },
       secondaryModel: {
-        defaultModel: 'my-kimi/kimi-k2',
-        models: { 'my-kimi/kimi-k2': 'fast and cheap' },
+        defaultModel: 'my-floyd/floyd-k2',
+        models: { 'my-floyd/floyd-k2': 'fast and cheap' },
       },
     });
     try {
       const result = await discovery.refreshProviderModels({ scope: 'all' });
 
       expect(result.changed).toEqual([
-        { provider_id: 'my-kimi', provider_name: 'my-kimi', added: 1, removed: 1 },
+        { provider_id: 'my-floyd', provider_name: 'my-floyd', added: 1, removed: 1 },
       ]);
       expect(config.get('secondaryModel')).toEqual({
-        defaultModel: 'my-kimi/kimi-k2',
-        models: { 'my-kimi/kimi-k2': 'fast and cheap' },
+        defaultModel: 'my-floyd/floyd-k2',
+        models: { 'my-floyd/floyd-k2': 'fast and cheap' },
       });
     } finally {
       host.dispose();
@@ -464,12 +464,12 @@ describe('refreshProviderModels write behavior', () => {
 
   it('leaves the whole pool untouched even when a refresh drops a non-default entry', async () => {
     const baseUrl = 'https://api.managed.example.test/coding/v1';
-    vi.stubEnv('KIMI_CODE_BASE_URL', baseUrl);
+    vi.stubEnv('FLOYD_CODE_BASE_URL', baseUrl);
     const fetchMock = vi.fn(
       async () =>
         new Response(
           JSON.stringify({
-            data: [{ id: 'kimi-k3', context_length: 1048576, supports_reasoning: true }],
+            data: [{ id: 'floyd-k3', context_length: 1048576, supports_reasoning: true }],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -479,26 +479,26 @@ describe('refreshProviderModels write behavior', () => {
     const { host, config, discovery } = await createHost({
       providers: {
         ...staticProviders,
-        'my-kimi': { type: 'kimi', baseUrl, apiKey: 'sk-distributed-key' },
+        'my-floyd': { type: 'floyd', baseUrl, apiKey: 'sk-distributed-key' },
       },
       models: {
         ...staticModels,
-        'my-kimi/kimi-k2': { provider: 'my-kimi', model: 'kimi-k2', maxContextSize: 262144 },
+        'my-floyd/floyd-k2': { provider: 'my-floyd', model: 'floyd-k2', maxContextSize: 262144 },
       },
       secondaryModel: {
         defaultModel: 's1',
-        models: { s1: 'static fallback', 'my-kimi/kimi-k2': 'managed' },
+        models: { s1: 'static fallback', 'my-floyd/floyd-k2': 'managed' },
       },
     });
     try {
       const result = await discovery.refreshProviderModels({ scope: 'all' });
 
       expect(result.changed).toEqual([
-        { provider_id: 'my-kimi', provider_name: 'my-kimi', added: 1, removed: 1 },
+        { provider_id: 'my-floyd', provider_name: 'my-floyd', added: 1, removed: 1 },
       ]);
       expect(config.get('secondaryModel')).toEqual({
         defaultModel: 's1',
-        models: { s1: 'static fallback', 'my-kimi/kimi-k2': 'managed' },
+        models: { s1: 'static fallback', 'my-floyd/floyd-k2': 'managed' },
       });
     } finally {
       host.dispose();
@@ -585,7 +585,7 @@ describe('refreshProviderModels api_key_env credentials', () => {
       }
       return new Response(
         JSON.stringify({
-          data: [{ id: 'kimi-k2', context_length: 262144, supports_reasoning: true }],
+          data: [{ id: 'floyd-k2', context_length: 262144, supports_reasoning: true }],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       );
@@ -593,10 +593,10 @@ describe('refreshProviderModels api_key_env credentials', () => {
     vi.stubGlobal('fetch', fetchMock);
     const { host, discovery, models } = await createHost({
       providers: {
-        'moonshot-cn': {
-          type: 'kimi',
-          apiKeyEnv: 'KIMI_TEST_OPEN_PLATFORM_KEY',
-          oauth: { storage: 'file', key: 'oauth/moonshot' },
+        'legacy-cn': {
+          type: 'floyd',
+          apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY',
+          oauth: { storage: 'file', key: 'oauth/legacy' },
         },
         acme: {
           type: 'openai',
@@ -609,7 +609,7 @@ describe('refreshProviderModels api_key_env credentials', () => {
     try {
       const result = await discovery.refreshProviderModels({ scope: 'all' });
       expect(result.failed).toHaveLength(1);
-      expect(result.failed[0]).toMatchObject({ provider: 'moonshot-cn' });
+      expect(result.failed[0]).toMatchObject({ provider: 'legacy-cn' });
       expect(result.failed[0]?.reason).toContain('mutually exclusive');
       expect(result.changed).toEqual([
         { provider_id: 'acme', provider_name: 'Acme', added: 1, removed: 0 },
@@ -621,18 +621,18 @@ describe('refreshProviderModels api_key_env credentials', () => {
   });
 
   it('refreshes an open-platform provider through api_key_env without persisting the secret', async () => {
-    vi.stubEnv('KIMI_TEST_OPEN_PLATFORM_KEY', 'sk-open-platform');
+    vi.stubEnv('FLOYD_TEST_OPEN_PLATFORM_KEY', 'sk-open-platform');
     const fetchMock = vi.fn(
       async () =>
         new Response(
-          JSON.stringify({ data: [{ id: 'kimi-k2', context_length: 262144 }] }),
+          JSON.stringify({ data: [{ id: 'floyd-k2', context_length: 262144 }] }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
     );
     vi.stubGlobal('fetch', fetchMock);
     const { host, discovery, providers } = await createHost({
       providers: {
-        'moonshot-cn': { type: 'kimi', apiKeyEnv: 'KIMI_TEST_OPEN_PLATFORM_KEY' },
+        'legacy-cn': { type: 'floyd', apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY' },
       },
       models: {},
     });
@@ -640,15 +640,15 @@ describe('refreshProviderModels api_key_env credentials', () => {
       const result = await discovery.refreshProviderModels({ scope: 'all' });
       expect(result.failed).toEqual([]);
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://api.moonshot.cn/v1/models',
+        'https://api.legacy.cn/v1/models',
         expect.objectContaining({
           headers: expect.objectContaining({ Authorization: 'Bearer sk-open-platform' }),
         }),
       );
-      expect(providers.list()['moonshot-cn']).toEqual({
-        type: 'kimi',
-        baseUrl: 'https://api.moonshot.cn/v1',
-        apiKeyEnv: 'KIMI_TEST_OPEN_PLATFORM_KEY',
+      expect(providers.list()['legacy-cn']).toEqual({
+        type: 'floyd',
+        baseUrl: 'https://api.legacy.cn/v1',
+        apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY',
       });
     } finally {
       host.dispose();
@@ -658,20 +658,20 @@ describe('refreshProviderModels api_key_env credentials', () => {
 
 describe('refreshProviderModels defaultModel self-heal', () => {
   const managedProviders = {
-    [KIMI_CODE_PROVIDER_NAME]: {
-      type: 'kimi',
+    [FLOYD_CODE_PROVIDER_NAME]: {
+      type: 'floyd',
       baseUrl: 'https://api.example.test/v1',
-      oauth: { storage: 'file', key: 'oauth/kimi-code' },
+      oauth: { storage: 'file', key: 'oauth/floyd-code' },
     },
   };
 
   const managedModels = {
-    'kimi-code/kimi-k2': {
-      provider: KIMI_CODE_PROVIDER_NAME,
-      model: 'kimi-k2',
+    'floyd-code/floyd-k2': {
+      provider: FLOYD_CODE_PROVIDER_NAME,
+      model: 'floyd-k2',
       maxContextSize: 131072,
       capabilities: ['thinking', 'tool_use'],
-      displayName: 'Kimi K2',
+      displayName: 'Floyd K2',
     },
   };
 
@@ -684,10 +684,10 @@ describe('refreshProviderModels defaultModel self-heal', () => {
             JSON.stringify({
               data: [
                 {
-                  id: 'kimi-k2',
+                  id: 'floyd-k2',
                   context_length: 131072,
                   supports_reasoning: true,
-                  display_name: 'Kimi K2',
+                  display_name: 'Floyd K2',
                 },
               ],
             }),
@@ -713,12 +713,12 @@ describe('refreshProviderModels defaultModel self-heal', () => {
       expect(result.failed).toEqual([]);
       expect(result.unchanged).toEqual([]);
       expect(result.changed).toEqual([
-        { provider_id: KIMI_CODE_PROVIDER_NAME, provider_name: 'Kimi Code', added: 0, removed: 0 },
+        { provider_id: FLOYD_CODE_PROVIDER_NAME, provider_name: 'Floyd Code', added: 0, removed: 0 },
       ]);
       expect(replaceSections).toHaveBeenCalledTimes(1);
-      expect(config.get<string>('defaultModel')).toBe('kimi-code/kimi-k2');
+      expect(config.get<string>('defaultModel')).toBe('floyd-code/floyd-k2');
       expect(config.get('thinking')).toEqual({ enabled: true });
-      expect(models.list()['kimi-code/kimi-k2']).toBeDefined();
+      expect(models.list()['floyd-code/floyd-k2']).toBeDefined();
       expect(events.published).toEqual([
         expect.objectContaining({ type: 'event.model_catalog.changed' }),
       ]);
@@ -729,19 +729,19 @@ describe('refreshProviderModels defaultModel self-heal', () => {
 
   it('keeps a default model the user selected while the catalog fetch was in flight', async () => {
     const twoModels = {
-      'kimi-code/kimi-k2': {
-        provider: KIMI_CODE_PROVIDER_NAME,
-        model: 'kimi-k2',
+      'floyd-code/floyd-k2': {
+        provider: FLOYD_CODE_PROVIDER_NAME,
+        model: 'floyd-k2',
         maxContextSize: 131072,
         capabilities: ['thinking', 'tool_use'],
-        displayName: 'Kimi K2',
+        displayName: 'Floyd K2',
       },
-      'kimi-code/kimi-k3': {
-        provider: KIMI_CODE_PROVIDER_NAME,
-        model: 'kimi-k3',
+      'floyd-code/floyd-k3': {
+        provider: FLOYD_CODE_PROVIDER_NAME,
+        model: 'floyd-k3',
         maxContextSize: 131072,
         capabilities: ['thinking', 'tool_use'],
-        displayName: 'Kimi K3',
+        displayName: 'Floyd K3',
       },
     };
     const { host, config, discovery, events } = await createHost(
@@ -756,21 +756,21 @@ describe('refreshProviderModels defaultModel self-heal', () => {
         'fetch',
         vi.fn(
           async () => {
-            await config.set('defaultModel', 'kimi-code/kimi-k3');
+            await config.set('defaultModel', 'floyd-code/floyd-k3');
             return new Response(
               JSON.stringify({
                 data: [
                   {
-                    id: 'kimi-k2',
+                    id: 'floyd-k2',
                     context_length: 131072,
                     supports_reasoning: true,
-                    display_name: 'Kimi K2',
+                    display_name: 'Floyd K2',
                   },
                   {
-                    id: 'kimi-k3',
+                    id: 'floyd-k3',
                     context_length: 131072,
                     supports_reasoning: true,
-                    display_name: 'Kimi K3',
+                    display_name: 'Floyd K3',
                   },
                 ],
               }),
@@ -784,12 +784,12 @@ describe('refreshProviderModels defaultModel self-heal', () => {
 
       expect(result).toEqual({
         changed: [],
-        unchanged: [KIMI_CODE_PROVIDER_NAME],
+        unchanged: [FLOYD_CODE_PROVIDER_NAME],
         failed: [],
       });
       expect(replaceSections).not.toHaveBeenCalled();
       expect(events.published).toEqual([]);
-      expect(config.get<string>('defaultModel')).toBe('kimi-code/kimi-k3');
+      expect(config.get<string>('defaultModel')).toBe('floyd-code/floyd-k3');
     } finally {
       host.dispose();
     }
@@ -801,7 +801,7 @@ describe('refreshProviderModels defaultModel self-heal', () => {
       {
         providers: managedProviders,
         models: managedModels,
-        defaultModel: 'kimi-code/kimi-k2',
+        defaultModel: 'floyd-code/floyd-k2',
         thinking: { enabled: true },
       },
       stubOAuthService(stubTokenProvider(['access-token'])),
@@ -812,12 +812,12 @@ describe('refreshProviderModels defaultModel self-heal', () => {
 
       expect(result).toEqual({
         changed: [],
-        unchanged: [KIMI_CODE_PROVIDER_NAME],
+        unchanged: [FLOYD_CODE_PROVIDER_NAME],
         failed: [],
       });
       expect(replaceSections).not.toHaveBeenCalled();
       expect(events.published).toEqual([]);
-      expect(config.get<string>('defaultModel')).toBe('kimi-code/kimi-k2');
+      expect(config.get<string>('defaultModel')).toBe('floyd-code/floyd-k2');
     } finally {
       host.dispose();
     }
@@ -840,7 +840,7 @@ describe('refreshProviderModels defaultModel self-heal', () => {
 
       expect(result).toEqual({
         changed: [],
-        unchanged: [KIMI_CODE_PROVIDER_NAME],
+        unchanged: [FLOYD_CODE_PROVIDER_NAME],
         failed: [],
       });
       expect(replaceSections).not.toHaveBeenCalled();

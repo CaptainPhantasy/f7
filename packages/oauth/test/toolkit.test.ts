@@ -3,12 +3,12 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  applyManagedKimiCodeConfig,
-  KIMI_CODE_PROVIDER_NAME,
-  KimiOAuthToolkit,
-  resolveKimiCodeOAuthKey,
-  resolveKimiTokenStorageName,
-  type ManagedKimiConfigShape,
+  applyManagedFloydCodeConfig,
+  FLOYD_CODE_PROVIDER_NAME,
+  FloydOAuthToolkit,
+  resolveFloydCodeOAuthKey,
+  resolveFloydTokenStorageName,
+  type ManagedFloydConfigShape,
   type TokenInfo,
   type TokenStorage,
 } from '../src';
@@ -45,9 +45,9 @@ function token(accessToken: string): TokenInfo {
 }
 
 const TEST_IDENTITY = {
-  productName: 'kimi-code-cli',
+  productName: 'floyd-code-cli',
   version: '0.0.0-test',
-  platform: 'kimi_code_cli',
+  platform: 'floyd_code_cli',
 } as const;
 
 afterEach(() => {
@@ -60,7 +60,7 @@ function managedModelsResponse(): Response {
     JSON.stringify({
       data: [
         {
-          id: 'kimi-for-coding',
+          id: 'floyd-for-coding',
           context_length: 262144,
           supports_reasoning: true,
         },
@@ -77,40 +77,40 @@ function fetchInputUrl(input: unknown): string {
   throw new TypeError('expected fetch input to be a string, URL, or Request');
 }
 
-describe('resolveKimiTokenStorageName', () => {
+describe('resolveFloydTokenStorageName', () => {
   it('maps config oauth keys to the file storage token name', () => {
     expect(
-      resolveKimiTokenStorageName({
-        providerName: KIMI_CODE_PROVIDER_NAME,
-        oauthKey: 'oauth/kimi-code',
+      resolveFloydTokenStorageName({
+        providerName: FLOYD_CODE_PROVIDER_NAME,
+        oauthKey: 'oauth/floyd-code',
       }),
-    ).toBe('kimi-code');
-    expect(resolveKimiTokenStorageName({ oauthKey: 'kimi-code' })).toBe('kimi-code');
+    ).toBe('floyd-code');
+    expect(resolveFloydTokenStorageName({ oauthKey: 'floyd-code' })).toBe('floyd-code');
   });
 
   it('accepts non-managed providers with a valid key and rejects unsafe token keys', () => {
     expect(
-      resolveKimiTokenStorageName({
+      resolveFloydTokenStorageName({
         providerName: 'custom',
-        oauthKey: 'oauth/kimi-code',
+        oauthKey: 'oauth/floyd-code',
       }),
-    ).toBe('kimi-code');
+    ).toBe('floyd-code');
     expect(
-      resolveKimiTokenStorageName({
-        providerName: 'kimi-code-anthropic',
-        oauthKey: 'oauth/kimi-code',
+      resolveFloydTokenStorageName({
+        providerName: 'floyd-code-anthropic',
+        oauthKey: 'oauth/floyd-code',
       }),
-    ).toBe('kimi-code');
-    expect(() => resolveKimiTokenStorageName({ oauthKey: '../kimi-code' })).toThrow(/Invalid/);
+    ).toBe('floyd-code');
+    expect(() => resolveFloydTokenStorageName({ oauthKey: '../floyd-code' })).toThrow(/Invalid/);
   });
 });
 
-describe('KimiOAuthToolkit', () => {
+describe('FloydOAuthToolkit', () => {
   it('can be constructed without host identity', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('kimi-code', token('access-1'));
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    storage.tokens.set('floyd-code', token('access-1'));
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       storage,
       now: () => 100,
     });
@@ -120,25 +120,25 @@ describe('KimiOAuthToolkit', () => {
 
   it('reports status and exposes a bearer token provider', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('kimi-code', token('access-1'));
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    storage.tokens.set('floyd-code', token('access-1'));
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
     });
 
     await expect(toolkit.status()).resolves.toEqual({
-      providers: [{ providerName: KIMI_CODE_PROVIDER_NAME, hasToken: true }],
+      providers: [{ providerName: FLOYD_CODE_PROVIDER_NAME, hasToken: true }],
     });
     await expect(toolkit.tokenProvider().getAccessToken()).resolves.toBe('access-1');
   });
 
   it('resolves bearer token providers using the configured oauth key', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('custom-kimi-code', token('custom-access'));
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    storage.tokens.set('custom-floyd-code', token('custom-access'));
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
@@ -146,7 +146,7 @@ describe('KimiOAuthToolkit', () => {
 
     await expect(
       toolkit
-        .tokenProvider(KIMI_CODE_PROVIDER_NAME, { key: 'oauth/custom-kimi-code' })
+        .tokenProvider(FLOYD_CODE_PROVIDER_NAME, { key: 'oauth/custom-floyd-code' })
         .getAccessToken(),
     ).resolves.toBe('custom-access');
   });
@@ -154,11 +154,11 @@ describe('KimiOAuthToolkit', () => {
   it('refreshes configured bearer token refs against their OAuth host', async () => {
     const storage = new MemoryTokenStorage();
     const oauthHost = 'https://auth.dev.example.test';
-    const oauthKey = resolveKimiCodeOAuthKey({
+    const oauthKey = resolveFloydCodeOAuthKey({
       oauthHost,
       baseUrl: 'https://api.dev.example.test/coding/v1',
     });
-    storage.tokens.set(resolveKimiTokenStorageName({ oauthKey }), {
+    storage.tokens.set(resolveFloydTokenStorageName({ oauthKey }), {
       ...token('expired-dev-access'),
       expiresAt: 100,
     });
@@ -178,28 +178,28 @@ describe('KimiOAuthToolkit', () => {
       );
     });
     vi.stubGlobal('fetch', fetchImpl);
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 1_000,
       flowConfig: {
-        name: 'kimi-code',
-        oauthHost: 'https://auth.kimi.com',
+        name: 'floyd-code',
+        oauthHost: 'https://auth.floyd.com',
         clientId: 'test-client-id',
       },
     });
 
     await expect(
       toolkit
-        .tokenProvider(KIMI_CODE_PROVIDER_NAME, { key: oauthKey, oauthHost })
+        .tokenProvider(FLOYD_CODE_PROVIDER_NAME, { key: oauthKey, oauthHost })
         .getAccessToken(),
     ).resolves.toBe('rotated-dev-access');
   });
 
   it('does not reuse a cached OAuth manager across different hosts for the same token key', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('custom-kimi-code', {
+    storage.tokens.set('custom-floyd-code', {
       ...token('expired-custom-access'),
       expiresAt: 100,
     });
@@ -218,30 +218,30 @@ describe('KimiOAuthToolkit', () => {
       );
     });
     vi.stubGlobal('fetch', fetchImpl);
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 1_000,
       flowConfig: {
-        name: 'kimi-code',
-        oauthHost: 'https://auth.kimi.com',
+        name: 'floyd-code',
+        oauthHost: 'https://auth.floyd.com',
         clientId: 'test-client-id',
       },
     });
 
     await expect(
       toolkit
-        .tokenProvider(KIMI_CODE_PROVIDER_NAME, {
-          key: 'oauth/custom-kimi-code',
+        .tokenProvider(FLOYD_CODE_PROVIDER_NAME, {
+          key: 'oauth/custom-floyd-code',
           oauthHost: 'https://auth.one.test/',
         })
         .getAccessToken({ force: true }),
     ).resolves.toBe('rotated-1');
     await expect(
       toolkit
-        .tokenProvider(KIMI_CODE_PROVIDER_NAME, {
-          key: 'oauth/custom-kimi-code',
+        .tokenProvider(FLOYD_CODE_PROVIDER_NAME, {
+          key: 'oauth/custom-floyd-code',
           oauthHost: 'https://auth.two.test',
         })
         .getAccessToken({ force: true }),
@@ -255,12 +255,12 @@ describe('KimiOAuthToolkit', () => {
 
   it('returns the cached access token without refreshing it', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('kimi-code', {
+    storage.tokens.set('floyd-code', {
       ...token('cached-access'),
       expiresAt: 1,
     });
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 10_000,
@@ -271,22 +271,22 @@ describe('KimiOAuthToolkit', () => {
 
   it('resolves cached access tokens using the configured oauth key', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('custom-kimi-code', token('custom-cached-access'));
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    storage.tokens.set('custom-floyd-code', token('custom-cached-access'));
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
     });
 
     await expect(
-      toolkit.getCachedAccessToken(KIMI_CODE_PROVIDER_NAME, { key: 'oauth/custom-kimi-code' }),
+      toolkit.getCachedAccessToken(FLOYD_CODE_PROVIDER_NAME, { key: 'oauth/custom-floyd-code' }),
     ).resolves.toBe('custom-cached-access');
   });
 
   it('returns undefined when no cached access token exists', async () => {
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage: new MemoryTokenStorage(),
       now: () => 100,
@@ -300,8 +300,8 @@ describe('KimiOAuthToolkit', () => {
     const write = vi.fn();
     const fetchImpl = vi.fn(async () => managedModelsResponse()) as unknown as typeof fetch;
     const config = { providers: {} };
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
@@ -310,24 +310,24 @@ describe('KimiOAuthToolkit', () => {
         read: () => config,
         write,
         apply: (target, input) => {
-          target.providers[KIMI_CODE_PROVIDER_NAME] = {
-            type: 'kimi',
+          target.providers[FLOYD_CODE_PROVIDER_NAME] = {
+            type: 'floyd',
             apiKey: '',
           };
           return {
-            defaultModel: `kimi-code/${input.models[0]?.id ?? 'unknown'}`,
+            defaultModel: `floyd-code/${input.models[0]?.id ?? 'unknown'}`,
             defaultThinking: true,
           };
         },
       },
     });
 
-    storage.tokens.set('kimi-code', token('access-1'));
+    storage.tokens.set('floyd-code', token('access-1'));
     await expect(toolkit.login()).resolves.toMatchObject({
-      providerName: KIMI_CODE_PROVIDER_NAME,
+      providerName: FLOYD_CODE_PROVIDER_NAME,
       ok: true,
       provision: {
-        defaultModel: 'kimi-code/kimi-for-coding',
+        defaultModel: 'floyd-code/floyd-for-coding',
       },
     });
     expect(write).toHaveBeenCalledWith(config);
@@ -341,8 +341,8 @@ describe('KimiOAuthToolkit', () => {
       const onDeviceCode = vi.fn();
       const config = { providers: {} };
       const oauthHost = 'https://auth.test';
-      const oauthKey = resolveKimiCodeOAuthKey({ oauthHost });
-      storage.tokens.set(resolveKimiTokenStorageName({ oauthKey }), token('stale-access'));
+      const oauthKey = resolveFloydCodeOAuthKey({ oauthHost });
+      storage.tokens.set(resolveFloydTokenStorageName({ oauthKey }), token('stale-access'));
       const fetchMock = vi
         .fn()
         .mockResolvedValueOnce(
@@ -373,14 +373,14 @@ describe('KimiOAuthToolkit', () => {
         );
       });
       vi.stubGlobal('fetch', oauthFetch);
-      const toolkit = new KimiOAuthToolkit({
-        homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+      const toolkit = new FloydOAuthToolkit({
+        homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
         identity: TEST_IDENTITY,
         storage,
         now: () => 100,
         fetchImpl,
         flowConfig: {
-          name: 'kimi-code',
+          name: 'floyd-code',
           oauthHost,
           clientId: 'test-client-id',
         },
@@ -388,12 +388,12 @@ describe('KimiOAuthToolkit', () => {
           read: () => config,
           write,
           apply: (target, input) => {
-            target.providers[KIMI_CODE_PROVIDER_NAME] = {
-              type: 'kimi',
+            target.providers[FLOYD_CODE_PROVIDER_NAME] = {
+              type: 'floyd',
               apiKey: '',
             };
             return {
-              defaultModel: `kimi-code/${input.models[0]?.id ?? 'unknown'}`,
+              defaultModel: `floyd-code/${input.models[0]?.id ?? 'unknown'}`,
               defaultThinking: true,
             };
           },
@@ -401,10 +401,10 @@ describe('KimiOAuthToolkit', () => {
       });
 
       await expect(toolkit.login(undefined, { onDeviceCode })).resolves.toMatchObject({
-        providerName: KIMI_CODE_PROVIDER_NAME,
+        providerName: FLOYD_CODE_PROVIDER_NAME,
         ok: true,
         provision: {
-          defaultModel: 'kimi-code/kimi-for-coding',
+          defaultModel: 'floyd-code/floyd-for-coding',
         },
       });
       expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -424,15 +424,15 @@ describe('KimiOAuthToolkit', () => {
 
   it('uses a scoped credential slot for non-default OAuth login environments', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('kimi-code', token('prod-access'));
-    const config: ManagedKimiConfigShape = { providers: {} };
+    storage.tokens.set('floyd-code', token('prod-access'));
+    const config: ManagedFloydConfigShape = { providers: {} };
     const devBaseUrl = 'https://api.dev.example.test/coding/v1';
     const devOauthHost = 'https://auth.dev.example.test';
-    const devOauthKey = resolveKimiCodeOAuthKey({
+    const devOauthKey = resolveFloydCodeOAuthKey({
       oauthHost: devOauthHost,
       baseUrl: devBaseUrl,
     });
-    const devStorageName = resolveKimiTokenStorageName({ oauthKey: devOauthKey });
+    const devStorageName = resolveFloydTokenStorageName({ oauthKey: devOauthKey });
     const write = vi.fn();
     const fetchMock = vi.fn(async (_input: unknown, _init?: RequestInit) =>
       managedModelsResponse(),
@@ -465,32 +465,32 @@ describe('KimiOAuthToolkit', () => {
       );
     });
     vi.stubGlobal('fetch', oauthFetch);
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
       fetchImpl: fetchMock as unknown as typeof fetch,
       flowConfig: {
-        name: 'kimi-code',
+        name: 'floyd-code',
         oauthHost: devOauthHost,
         clientId: 'test-client-id',
       },
       configAdapter: {
         read: () => config,
         write,
-        apply: applyManagedKimiCodeConfig,
+        apply: applyManagedFloydCodeConfig,
       },
     });
 
     await expect(toolkit.login(undefined, { baseUrl: devBaseUrl })).resolves.toMatchObject({
-      providerName: KIMI_CODE_PROVIDER_NAME,
+      providerName: FLOYD_CODE_PROVIDER_NAME,
       ok: true,
     });
     expect(oauthFetch).toHaveBeenCalledTimes(2);
-    expect(storage.tokens.get('kimi-code')?.accessToken).toBe('prod-access');
+    expect(storage.tokens.get('floyd-code')?.accessToken).toBe('prod-access');
     expect(storage.tokens.get(devStorageName)?.accessToken).toBe('dev-access');
-    expect(config.providers[KIMI_CODE_PROVIDER_NAME]?.oauth).toEqual({
+    expect(config.providers[FLOYD_CODE_PROVIDER_NAME]?.oauth).toEqual({
       storage: 'file',
       key: devOauthKey,
       oauthHost: devOauthHost,
@@ -503,8 +503,8 @@ describe('KimiOAuthToolkit', () => {
   it('starts a new device flow when the stored refresh token is invalid', async () => {
     const storage = new MemoryTokenStorage();
     const oauthHost = 'https://auth.test';
-    const oauthKey = resolveKimiCodeOAuthKey({ oauthHost });
-    const storageName = resolveKimiTokenStorageName({ oauthKey });
+    const oauthKey = resolveFloydCodeOAuthKey({ oauthHost });
+    const storageName = resolveFloydTokenStorageName({ oauthKey });
     storage.tokens.set(storageName, {
       ...token('stale-access'),
       refreshToken: 'revoked-refresh',
@@ -548,20 +548,20 @@ describe('KimiOAuthToolkit', () => {
       );
     }) as unknown as typeof fetch;
     vi.stubGlobal('fetch', fetchImpl);
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
       flowConfig: {
-        name: 'kimi-code',
+        name: 'floyd-code',
         oauthHost,
         clientId: 'test-client-id',
       },
     });
 
     await expect(toolkit.login(undefined, { onDeviceCode })).resolves.toMatchObject({
-      providerName: KIMI_CODE_PROVIDER_NAME,
+      providerName: FLOYD_CODE_PROVIDER_NAME,
       ok: true,
     });
     expect(onDeviceCode).toHaveBeenCalledTimes(1);
@@ -570,7 +570,7 @@ describe('KimiOAuthToolkit', () => {
 
   it('propagates the managed quota response', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('kimi-code', token('access-1'));
+    storage.tokens.set('floyd-code', token('access-1'));
     const fetchImpl = vi.fn(async (_input: unknown, _init?: RequestInit) =>
       new Response(
         JSON.stringify({
@@ -594,8 +594,8 @@ describe('KimiOAuthToolkit', () => {
       ),
     ) as unknown as typeof fetch;
     vi.stubGlobal('fetch', fetchImpl);
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
@@ -622,7 +622,7 @@ describe('KimiOAuthToolkit', () => {
 
   it('returns null extraUsage when the payload has no boosterWallet', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('kimi-code', token('access-1'));
+    storage.tokens.set('floyd-code', token('access-1'));
     const fetchImpl = vi.fn(async (_input: unknown, _init?: RequestInit) =>
       new Response(
         JSON.stringify({
@@ -635,8 +635,8 @@ describe('KimiOAuthToolkit', () => {
       ),
     ) as unknown as typeof fetch;
     vi.stubGlobal('fetch', fetchImpl);
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
@@ -655,7 +655,7 @@ describe('KimiOAuthToolkit', () => {
 
   it('propagates the managed profile response', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('kimi-code', token('access-1'));
+    storage.tokens.set('floyd-code', token('access-1'));
     const fetchImpl = vi.fn(async (_input: unknown, _init?: RequestInit) =>
       new Response(
         JSON.stringify({
@@ -673,8 +673,8 @@ describe('KimiOAuthToolkit', () => {
       ),
     ) as unknown as typeof fetch;
     vi.stubGlobal('fetch', fetchImpl);
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
@@ -698,13 +698,13 @@ describe('KimiOAuthToolkit', () => {
 
   it('normalizes managed profile fetch errors into the error result', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('kimi-code', token('access-1'));
+    storage.tokens.set('floyd-code', token('access-1'));
     const fetchImpl = vi.fn(
       async () => new Response('', { status: 401 }),
     ) as unknown as typeof fetch;
     vi.stubGlobal('fetch', fetchImpl);
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
@@ -719,29 +719,29 @@ describe('KimiOAuthToolkit', () => {
 
   it('removes managed config on logout when an adapter supports cleanup', async () => {
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('kimi-code', token('access-1'));
-    const config = { providers: { [KIMI_CODE_PROVIDER_NAME]: { type: 'kimi' } } };
+    storage.tokens.set('floyd-code', token('access-1'));
+    const config = { providers: { [FLOYD_CODE_PROVIDER_NAME]: { type: 'floyd' } } };
     const write = vi.fn();
     const remove = vi.fn();
-    const toolkit = new KimiOAuthToolkit({
-      homeDir: join('/tmp', 'kimi-oauth-toolkit-test'),
+    const toolkit = new FloydOAuthToolkit({
+      homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
       configAdapter: {
         read: () => config,
         write,
-        apply: () => ({ defaultModel: 'kimi-code/kimi-for-coding', defaultThinking: true }),
+        apply: () => ({ defaultModel: 'floyd-code/floyd-for-coding', defaultThinking: true }),
         remove,
       },
     });
 
     await expect(toolkit.logout()).resolves.toMatchObject({
-      providerName: KIMI_CODE_PROVIDER_NAME,
+      providerName: FLOYD_CODE_PROVIDER_NAME,
       ok: true,
     });
     expect(remove).toHaveBeenCalledWith(config);
     expect(write).toHaveBeenCalledWith(config);
-    await expect(storage.load('kimi-code')).resolves.toBeUndefined();
+    await expect(storage.load('floyd-code')).resolves.toBeUndefined();
   });
 });

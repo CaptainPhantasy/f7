@@ -2,9 +2,9 @@ import {
   RemoteControlAlreadyRunningError,
   type RemoteControlManager,
   type RemoteControlStatusInfo,
-} from '@moonshot-ai/remote-control';
+} from '@legacy-ai/remote-control';
 
-import type { ITelemetryService } from '@moonshot-ai/agent-core-v2';
+import type { ITelemetryService } from '@legacy-ai/agent-core-v2';
 
 import { errEnvelope, okEnvelope } from '../envelope';
 import { requestLog } from '../lib/requestLog';

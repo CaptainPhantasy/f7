@@ -286,7 +286,7 @@ describe('AgentLifecycleService', () => {
       _serviceBrand: undefined,
       sessionId: 'sess_test',
       workspaceId: 'ws_test',
-      sessionDir: '/tmp/kimi-agentLifecycle-test',
+      sessionDir: '/tmp/floyd-agentLifecycle-test',
       metaScope: 'test',
       scope: (subKey?: string) =>
         subKey === undefined || subKey === ''
@@ -319,8 +319,8 @@ describe('AgentLifecycleService', () => {
     });
     ix.stub(IBootstrapService, {
       _serviceBrand: undefined,
-      homeDir: '/tmp/kimi-agentLifecycle-home',
-      cwd: '/tmp/kimi-agentLifecycle-home',
+      homeDir: '/tmp/floyd-agentLifecycle-home',
+      cwd: '/tmp/floyd-agentLifecycle-home',
       getEnv: () => undefined,
     } as unknown as IBootstrapService);
     ix.stub(IFlagService, {
@@ -330,7 +330,7 @@ describe('AgentLifecycleService', () => {
     ix.stub(ISessionNotify, { _serviceBrand: undefined, ready: Promise.resolve(), enabled: false });
     ix.stub(ISessionWorkspaceContext, {
       _serviceBrand: undefined,
-      workDir: '/tmp/kimi-agentLifecycle-work',
+      workDir: '/tmp/floyd-agentLifecycle-work',
       additionalDirs: [],
     } as unknown as ISessionWorkspaceContext);
     ix.stub(IPluginService, pluginServiceStub);
@@ -920,8 +920,8 @@ describe('AgentLifecycleService', () => {
           updatedAt: 0,
           archived: false,
           agents: {
-            'agent-0': { homedir: '/tmp/kimi-agentLifecycle-test/agents/agent-0', type: 'sub' },
-            'agent-1': { homedir: '/tmp/kimi-agentLifecycle-test/agents/agent-1', type: 'sub' },
+            'agent-0': { homedir: '/tmp/floyd-agentLifecycle-test/agents/agent-0', type: 'sub' },
+            'agent-1': { homedir: '/tmp/floyd-agentLifecycle-test/agents/agent-1', type: 'sub' },
           },
         }),
       update: () => Promise.resolve(),
@@ -976,7 +976,7 @@ describe('AgentLifecycleService', () => {
 
     expect(child.agentId).toBe('child');
     expect(registerAgent).toHaveBeenCalledWith('child', {
-      homedir: '/tmp/kimi-agentLifecycle-home/sessions/ws_test/sess_test/agents/child',
+      homedir: '/tmp/floyd-agentLifecycle-home/sessions/ws_test/sess_test/agents/child',
       type: 'sub',
       parentAgentId: 'main',
       forkedFrom: 'main',
@@ -1392,7 +1392,7 @@ describe('AgentLifecycleService', () => {
     await svc
       .create({
         agentId: 'child',
-        binding: { profile: 'coder', model: 'kimi-test' },
+        binding: { profile: 'coder', model: 'floyd-test' },
         labels: { parentAgentId: 'main' },
       })
       .catch(() => undefined);

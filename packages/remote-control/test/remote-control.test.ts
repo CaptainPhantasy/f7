@@ -8,10 +8,10 @@ import { gunzipSync } from 'node:zlib';
 
 import {
   FileTokenStorage,
-  KIMI_CODE_PROVIDER_NAME,
-  resolveKimiTokenStorageName,
+  FLOYD_CODE_PROVIDER_NAME,
+  resolveFloydTokenStorageName,
   type TokenInfo,
-} from '@moonshot-ai/kimi-code-oauth';
+} from '@legacy-ai/floyd-code-oauth';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer, type RawData, type WebSocket } from 'ws';
 
@@ -26,7 +26,7 @@ import {
 } from '../src/remote-control';
 import { remoteControlLockPath } from '../src/lock';
 
-const CLIENT_VERSION = 'kimi-code/test';
+const CLIENT_VERSION = 'floyd-code/test';
 
 const TOKEN: TokenInfo = {
   accessToken: 'access-token',
@@ -48,29 +48,29 @@ describe('Remote Control URLs', () => {
   it('builds the public device entry without a local token', () => {
     const url = buildRemoteControlUrl('device/one');
     expect(url).toBe(
-      'https://code-rc.kimi.com/devices/device%2Fone/?rc=1&from=kimi_code_cli',
+      'https://code-rc.floyd.com/devices/device%2Fone/?rc=1&from=floyd_code_cli',
     );
     expect(url).not.toContain('token');
   });
 
   it('builds an encoded session deep link before the query', () => {
     expect(buildRemoteControlUrl('device-1', 'session/a b')).toBe(
-      'https://code-rc.kimi.com/devices/device-1/sessions/session%2Fa%20b?rc=1&from=kimi_code_cli',
+      'https://code-rc.floyd.com/devices/device-1/sessions/session%2Fa%20b?rc=1&from=floyd_code_cli',
     );
   });
 
   it('falls back to the default relay origin when the env is unset or blank', () => {
-    expect(resolveRemoteControlRelayOrigin({})).toBe('https://code-rc.kimi.com');
+    expect(resolveRemoteControlRelayOrigin({})).toBe('https://code-rc.floyd.com');
     expect(
-      resolveRemoteControlRelayOrigin({ KIMI_CODE_REMOTE_CONTROL_RELAY_URL: '  ' }),
-    ).toBe('https://code-rc.kimi.com');
+      resolveRemoteControlRelayOrigin({ FLOYD_CODE_REMOTE_CONTROL_RELAY_URL: '  ' }),
+    ).toBe('https://code-rc.floyd.com');
   });
 
   it('builds device URLs from the relay origin env override', () => {
-    vi.stubEnv('KIMI_CODE_REMOTE_CONTROL_RELAY_URL', 'https://rc.example.test/coding-relay/');
+    vi.stubEnv('FLOYD_CODE_REMOTE_CONTROL_RELAY_URL', 'https://rc.example.test/coding-relay/');
     expect(resolveRemoteControlRelayOrigin()).toBe('https://rc.example.test/coding-relay/');
     expect(buildRemoteControlUrl('device-1')).toBe(
-      'https://rc.example.test/coding-relay/devices/device-1/?rc=1&from=kimi_code_cli',
+      'https://rc.example.test/coding-relay/devices/device-1/?rc=1&from=floyd_code_cli',
     );
   });
 });
@@ -112,7 +112,7 @@ describe('Remote Control HTTP forwarding', () => {
     ).toString();
     expect(html).toContain(`src="${prefix}/boot.js"`);
     expect(html).toContain(`href="${prefix}/x"`);
-    expect(html).toContain("sessionStorage.setItem('kimi-desktop-server-origin',location.origin+p)");
+    expect(html).toContain("sessionStorage.setItem('floyd-desktop-server-origin',location.origin+p)");
     expect(html).toContain('history.pushState=w(history.pushState)');
 
     const js = rewriteRemoteControlResponse(
@@ -137,10 +137,10 @@ describe('Remote Control HTTP forwarding', () => {
 
 describe('Remote Control tunnel', () => {
   it('surfaces register_nak details', async () => {
-    const homeDir = mkdtempSync(join(tmpdir(), 'kimi-rc-nak-'));
+    const homeDir = mkdtempSync(join(tmpdir(), 'floyd-rc-nak-'));
     cleanups.push(() => rmSync(homeDir, { recursive: true, force: true }));
     await new FileTokenStorage(join(homeDir, 'credentials')).save(
-      resolveKimiTokenStorageName({ providerName: KIMI_CODE_PROVIDER_NAME }),
+      resolveFloydTokenStorageName({ providerName: FLOYD_CODE_PROVIDER_NAME }),
       TOKEN,
     );
     const managementServer = new WebSocketServer({ noServer: true });
@@ -215,7 +215,7 @@ describe('Remote Control tunnel', () => {
       stderr: { write: () => true },
     });
 
-    expect(relay.requests.some((request) => request.protocol?.startsWith('kimi-code.bearer.'))).toBe(
+    expect(relay.requests.some((request) => request.protocol?.startsWith('floyd-code.bearer.'))).toBe(
       true,
     );
     expect(
@@ -243,7 +243,7 @@ describe('Remote Control tunnel', () => {
     });
 
     expect(relay.requests.length).toBeGreaterThanOrEqual(4);
-    expect(handle.url).toContain('?rc=1&from=kimi_code_cli');
+    expect(handle.url).toContain('?rc=1&from=floyd_code_cli');
   }, 6000);
 
   it('reconnects when management closes during the HTTP tunnel handshake', async () => {
@@ -265,10 +265,10 @@ describe('Remote Control tunnel', () => {
   }, 6000);
 
   it('registers, forwards HTTP and WS with local auth, then reconnects the pair', async () => {
-    const homeDir = mkdtempSync(join(tmpdir(), 'kimi-rc-'));
+    const homeDir = mkdtempSync(join(tmpdir(), 'floyd-rc-'));
     cleanups.push(() => rmSync(homeDir, { recursive: true, force: true }));
     await new FileTokenStorage(join(homeDir, 'credentials')).save(
-      resolveKimiTokenStorageName({ providerName: KIMI_CODE_PROVIDER_NAME }),
+      resolveFloydTokenStorageName({ providerName: FLOYD_CODE_PROVIDER_NAME }),
       TOKEN,
     );
 
@@ -388,7 +388,7 @@ describe('Remote Control tunnel', () => {
 
     expect(registrations).toHaveLength(1);
     expect(handle.url).toContain('/coding-relay/devices/');
-    expect(handle.url).toContain('?rc=1&from=kimi_code_cli');
+    expect(handle.url).toContain('?rc=1&from=floyd_code_cli');
 
     const rawRequest = Buffer.from(
       'GET / HTTP/1.1\r\nHost: relay.test\r\nAuthorization: Bearer relay-token\r\nCookie: sid=1\r\nOrigin: https://relay.test\r\nAccept-Encoding: gzip\r\nConnection: X-Hop\r\nX-Hop: remove\r\nX-Keep: yes\r\n\r\n',
@@ -613,7 +613,7 @@ describe('Remote Control tunnel', () => {
     );
     await waitFor(() => streamConnections.length === 1 && localWs !== undefined);
     expect(localWsRequest?.headers['sec-websocket-protocol']).toBe(
-      'kimi-code.bearer.rotated-server-token',
+      'floyd-code.bearer.rotated-server-token',
     );
     expect(localWsRequest?.headers.authorization).toBeUndefined();
     expect(localWsRequest?.headers.cookie).toBeUndefined();
@@ -705,7 +705,7 @@ describe('Remote Control tunnel', () => {
         relay.httpSockets.some((socket) => socket.readyState === 1),
     );
     expect(logs).toContain('DEPLOYING');
-    expect(handle.url).toContain('?rc=1&from=kimi_code_cli');
+    expect(handle.url).toContain('?rc=1&from=floyd_code_cli');
   }, 15_000);
 });
 
@@ -753,7 +753,7 @@ describe('Remote Control single-instance lock', () => {
         nonce: 'stale',
         local_origin: 'http://127.0.0.1:1',
         device_id: 'dead-device',
-        url: 'https://code-rc.kimi.com/devices/dead-device/',
+        url: 'https://code-rc.floyd.com/devices/dead-device/',
         started_at: 0,
       }),
     );
@@ -821,7 +821,7 @@ describe('Remote Control single-instance lock', () => {
         nonce: 'successor',
         local_origin: 'http://127.0.0.1:58628',
         device_id: 'device-2',
-        url: 'https://code-rc.kimi.com/devices/device-2/',
+        url: 'https://code-rc.floyd.com/devices/device-2/',
         started_at: Date.now(),
       }),
     );
@@ -836,10 +836,10 @@ describe('Remote Control single-instance lock', () => {
 });
 
 async function createRemoteControlHome(refreshToken: string): Promise<string> {
-  const homeDir = mkdtempSync(join(tmpdir(), 'kimi-rc-auth-'));
+  const homeDir = mkdtempSync(join(tmpdir(), 'floyd-rc-auth-'));
   cleanups.push(() => rmSync(homeDir, { recursive: true, force: true }));
   await new FileTokenStorage(join(homeDir, 'credentials')).save(
-    resolveKimiTokenStorageName({ providerName: KIMI_CODE_PROVIDER_NAME }),
+    resolveFloydTokenStorageName({ providerName: FLOYD_CODE_PROVIDER_NAME }),
     {
       ...TOKEN,
       refreshToken,

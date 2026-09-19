@@ -1,4 +1,4 @@
-import { KIMI_CODE_PROVIDER_NAME } from '@moonshot-ai/kimi-code-oauth';
+import { FLOYD_CODE_PROVIDER_NAME } from '@legacy-ai/floyd-code-oauth';
 
 import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
 import { Service } from '#/_base/di/service';
@@ -36,9 +36,9 @@ import type {
   ReloadSummary,
 } from './types';
 
-const KIMI_CODE_BASE_URL_ENV = 'KIMI_CODE_BASE_URL';
-const KIMI_CODE_OAUTH_HOST_ENV = 'KIMI_CODE_OAUTH_HOST';
-const KIMI_OAUTH_HOST_ENV = 'KIMI_OAUTH_HOST';
+const FLOYD_CODE_BASE_URL_ENV = 'FLOYD_CODE_BASE_URL';
+const FLOYD_CODE_OAUTH_HOST_ENV = 'FLOYD_CODE_OAUTH_HOST';
+const FLOYD_OAUTH_HOST_ENV = 'FLOYD_OAUTH_HOST';
 const NO_ABORT = new AbortController().signal;
 
 interface PluginReloadNotification {
@@ -75,11 +75,11 @@ export class PluginService extends Service implements IPluginService {
   ) {
     super();
     this.homeDir = bootstrap.homeDir;
-    this.envBaseUrl = bootstrap.getEnv(KIMI_CODE_BASE_URL_ENV);
+    this.envBaseUrl = bootstrap.getEnv(FLOYD_CODE_BASE_URL_ENV);
     this.envOAuthHost =
-      bootstrap.getEnv(KIMI_CODE_OAUTH_HOST_ENV) ?? bootstrap.getEnv(KIMI_OAUTH_HOST_ENV);
+      bootstrap.getEnv(FLOYD_CODE_OAUTH_HOST_ENV) ?? bootstrap.getEnv(FLOYD_OAUTH_HOST_ENV);
     this.manager = new PluginManager({
-      kimiHomeDir: this.homeDir,
+      floydHomeDir: this.homeDir,
       discoverSkills: (roots) => discovery.discover(roots),
     });
   }
@@ -142,7 +142,7 @@ export class PluginService extends Service implements IPluginService {
           throw new Error2(
             PluginErrors.codes.PLUGIN_LOAD_FAILED,
             `Failed to reload plugins: ${this.loadError.message}`,
-            { cause: this.loadError, details: { kimiHomeDir: this.homeDir } },
+            { cause: this.loadError, details: { floydHomeDir: this.homeDir } },
           );
         }
       }),
@@ -220,8 +220,8 @@ export class PluginService extends Service implements IPluginService {
       if (!Object.values(pluginServers).some((server) => server.transport === 'stdio')) {
         return pluginServers;
       }
-      const managedEnv = await this.managedKimiCodeEnvForPlugins();
-      return withManagedKimiPluginEnv(pluginServers, managedEnv);
+      const managedEnv = await this.managedFloydCodeEnvForPlugins();
+      return withManagedFloydPluginEnv(pluginServers, managedEnv);
     });
   }
 
@@ -231,8 +231,8 @@ export class PluginService extends Service implements IPluginService {
       if (!entries.some((entry) => entry.config.transport === 'stdio')) {
         return entries;
       }
-      const managedEnv = await this.managedKimiCodeEnvForPlugins();
-      return withManagedKimiPluginEnvOnEntries(entries, managedEnv);
+      const managedEnv = await this.managedFloydCodeEnvForPlugins();
+      return withManagedFloydPluginEnvOnEntries(entries, managedEnv);
     });
   }
 
@@ -301,26 +301,26 @@ export class PluginService extends Service implements IPluginService {
       PluginErrors.codes.PLUGIN_LOAD_FAILED,
       `Plugin state failed to load: ${this.loadError.message}. ` +
         `Fix the file at ${this.homeDir}/plugins/installed.json and run /plugins reload.`,
-      { cause: this.loadError, details: { kimiHomeDir: this.homeDir } },
+      { cause: this.loadError, details: { floydHomeDir: this.homeDir } },
     );
   }
 
-  private async managedKimiCodeEnvForPlugins(): Promise<Record<string, string>> {
+  private async managedFloydCodeEnvForPlugins(): Promise<Record<string, string>> {
     await this.providers.ready;
-    const provider = this.providers.get(KIMI_CODE_PROVIDER_NAME);
+    const provider = this.providers.get(FLOYD_CODE_PROVIDER_NAME);
     const envBaseUrl = this.envBaseUrl;
     const envOAuthHost = this.envOAuthHost;
     const hasEnvOverride = envBaseUrl !== undefined || envOAuthHost !== undefined;
     const baseUrl = envBaseUrl !== undefined ? envBaseUrl.replace(/\/+$/, '') : provider?.baseUrl;
     const oauthHost = hasEnvOverride ? envOAuthHost : provider?.oauth?.oauthHost;
     const env: Record<string, string> = {};
-    if (baseUrl !== undefined) env[KIMI_CODE_BASE_URL_ENV] = baseUrl;
-    if (oauthHost !== undefined) env[KIMI_CODE_OAUTH_HOST_ENV] = oauthHost;
+    if (baseUrl !== undefined) env[FLOYD_CODE_BASE_URL_ENV] = baseUrl;
+    if (oauthHost !== undefined) env[FLOYD_CODE_OAUTH_HOST_ENV] = oauthHost;
     return env;
   }
 }
 
-function withManagedKimiPluginEnv(
+function withManagedFloydPluginEnv(
   pluginServers: Record<string, McpServerConfig>,
   managedEnv: Record<string, string>,
 ): Record<string, McpServerConfig> {
@@ -333,7 +333,7 @@ function withManagedKimiPluginEnv(
   return out;
 }
 
-function withManagedKimiPluginEnvOnEntries(
+function withManagedFloydPluginEnvOnEntries(
   entries: readonly PluginMcpServerEntry[],
   managedEnv: Record<string, string>,
 ): readonly PluginMcpServerEntry[] {

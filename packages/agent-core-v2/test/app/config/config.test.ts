@@ -184,10 +184,10 @@ describe('Agent config', () => {
     };
     ctx.configureRuntimeModel(
       {
-        type: 'kimi',
+        type: 'floyd',
         apiKey: 'sk-next',
         baseUrl: 'https://next.example/v1',
-        model: 'kimi-next',
+        model: 'floyd-next',
       },
       nextCapability,
     );
@@ -352,7 +352,7 @@ describe('Agent config', () => {
     `);
 
     ctx.configureRuntimeModel({
-      type: 'kimi',
+      type: 'floyd',
       apiKey: 'test-key',
       baseUrl: 'https://changed.example.test/v1',
       model: 'changed-model',
@@ -448,11 +448,11 @@ describe('Agent config', () => {
 
 describe('ConfigService env overlay (live)', () => {
   it('re-applies env bindings on every get()', async () => {
-    const env: Record<string, string> = { KIMI_DISABLE_CRON: '0' };
+    const env: Record<string, string> = { FLOYD_DISABLE_CRON: '0' };
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -461,9 +461,9 @@ describe('ConfigService env overlay (live)', () => {
     await config.ready;
 
     expect(config.get<CronConfig>('cron').disabled).toBe(false);
-    env['KIMI_DISABLE_CRON'] = '1';
+    env['FLOYD_DISABLE_CRON'] = '1';
     expect(config.get<CronConfig>('cron').disabled).toBe(true);
-    env['KIMI_DISABLE_CRON'] = '0';
+    env['FLOYD_DISABLE_CRON'] = '0';
     expect(config.get<CronConfig>('cron').disabled).toBe(false);
 
     disposables.dispose();
@@ -474,7 +474,7 @@ describe('ConfigService env overlay (live)', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -484,11 +484,11 @@ describe('ConfigService env overlay (live)', () => {
 
     expect(config.get(BUILTIN_PRODUCT_SKILLS_SECTION)).toBe(true);
 
-    env['KIMI_CODE_BUILTIN_PRODUCT_SKILLS'] = '0';
+    env['FLOYD_CODE_BUILTIN_PRODUCT_SKILLS'] = '0';
     expect(config.get(BUILTIN_PRODUCT_SKILLS_SECTION)).toBe(false);
 
     await config.replace(BUILTIN_PRODUCT_SKILLS_SECTION, true);
-    delete env['KIMI_CODE_BUILTIN_PRODUCT_SKILLS'];
+    delete env['FLOYD_CODE_BUILTIN_PRODUCT_SKILLS'];
     expect(config.get(BUILTIN_PRODUCT_SKILLS_SECTION)).toBe(true);
 
     disposables.dispose();
@@ -499,7 +499,7 @@ describe('ConfigService env overlay (live)', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -509,22 +509,22 @@ describe('ConfigService env overlay (live)', () => {
     await config.replace(BUILTIN_PRODUCT_SKILLS_SECTION, false);
 
     for (const invalid of ['', '   ', 'maybe']) {
-      env['KIMI_CODE_BUILTIN_PRODUCT_SKILLS'] = invalid;
+      env['FLOYD_CODE_BUILTIN_PRODUCT_SKILLS'] = invalid;
       expect(config.get(BUILTIN_PRODUCT_SKILLS_SECTION)).toBe(false);
     }
 
-    env['KIMI_CODE_BUILTIN_PRODUCT_SKILLS'] = 'on';
+    env['FLOYD_CODE_BUILTIN_PRODUCT_SKILLS'] = 'on';
     expect(config.get(BUILTIN_PRODUCT_SKILLS_SECTION)).toBe(true);
 
     disposables.dispose();
   });
 
-  it('keeps the Kimi effort force separate from the configured effort', async () => {
-    const env: Record<string, string> = { KIMI_MODEL_THINKING_EFFORT: 'max' };
+  it('keeps the Floyd effort force separate from the configured effort', async () => {
+    const env: Record<string, string> = { FLOYD_MODEL_THINKING_EFFORT: 'max' };
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -541,11 +541,11 @@ describe('ConfigService env overlay (live)', () => {
     disposables.dispose();
   });
 
-  it('strips the Kimi effort force before persisting thinking config', async () => {
+  it('strips the Floyd effort force before persisting thinking config', async () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg'));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg'));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -566,7 +566,7 @@ describe('ConfigService env overlay (live)', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg'));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg'));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -574,11 +574,11 @@ describe('ConfigService env overlay (live)', () => {
     const config = ix.get(IConfigService);
     await config.ready;
 
-    await config.replace('defaultModel', 'kimi-code/kimi-k2');
-    expect(config.get<string>('defaultModel')).toBe('kimi-code/kimi-k2');
+    await config.replace('defaultModel', 'floyd-code/floyd-k2');
+    expect(config.get<string>('defaultModel')).toBe('floyd-code/floyd-k2');
 
     await config.set('defaultModel', undefined);
-    expect(config.get<string>('defaultModel')).toBe('kimi-code/kimi-k2');
+    expect(config.get<string>('defaultModel')).toBe('floyd-code/floyd-k2');
 
     await config.replace('defaultModel', undefined);
     expect(config.get<string>('defaultModel')).toBeUndefined();
@@ -587,11 +587,11 @@ describe('ConfigService env overlay (live)', () => {
   });
 
   it('marks the env-injected flat model ready in the auth legacy summary', async () => {
-    const env: Record<string, string> = { KIMI_MODEL_NAME: 'kimi-for-coding' };
+    const env: Record<string, string> = { FLOYD_MODEL_NAME: 'floyd-for-coding' };
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.stub(IOAuthService, { status: vi.fn() } as unknown as IOAuthService);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
@@ -619,7 +619,7 @@ describe('services config section env bindings', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -627,7 +627,7 @@ describe('services config section env bindings', () => {
     return { config: ix.get(IConfigService), disposables };
   }
 
-  it('resolves moonshot_search / moonshot_fetch fields from KIMI_WEB_* env vars', async () => {
+  it('resolves legacy_search / legacy_fetch fields from FLOYD_WEB_* env vars', async () => {
     const { config, disposables } = createConfig({
       [WEB_SEARCH_BASE_URL_ENV]: 'https://search-env.example/search',
       [WEB_SEARCH_API_KEY_ENV]: 'env-search-key',
@@ -637,8 +637,8 @@ describe('services config section env bindings', () => {
     await config.ready;
 
     expect(config.get<ServicesConfig>(SERVICES_SECTION)).toEqual({
-      moonshotSearch: { baseUrl: 'https://search-env.example/search', apiKey: 'env-search-key' },
-      moonshotFetch: { baseUrl: 'https://fetch-env.example/fetch', apiKey: 'env-fetch-key' },
+      legacySearch: { baseUrl: 'https://search-env.example/search', apiKey: 'env-search-key' },
+      legacyFetch: { baseUrl: 'https://fetch-env.example/fetch', apiKey: 'env-fetch-key' },
     });
 
     disposables.dispose();
@@ -649,13 +649,13 @@ describe('services config section env bindings', () => {
     const { config, disposables } = createConfig(env);
     await config.ready;
     await config.set(SERVICES_SECTION, {
-      moonshotSearch: {
+      legacySearch: {
         baseUrl: 'https://file.example/search',
         apiKey: 'file-search-key',
         oauth: { storage: 'file', key: 'oauth/search' },
         customHeaders: { Authorization: 'Bearer configured-search-secret' },
       },
-      moonshotFetch: {
+      legacyFetch: {
         baseUrl: 'https://file.example/fetch',
         apiKey: 'file-fetch-key',
         oauth: { storage: 'file', key: 'oauth/fetch' },
@@ -670,11 +670,11 @@ describe('services config section env bindings', () => {
     });
 
     expect(config.get<ServicesConfig>(SERVICES_SECTION)).toEqual({
-      moonshotSearch: {
+      legacySearch: {
         baseUrl: 'https://search-env.example/search',
         apiKey: 'env-search-key',
       },
-      moonshotFetch: {
+      legacyFetch: {
         baseUrl: 'https://fetch-env.example/fetch',
         apiKey: 'env-fetch-key',
       },
@@ -688,7 +688,7 @@ describe('services config section env bindings', () => {
     const { config, disposables } = createConfig(env);
     await config.ready;
     await config.set(SERVICES_SECTION, {
-      moonshotSearch: {
+      legacySearch: {
         baseUrl: 'https://file.example/search',
         oauth: { storage: 'file', key: 'oauth/search' },
         customHeaders: { 'X-Service': 'search' },
@@ -696,7 +696,7 @@ describe('services config section env bindings', () => {
     });
     env[WEB_SEARCH_API_KEY_ENV] = 'env-search-key';
 
-    expect(config.get<ServicesConfig>(SERVICES_SECTION)?.moonshotSearch).toEqual({
+    expect(config.get<ServicesConfig>(SERVICES_SECTION)?.legacySearch).toEqual({
       baseUrl: 'https://file.example/search',
       apiKey: 'env-search-key',
       customHeaders: { 'X-Service': 'search' },
@@ -709,10 +709,10 @@ describe('services config section env bindings', () => {
     const { config, disposables } = createConfig({ [WEB_SEARCH_BASE_URL_ENV]: '   ' });
     await config.ready;
     await config.set(SERVICES_SECTION, {
-      moonshotSearch: { baseUrl: 'https://file.example/search' },
+      legacySearch: { baseUrl: 'https://file.example/search' },
     });
 
-    expect(config.get<ServicesConfig>(SERVICES_SECTION)?.moonshotSearch).toEqual({
+    expect(config.get<ServicesConfig>(SERVICES_SECTION)?.legacySearch).toEqual({
       baseUrl: 'https://file.example/search',
     });
 
@@ -726,18 +726,18 @@ describe('services config section env bindings', () => {
     });
     await config.ready;
     await config.set(SERVICES_SECTION, {
-      moonshotSearch: { baseUrl: 'https://file.example/search' },
+      legacySearch: { baseUrl: 'https://file.example/search' },
     });
 
     const effective = config.get<ServicesConfig>(SERVICES_SECTION);
-    expect(effective?.moonshotFetch).toEqual({
+    expect(effective?.legacyFetch).toEqual({
       baseUrl: 'https://fetch-env.example/fetch',
       apiKey: 'env-fetch-key',
     });
 
     await config.replace(SERVICES_SECTION, effective);
     expect(config.inspect<ServicesConfig>(SERVICES_SECTION).userValue).toEqual({
-      moonshotSearch: { baseUrl: 'https://file.example/search' },
+      legacySearch: { baseUrl: 'https://file.example/search' },
     });
 
     disposables.dispose();
@@ -749,13 +749,13 @@ describe('services config section env bindings', () => {
     });
     await config.ready;
     await config.set(SERVICES_SECTION, {
-      moonshotSearch: { baseUrl: 'https://file.example/search' },
+      legacySearch: { baseUrl: 'https://file.example/search' },
     });
 
     await config.replace(SERVICES_SECTION, undefined);
 
     expect(config.inspect<ServicesConfig>(SERVICES_SECTION).userValue).toBeUndefined();
-    expect(config.get<ServicesConfig>(SERVICES_SECTION)?.moonshotSearch?.baseUrl).toBe(
+    expect(config.get<ServicesConfig>(SERVICES_SECTION)?.legacySearch?.baseUrl).toBe(
       'https://search-env.example/search',
     );
 
@@ -822,7 +822,7 @@ describe('image config section', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -832,25 +832,25 @@ describe('image config section', () => {
 
     expect(config.get<ImageConfig>(IMAGE_SECTION)).toEqual({});
 
-    env['KIMI_IMAGE_MAX_EDGE_PX'] = 'abc';
-    env['KIMI_IMAGE_READ_BYTE_BUDGET'] = '-1';
+    env['FLOYD_IMAGE_MAX_EDGE_PX'] = 'abc';
+    env['FLOYD_IMAGE_READ_BYTE_BUDGET'] = '-1';
     expect(config.get<ImageConfig>(IMAGE_SECTION)).toEqual({});
 
-    env['KIMI_IMAGE_MAX_EDGE_PX'] = '1500';
-    env['KIMI_IMAGE_READ_BYTE_BUDGET'] = '131072';
+    env['FLOYD_IMAGE_MAX_EDGE_PX'] = '1500';
+    env['FLOYD_IMAGE_READ_BYTE_BUDGET'] = '131072';
     expect(config.get<ImageConfig>(IMAGE_SECTION)).toEqual({
       maxEdgePx: 1500,
       readByteBudget: 131072,
     });
 
-    env['KIMI_IMAGE_MAX_EDGE_PX'] = '2500';
+    env['FLOYD_IMAGE_MAX_EDGE_PX'] = '2500';
     expect(config.get<ImageConfig>(IMAGE_SECTION).maxEdgePx).toBe(2500);
 
     disposables.dispose();
   });
 
   it('restores env-owned fields to the raw value on set() while the env var is set', async () => {
-    const env: Record<string, string> = { 'KIMI_IMAGE_MAX_EDGE_PX': '1500' };
+    const env: Record<string, string> = { 'FLOYD_IMAGE_MAX_EDGE_PX': '1500' };
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     const storage = new InMemoryStorageService();
@@ -860,7 +860,7 @@ describe('image config section', () => {
       new TextEncoder().encode('[image]\nread_byte_budget = 131072\n'),
     );
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -905,7 +905,7 @@ describe('tokenCounting config section', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -960,7 +960,7 @@ describe('loopControl config section', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1001,7 +1001,7 @@ describe('loopControl config section', () => {
       new TextEncoder().encode('[loop_control]\nmax_steps_per_turn = 100\n'),
     );
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1037,7 +1037,7 @@ describe('loopControl config section', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1059,7 +1059,7 @@ describe('loopControl config section', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1088,7 +1088,7 @@ describe('loopControl config section', () => {
       new TextEncoder().encode('[loop_control]\nmax_steps_per_turn = 100\n'),
     );
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1127,7 +1127,7 @@ describe('loopControl config section', () => {
       new TextEncoder().encode('[loop_control]\nmax_steps_per_run = 100\n'),
     );
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1164,7 +1164,7 @@ describe('loopControl config section', () => {
       new TextEncoder().encode('[loop_control]\nfuture_field = 1\n'),
     );
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1196,7 +1196,7 @@ describe('loopControl config section', () => {
       new TextEncoder().encode('[loop_control]\nmax_steps_per_turn = -1\n'),
     );
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1225,7 +1225,7 @@ describe('config deprecations', () => {
       await storage.write('', 'config.toml', new TextEncoder().encode(toml));
     }
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1347,7 +1347,7 @@ describe('config deprecations', () => {
       new TextEncoder().encode('[loop_control]\nmax_retries_per_step = 3\n'),
     );
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', {}));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', {}));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1390,7 +1390,7 @@ describe('malformed models config entries', () => {
     const storage = new InMemoryStorageService();
     await storage.write('', 'config.toml', new TextEncoder().encode(toml));
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', {}));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', {}));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1402,15 +1402,15 @@ describe('malformed models config entries', () => {
 
   it('warns at load time when a dotted alias parses as a nested table', async () => {
     const { config, disposables } = await createConfig(
-      '[models.kimi-k2.7-code]\nmodel = "kimi-k2.7-code"\nmax_context_size = 262144\n',
+      '[models.floyd-k2.7-code]\nmodel = "floyd-k2.7-code"\nmax_context_size = 262144\n',
     );
 
     expect(config.diagnostics()).toContainEqual({
       domain: 'models',
       severity: 'warning',
       message:
-        "[models] entry 'kimi-k2' is missing the 'model' field and cannot be used as a model; " +
-        'if the alias contains dots, quote the table name (e.g. [models."kimi-k2.7-code"]).',
+        "[models] entry 'floyd-k2' is missing the 'model' field and cannot be used as a model; " +
+        'if the alias contains dots, quote the table name (e.g. [models."floyd-k2.7-code"]).',
     });
 
     disposables.dispose();
@@ -1418,7 +1418,7 @@ describe('malformed models config entries', () => {
 
   it('stays silent for quoted dotted aliases and entries with a wire-facing name', async () => {
     const { config, disposables } = await createConfig(
-      '[models."kimi-k2.7-code"]\nmodel = "kimi-k2.7-code"\n\n[models.renamed]\nname = "wire-name"\n',
+      '[models."floyd-k2.7-code"]\nmodel = "floyd-k2.7-code"\n\n[models.renamed]\nname = "wire-name"\n',
     );
 
     expect(config.diagnostics()).toEqual([]);
@@ -1458,14 +1458,14 @@ describe('malformed models config entries', () => {
 
   it('clears the warning on reload once the entry is fixed', async () => {
     const { config, disposables, storage } = await createConfig(
-      '[models.kimi-k2.7-code]\nmodel = "kimi-k2.7-code"\n',
+      '[models.floyd-k2.7-code]\nmodel = "floyd-k2.7-code"\n',
     );
     expect(config.diagnostics()).toHaveLength(1);
 
     await storage.write(
       '',
       'config.toml',
-      new TextEncoder().encode('[models."kimi-k2.7-code"]\nmodel = "kimi-k2.7-code"\n'),
+      new TextEncoder().encode('[models."floyd-k2.7-code"]\nmodel = "floyd-k2.7-code"\n'),
     );
     await config.reload();
 
@@ -1481,7 +1481,7 @@ describe('task config section', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1515,7 +1515,7 @@ describe('task config section', () => {
       ),
     );
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1616,7 +1616,7 @@ describe('task config section', () => {
       await storage.write('', 'config.toml', new TextEncoder().encode(toml));
     }
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1763,7 +1763,7 @@ describe('applyPrintModeConfigDefaults', () => {
       await storage.write('', 'config.toml', new TextEncoder().encode(toml));
     }
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1891,7 +1891,7 @@ describe('swarm config section', () => {
       await storage.write('', 'config.toml', new TextEncoder().encode(toml));
     }
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -1976,7 +1976,7 @@ describe('subagent config section', () => {
       await storage.write('', 'config.toml', new TextEncoder().encode(toml));
     }
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -2361,7 +2361,7 @@ describe('mcp config section', () => {
       await storage.write('', 'config.toml', new TextEncoder().encode(toml));
     }
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -2469,7 +2469,7 @@ describe('get() freshness for overlay-written domains', () => {
     const disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, new InMemoryStorageService());
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -2507,7 +2507,7 @@ describe('nested env bindings', () => {
       new TextEncoder().encode('[nested_demo.inner]\nvalue = "file"\n'),
     );
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -2597,7 +2597,7 @@ describe('config section collection fold (D12)', () => {
     const ix = disposables.add(new TestInstantiationService());
     const storage = new InMemoryStorageService();
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -2742,7 +2742,7 @@ describe('ConfigService replaceSections', () => {
     const storage = new InMemoryStorageService();
     await storage.write('', 'config.toml', new TextEncoder().encode(toml));
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg-replace-sections'));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg-replace-sections'));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -2976,7 +2976,7 @@ describe('ConfigService persistence guards', () => {
     const storage = new InMemoryStorageService();
     await storage.write('', 'config.toml', new TextEncoder().encode(toml));
     ix.stub(ILogService, stubLog());
-    ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-cfg-guards', env));
+    ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-cfg-guards', env));
     ix.stub(IFileSystemStorageService, storage);
     ix.set(IAtomicTomlDocumentStore, new SyncDescriptor(TomlAtomicDocumentStore));
     ix.set(IConfigRegistry, new SyncDescriptor(ConfigRegistry));
@@ -3124,9 +3124,9 @@ describe('ConfigService persistence guards', () => {
   it('restores env-masked values from the freshly re-read file instead of the stale snapshot', async () => {
     const { config, disposables, storage } = await createGuardedConfig(
       'default_model = "acme/m1"\n\n[providers.acme]\ntype = "openai"\napi_key = "sk-acme"\n\n[models."acme/m1"]\nprovider = "acme"\nmodel = "m1"\n',
-      { KIMI_MODEL_NAME: 'env-model' },
+      { FLOYD_MODEL_NAME: 'env-model' },
     );
-    expect(config.get(DEFAULT_MODEL_SECTION)).toBe('__kimi_env_model__');
+    expect(config.get(DEFAULT_MODEL_SECTION)).toBe('__floyd_env_model__');
 
     await overwrite(
       storage,

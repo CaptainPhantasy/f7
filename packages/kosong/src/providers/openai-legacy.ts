@@ -312,7 +312,7 @@ function convertHistoryMessages(
   const pendingToolResultMedia: OpenAIContentPart[] = [];
 
   for (const msg of history) {
-    // Message-level tool declarations are a Kimi wire feature; skipped here
+    // Message-level tool declarations are a Floyd wire feature; skipped here
     // because the leftover `{role:"system"}` without content is rejected by
     // the Chat Completions API. See isToolDeclarationOnlyMessage.
     if (isToolDeclarationOnlyMessage(msg)) continue;
@@ -596,7 +596,7 @@ export class OpenAILegacyChatProvider implements ChatProvider {
     // from withThinking is honored as well: with thinking turned off the
     // auto-enable must not silently switch reasoning back on (or leak the field
     // to models that reject it).
-    // See: https://github.com/MoonshotAI/kimi-code/issues/1616
+    // See: https://github.com/LegacyAI/floyd-code/issues/1616
     if (
       reasoningEffort === undefined &&
       effort !== 'off' &&

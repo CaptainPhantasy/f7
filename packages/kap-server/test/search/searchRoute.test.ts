@@ -2,9 +2,9 @@ import { mkdir, mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-process.env['KIMI_CODE_SEARCH_WORKER'] = '1';
+process.env['FLOYD_CODE_SEARCH_WORKER'] = '1';
 
-import { ISessionIndex, type SessionSummary } from '@moonshot-ai/agent-core-v2';
+import { ISessionIndex, type SessionSummary } from '@legacy-ai/agent-core-v2';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { type RunningServer, startServer } from '../../src/start';
@@ -64,7 +64,7 @@ describe('server-v2 /api/v1/search', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-search-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-search-'));
     const sessionDir = join(home, 'sessions', WS, 's1', 'agents', 'main');
     await mkdir(sessionDir, { recursive: true });
     await writeFile(
@@ -215,7 +215,7 @@ describe('server-v2 session routes with the global search DB unavailable', () =>
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-search-down-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-search-down-'));
     await writeFile(join(home, 'search-index'), 'not a minidb directory', 'utf8');
   });
 

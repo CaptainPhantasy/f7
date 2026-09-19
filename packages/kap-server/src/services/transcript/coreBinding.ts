@@ -16,8 +16,8 @@ import {
   type IAgentScopeHandle,
   type Interaction,
   type ISessionScopeHandle,
-} from '@moonshot-ai/agent-core-v2';
-import type { AgentDescriptor, TranscriptChangeEvent, TranscriptStore } from '@moonshot-ai/transcript';
+} from '@legacy-ai/agent-core-v2';
+import type { AgentDescriptor, TranscriptChangeEvent, TranscriptStore } from '@legacy-ai/transcript';
 
 import { legacyApprovalsOf } from '../legacyStatus/legacyActivity';
 import {

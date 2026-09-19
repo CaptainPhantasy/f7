@@ -1,4 +1,4 @@
-import { assign, createActor, fromPromise, setup, waitFor } from '@moonshot-ai/agent-core-v2/human/xstate2';
+import { assign, createActor, fromPromise, setup, waitFor } from '@legacy-ai/agent-core-v2/human/xstate2';
 
 import { startRemoteControl, type RemoteControlHandle } from './remote-control';
 

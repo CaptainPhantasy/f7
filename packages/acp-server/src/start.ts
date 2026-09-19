@@ -1,8 +1,8 @@
 /**
- * acp-server bootstrap — wires `@moonshot-ai/agent-core-v2` (the DI × Scope
+ * acp-server bootstrap — wires `@legacy-ai/agent-core-v2` (the DI × Scope
  * engine) into an ACP (Agent Client Protocol) stdio server.
  *
- * Composition root: `bootstrap()` builds the App `Scope`; a `@moonshot-ai/
+ * Composition root: `bootstrap()` builds the App `Scope`; a `@legacy-ai/
  * klient` facade over the in-memory transport is created on top of it, and
  * every ACP method handler drives the engine through that facade. The
  * ACP-backed `IHostFileSystem` (./acp-fs) is imported for its Session-scope
@@ -32,14 +32,14 @@ import {
   IWorkspaceInstanceManager,
   logSeed,
   resolveConfigPath,
-  resolveKimiHome,
+  resolveFloydHome,
   resolveLoggingConfig,
   type Scope,
   type ScopeSeed,
   sessionMediaOriginalsDir,
-} from '@moonshot-ai/agent-core-v2';
-import type { Klient } from '@moonshot-ai/klient';
-import { createKlient } from '@moonshot-ai/klient/memory';
+} from '@legacy-ai/agent-core-v2';
+import type { Klient } from '@legacy-ai/klient';
+import { createKlient } from '@legacy-ai/klient/memory';
 
 import { acpClientFromContext } from './acp-client';
 // Importing the `acp-fs` barrel also registers the ACP-backed Session-scope
@@ -97,7 +97,7 @@ export async function runAcpServerWithStream(
   stream: Stream,
   opts: RunAcpServerOptions = {},
 ): Promise<RunningAcpServer> {
-  const homeDir = resolveKimiHome(opts.homeDir);
+  const homeDir = resolveFloydHome(opts.homeDir);
   const configPath = resolveConfigPath({ homeDir, configPath: opts.configPath });
   // `ILogOptions` (logSeed) is required by the Session-scoped log writer; any
   // session creation would otherwise fail to instantiate the Session scope.
@@ -107,16 +107,16 @@ export async function runAcpServerWithStream(
   // session index all persist to disk. `clientIdentity` is required by the
   // engine: reuse the advertised ACP `agentInfo` (the embedding CLI's
   // name/version) with the CLI platform — the literal matches
-  // `KIMI_CODE_PLATFORM` from `@moonshot-ai/kimi-code-oauth`, which this
+  // `FLOYD_CODE_PLATFORM` from `@legacy-ai/floyd-code-oauth`, which this
   // package does not depend on.
   const { app: core } = bootstrap(
     {
       homeDir,
       configPath,
       clientIdentity: {
-        productName: opts.agentInfo?.name ?? 'kimi-code-acp',
+        productName: opts.agentInfo?.name ?? 'floyd-code-acp',
         version: opts.agentInfo?.version ?? '0.0.0',
-        platform: 'kimi_code_cli',
+        platform: 'floyd_code_cli',
       },
     },
     [...logSeed(logging), ...(opts.extraSeeds ?? [])],

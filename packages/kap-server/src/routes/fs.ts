@@ -16,9 +16,9 @@ import {
   isError2,
   Error2,
   type Scope,
-} from '@moonshot-ai/agent-core-v2';
-import { encodeWorkDirKey } from '@moonshot-ai/agent-core-v2/_base/utils/workdir-slug';
-import { RuntimeError } from '@moonshot-ai/agent-core-v2/runtime/runtimeRegistry';
+} from '@legacy-ai/agent-core-v2';
+import { encodeWorkDirKey } from '@legacy-ai/agent-core-v2/_base/utils/workdir-slug';
+import { RuntimeError } from '@legacy-ai/agent-core-v2/runtime/runtimeRegistry';
 import {
   fsDiffRequestSchema,
   fsGitStatusRequestSchema,
@@ -33,14 +33,14 @@ import {
   fsStatRequestSchema,
   fsSuggestRequestSchema,
   fsSuggestResponseSchema,
-} from '@moonshot-ai/agent-core-v2/workspace/workspaceFs/fs';
-import { GitService } from '@moonshot-ai/agent-core-v2/app/git/gitService';
-import type { IHostFileSystem } from '@moonshot-ai/agent-core-v2/os/interface/hostFileSystem';
-import type { RuntimeCapability, RuntimeLease } from '@moonshot-ai/agent-core-v2/runtime/runtime';
-import { WorkspaceFsService } from '@moonshot-ai/agent-core-v2/workspace/workspaceFs/fsService';
-import { WorkspaceGitService } from '@moonshot-ai/agent-core-v2/workspace/workspaceGit/workspaceGitService';
-import type { IWorkspaceContext } from '@moonshot-ai/agent-core-v2/workspace/workspaceContext/workspaceContext';
-import type { IWorkspaceDirs } from '@moonshot-ai/agent-core-v2/workspace/workspaceDirs/workspaceDirs';
+} from '@legacy-ai/agent-core-v2/workspace/workspaceFs/fs';
+import { GitService } from '@legacy-ai/agent-core-v2/app/git/gitService';
+import type { IHostFileSystem } from '@legacy-ai/agent-core-v2/os/interface/hostFileSystem';
+import type { RuntimeCapability, RuntimeLease } from '@legacy-ai/agent-core-v2/runtime/runtime';
+import { WorkspaceFsService } from '@legacy-ai/agent-core-v2/workspace/workspaceFs/fsService';
+import { WorkspaceGitService } from '@legacy-ai/agent-core-v2/workspace/workspaceGit/workspaceGitService';
+import type { IWorkspaceContext } from '@legacy-ai/agent-core-v2/workspace/workspaceContext/workspaceContext';
+import type { IWorkspaceDirs } from '@legacy-ai/agent-core-v2/workspace/workspaceDirs/workspaceDirs';
 import { z } from 'zod';
 
 import { errEnvelope, okEnvelope } from '../envelope';

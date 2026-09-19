@@ -35,7 +35,7 @@ import {
   type ExtraSkillDirsConfig,
   type MergeAllAvailableSkillsConfig,
   IAgentProfileService,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import { join } from 'node:path';
 import { z } from 'zod';
 

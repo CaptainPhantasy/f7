@@ -1,5 +1,5 @@
-import type { ToolInputDisplay } from '@moonshot-ai/agent-core-v2/tool/toolInputDisplay';
-import type { ContentPart, Message } from '@moonshot-ai/kosong';
+import type { ToolInputDisplay } from '@legacy-ai/agent-core-v2/tool/toolInputDisplay';
+import type { ContentPart, Message } from '@legacy-ai/kosong';
 
 import type { BackgroundTaskStatus } from '#/task';
 

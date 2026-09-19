@@ -4,9 +4,9 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import {
-  createKimiHarness,
+  createFloydHarness,
   type Event,
-  type KimiError,
+  type FloydError,
   type SkillActivatedEvent,
   type SkillSummary,
 } from '#/index';
@@ -24,7 +24,7 @@ const { Session } = await import('#/index');
 const tempDirs: string[] = [];
 
 const CONFIG_ENV_PATTERN =
-  /^(KIMI_MODEL_|KIMI_LOOP_|KIMI_MCP_|KIMI_WEB_|KIMI_IMAGE_|KIMI_CODE_BACKGROUND_|KIMI_CODE_MODEL_CATALOG_)/;
+  /^(FLOYD_MODEL_|FLOYD_LOOP_|FLOYD_MCP_|FLOYD_WEB_|FLOYD_IMAGE_|FLOYD_CODE_BACKGROUND_|FLOYD_CODE_MODEL_CATALOG_)/;
 
 /** Keep ambient env from injecting providers/models into the v2 engine. */
 function scrubConfigEnv(): () => void {
@@ -50,8 +50,8 @@ afterEach(async () => {
 describe('Session skills', () => {
   it('submits multiple skills with a prompt as one grouped turn', async () => {
     const restoreEnv = scrubConfigEnv();
-    const homeDir = await makeTempDir(tempDirs, 'kimi-sdk-skills-home-');
-    const workDir = await makeTempDir(tempDirs, 'kimi-sdk-skills-work-');
+    const homeDir = await makeTempDir(tempDirs, 'floyd-sdk-skills-home-');
+    const workDir = await makeTempDir(tempDirs, 'floyd-sdk-skills-work-');
     await writeSkill(workDir, 'review', [
       '---',
       'name: review',
@@ -68,7 +68,7 @@ describe('Session skills', () => {
       '',
       'Check the requested file for security issues.',
     ]);
-    const harness = createKimiHarness({ homeDir, identity: TEST_IDENTITY });
+    const harness = createFloydHarness({ homeDir, identity: TEST_IDENTITY });
 
     try {
       const session = await harness.createSession({ id: 'ses_sdk_multi_skill', workDir });
@@ -98,8 +98,8 @@ describe('Session skills', () => {
   });
 
   it('lists session skills without exposing content', async () => {
-    const homeDir = await makeTempDir(tempDirs, 'kimi-sdk-skills-home-');
-    const workDir = await makeTempDir(tempDirs, 'kimi-sdk-skills-work-');
+    const homeDir = await makeTempDir(tempDirs, 'floyd-sdk-skills-home-');
+    const workDir = await makeTempDir(tempDirs, 'floyd-sdk-skills-work-');
     await writeSkill(workDir, 'review', [
       '---',
       'name: review',
@@ -109,7 +109,7 @@ describe('Session skills', () => {
       '',
       'Review the requested file.',
     ]);
-    const harness = createKimiHarness({ homeDir, identity: TEST_IDENTITY });
+    const harness = createFloydHarness({ homeDir, identity: TEST_IDENTITY });
 
     try {
       const session = await harness.createSession({ id: 'ses_sdk_skill_list', workDir });
@@ -123,7 +123,7 @@ describe('Session skills', () => {
         source: 'project',
         disableModelInvocation: true,
       });
-      expect(listed?.path.endsWith('/.kimi-code/skills/review/SKILL.md')).toBe(true);
+      expect(listed?.path.endsWith('/.floyd-code/skills/review/SKILL.md')).toBe(true);
       expect(JSON.stringify(skills)).not.toContain('Review the requested file.');
     } finally {
       await harness.close();
@@ -131,8 +131,8 @@ describe('Session skills', () => {
   });
 
   it('activates a skill through core and emits the public skill event', async () => {
-    const homeDir = await makeTempDir(tempDirs, 'kimi-sdk-skills-home-');
-    const workDir = await makeTempDir(tempDirs, 'kimi-sdk-skills-work-');
+    const homeDir = await makeTempDir(tempDirs, 'floyd-sdk-skills-home-');
+    const workDir = await makeTempDir(tempDirs, 'floyd-sdk-skills-work-');
     await writeSkill(workDir, 'review', [
       '---',
       'name: review',
@@ -141,7 +141,7 @@ describe('Session skills', () => {
       '',
       'Review the requested file.',
     ]);
-    const harness = createKimiHarness({ homeDir, identity: TEST_IDENTITY });
+    const harness = createFloydHarness({ homeDir, identity: TEST_IDENTITY });
 
     try {
       const session = await harness.createSession({ id: 'ses_sdk_skill_activate', workDir });
@@ -194,15 +194,15 @@ describe('Session skills', () => {
     }
   });
 
-  it('resolves user brand skills from KIMI_CODE_HOME, not the OS home', async () => {
-    const homeDir = await makeTempDir(tempDirs, 'kimi-sdk-skills-home-');
-    const processHome = await makeTempDir(tempDirs, 'kimi-sdk-skills-process-home-');
-    const workDir = await makeTempDir(tempDirs, 'kimi-sdk-skills-work-');
+  it('resolves user brand skills from FLOYD_CODE_HOME, not the OS home', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'floyd-sdk-skills-home-');
+    const processHome = await makeTempDir(tempDirs, 'floyd-sdk-skills-process-home-');
+    const workDir = await makeTempDir(tempDirs, 'floyd-sdk-skills-work-');
     vi.stubEnv('HOME', processHome);
-    vi.stubEnv('KIMI_CODE_HOME', homeDir);
+    vi.stubEnv('FLOYD_CODE_HOME', homeDir);
     await writeLegacyUserSkill(processHome, 'sdk-real-home-only', 'SDK real home skill');
     await writeBrandUserSkill(homeDir, 'sdk-sandbox-only', 'SDK sandbox skill');
-    const harness = createKimiHarness({ identity: TEST_IDENTITY });
+    const harness = createFloydHarness({ identity: TEST_IDENTITY });
 
     try {
       const session = await harness.createSession({ id: 'ses_sdk_skill_env_home', workDir });
@@ -232,22 +232,22 @@ describe('Session skills', () => {
     });
 
     await expect(session.activateSkill('   ')).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'FloydError',
       code: 'skill.name_empty',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<FloydError>);
     expect(activateSkill).not.toHaveBeenCalled();
 
     await session.close();
     expect(closeSession).toHaveBeenCalledWith({ sessionId: session.id });
     expect(clearSessionHandlers).toHaveBeenCalledWith(session.id);
     await expect(session.listSkills()).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'FloydError',
       code: 'session.closed',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<FloydError>);
     await expect(session.activateSkill('review')).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'FloydError',
       code: 'session.closed',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<FloydError>);
   });
 
   it('finalizes local close state when the core close RPC fails', async () => {
@@ -273,9 +273,9 @@ describe('Session skills', () => {
     expect(closeSession).toHaveBeenCalledTimes(1);
     expect(clearSessionHandlers).toHaveBeenCalledWith(session.id);
     await expect(session.listSkills()).rejects.toMatchObject({
-      name: 'KimiError',
+      name: 'FloydError',
       code: 'session.closed',
-    } satisfies Partial<KimiError>);
+    } satisfies Partial<FloydError>);
   });
 
   it('exposes public skill event and summary types', () => {
@@ -284,10 +284,10 @@ describe('Session skills', () => {
   });
 });
 
-describe('KimiHarness workspace skills', () => {
+describe('FloydHarness workspace skills', () => {
   it('returns project skills when no session exists', async () => {
-    const homeDir = await makeTempDir(tempDirs, 'kimi-sdk-workspace-skills-home-');
-    const workDir = await makeTempDir(tempDirs, 'kimi-sdk-workspace-skills-work-');
+    const homeDir = await makeTempDir(tempDirs, 'floyd-sdk-workspace-skills-home-');
+    const workDir = await makeTempDir(tempDirs, 'floyd-sdk-workspace-skills-work-');
     await writeSkill(workDir, 'workspace-review', [
       '---',
       'name: workspace-review',
@@ -296,7 +296,7 @@ describe('KimiHarness workspace skills', () => {
       '',
       'Inspect every changed file.',
     ]);
-    const harness = createKimiHarness({ homeDir, identity: TEST_IDENTITY });
+    const harness = createFloydHarness({ homeDir, identity: TEST_IDENTITY });
 
     try {
       const skills = await harness.listWorkspaceSkills(workDir);
@@ -313,30 +313,30 @@ describe('KimiHarness workspace skills', () => {
   });
 
   it('preserves the core error when workDir is empty', async () => {
-    const homeDir = await makeTempDir(tempDirs, 'kimi-sdk-workspace-skills-home-');
-    const harness = createKimiHarness({ homeDir, identity: TEST_IDENTITY });
+    const homeDir = await makeTempDir(tempDirs, 'floyd-sdk-workspace-skills-home-');
+    const harness = createFloydHarness({ homeDir, identity: TEST_IDENTITY });
 
     try {
       await expect(harness.listWorkspaceSkills('   ')).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'FloydError',
         code: 'request.work_dir_required',
         message: 'listWorkspaceSkills requires workDir',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<FloydError>);
     } finally {
       await harness.close();
     }
   });
 
   it('preserves the core error when workDir is not a string', async () => {
-    const homeDir = await makeTempDir(tempDirs, 'kimi-sdk-workspace-skills-home-');
-    const harness = createKimiHarness({ homeDir, identity: TEST_IDENTITY });
+    const homeDir = await makeTempDir(tempDirs, 'floyd-sdk-workspace-skills-home-');
+    const harness = createFloydHarness({ homeDir, identity: TEST_IDENTITY });
 
     try {
       await expect(harness.listWorkspaceSkills(null as never)).rejects.toMatchObject({
-        name: 'KimiError',
+        name: 'FloydError',
         code: 'request.work_dir_required',
         message: 'listWorkspaceSkills requires workDir',
-      } satisfies Partial<KimiError>);
+      } satisfies Partial<FloydError>);
     } finally {
       await harness.close();
     }
@@ -344,7 +344,7 @@ describe('KimiHarness workspace skills', () => {
 });
 
 async function writeSkill(workDir: string, name: string, lines: readonly string[]): Promise<void> {
-  const dir = join(workDir, '.kimi-code', 'skills', name);
+  const dir = join(workDir, '.floyd-code', 'skills', name);
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, 'SKILL.md'), lines.join('\n'));
 }
@@ -354,7 +354,7 @@ async function writeLegacyUserSkill(
   name: string,
   description: string,
 ): Promise<void> {
-  await writeSkillFile(join(userHomeDir, '.kimi-code', 'skills', name), name, description);
+  await writeSkillFile(join(userHomeDir, '.floyd-code', 'skills', name), name, description);
 }
 
 async function writeBrandUserSkill(

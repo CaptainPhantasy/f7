@@ -6,13 +6,13 @@ import {
   IOAuthService,
   type IOAuthService as IOAuthServiceType,
   type ScopeSeed,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import {
   managedUsageResultSchema,
   managedUserInfoResultSchema,
   type ManagedUsageResult,
   type ManagedUserInfoResult,
-} from '@moonshot-ai/agent-core-v2/app/auth/oauthProtocol';
+} from '@legacy-ai/agent-core-v2/app/auth/oauthProtocol';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type RunningServer, startServer } from '../src/start';
@@ -32,7 +32,7 @@ describe('server-v2 GET /api/v1/oauth/usage', () => {
   let base: string;
 
   beforeEach(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-oauth-usage-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-oauth-usage-'));
   });
 
   afterEach(async () => {
@@ -140,12 +140,12 @@ describe('server-v2 GET /api/v1/oauth/usage', () => {
     }));
     await boot([[IOAuthService, oauthStub(getManagedUsage)]] as unknown as ScopeSeed);
 
-    expect(await getUsage('?provider=managed%3Akimi-code')).toEqual({
+    expect(await getUsage('?provider=managed%3Afloyd-code')).toEqual({
       kind: 'error',
       message: 'Authorization failed.',
       status: 401,
     });
-    expect(getManagedUsage).toHaveBeenCalledWith('managed:kimi-code');
+    expect(getManagedUsage).toHaveBeenCalledWith('managed:floyd-code');
   });
 });
 
@@ -155,7 +155,7 @@ describe('server-v2 GET /api/v1/oauth/userinfo', () => {
   let base: string;
 
   beforeEach(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-oauth-userinfo-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-oauth-userinfo-'));
   });
 
   afterEach(async () => {
@@ -267,11 +267,11 @@ describe('server-v2 GET /api/v1/oauth/userinfo', () => {
     }));
     await boot([[IOAuthService, oauthStub(getManagedUserInfo)]] as unknown as ScopeSeed);
 
-    expect(await getUserInfo('?provider=managed%3Akimi-code')).toEqual({
+    expect(await getUserInfo('?provider=managed%3Afloyd-code')).toEqual({
       kind: 'error',
       message: 'Authorization failed.',
       status: 401,
     });
-    expect(getManagedUserInfo).toHaveBeenCalledWith('managed:kimi-code');
+    expect(getManagedUserInfo).toHaveBeenCalledWith('managed:floyd-code');
   });
 });

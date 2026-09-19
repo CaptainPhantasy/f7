@@ -1,12 +1,12 @@
-import type { ContextSpliced } from '@moonshot-ai/agent-core-v2/agent/contextMemory/contextEvents';
-import type { HookResult } from '@moonshot-ai/agent-core-v2/features/externalHooks/agent/agentExternalHooksService';
+import type { ContextSpliced } from '@legacy-ai/agent-core-v2/agent/contextMemory/contextEvents';
+import type { HookResult } from '@legacy-ai/agent-core-v2/features/externalHooks/agent/agentExternalHooksService';
 import type {
   CompactionBlocked,
   CompactionCancelled,
   CompactionCompleted,
   CompactionStarted,
-} from '@moonshot-ai/agent-core-v2/agent/fullCompaction/compactionOps';
-import { daemonFileRefFromPart, type ContentPart, type ContextUndone, type CronFired, type GoalUpdated } from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2/agent/fullCompaction/compactionOps';
+import { daemonFileRefFromPart, type ContentPart, type ContextUndone, type CronFired, type GoalUpdated } from '@legacy-ai/agent-core-v2';
 import type {
   AssistantDelta,
   ThinkingDelta,
@@ -16,12 +16,12 @@ import type {
   TurnStepInterrupted,
   TurnStepRetrying,
   TurnStepStarted,
-} from '@moonshot-ai/agent-core-v2/agent/loop/turnEvents';
-import type { TurnEnded, TurnSteer } from '@moonshot-ai/agent-core-v2/agent/loop/turnOps';
-import type { AgentActivitySnapshot } from '@moonshot-ai/agent-core-v2/agent/loop/loop';
-import type { AgentErrorEvent } from '@moonshot-ai/agent-core-v2/agent/mcp/mcpEvents';
-import type { PluginCommandActivated } from '@moonshot-ai/agent-core-v2/agent/pluginCommand/pluginCommand';
-import type { WarningIssued } from '@moonshot-ai/agent-core-v2/agent/profile/profileOps';
+} from '@legacy-ai/agent-core-v2/agent/loop/turnEvents';
+import type { TurnEnded, TurnSteer } from '@legacy-ai/agent-core-v2/agent/loop/turnOps';
+import type { AgentActivitySnapshot } from '@legacy-ai/agent-core-v2/agent/loop/loop';
+import type { AgentErrorEvent } from '@legacy-ai/agent-core-v2/agent/mcp/mcpEvents';
+import type { PluginCommandActivated } from '@legacy-ai/agent-core-v2/agent/pluginCommand/pluginCommand';
+import type { WarningIssued } from '@legacy-ai/agent-core-v2/agent/profile/profileOps';
 import type {
   PromptAborted,
   PromptCompleted,
@@ -29,37 +29,37 @@ import type {
   PromptStarted,
   PromptSteered,
   PromptSubmitted,
-} from '@moonshot-ai/agent-core-v2/agent/prompt/promptEvents';
+} from '@legacy-ai/agent-core-v2/agent/prompt/promptEvents';
 import type {
   ShellCompleted,
   ShellOutput,
   ShellStarted,
-} from '@moonshot-ai/agent-core-v2/agent/shellCommand/shellCommandService';
-import type { SkillActivated } from '@moonshot-ai/agent-core-v2/features/skill/skillOps';
+} from '@legacy-ai/agent-core-v2/agent/shellCommand/shellCommandService';
+import type { SkillActivated } from '@legacy-ai/agent-core-v2/features/skill/skillOps';
 import type {
   TaskNotified,
   TaskStarted,
   TaskTerminatedNotice,
-} from '@moonshot-ai/agent-core-v2/agent/task/taskOps';
+} from '@legacy-ai/agent-core-v2/agent/task/taskOps';
 import type {
   PermissionApprovalRequested,
   PermissionApprovalResolved,
-} from '@moonshot-ai/agent-core-v2/agent/toolApproval/toolApprovalService';
+} from '@legacy-ai/agent-core-v2/agent/toolApproval/toolApprovalService';
 import type {
   ToolCallStarted,
   ToolProgress,
   ToolResultEvent,
-} from '@moonshot-ai/agent-core-v2/agent/toolExecutor/toolExecutorEvents';
-import type { AgentStatusUpdated } from '@moonshot-ai/agent-core-v2/agent/usage/usageEvents';
-import type { PlanRevision } from '@moonshot-ai/agent-core-v2/features/plan/planOps';
-import type { SubagentSuspended } from '@moonshot-ai/agent-core-v2/features/swarm/session/sessionSwarmService';
+} from '@legacy-ai/agent-core-v2/agent/toolExecutor/toolExecutorEvents';
+import type { AgentStatusUpdated } from '@legacy-ai/agent-core-v2/agent/usage/usageEvents';
+import type { PlanRevision } from '@legacy-ai/agent-core-v2/features/plan/planOps';
+import type { SubagentSuspended } from '@legacy-ai/agent-core-v2/features/swarm/session/sessionSwarmService';
 import type {
   SubagentCancelled,
   SubagentCompleted,
   SubagentFailed,
   SubagentSpawned,
   SubagentStarted,
-} from '@moonshot-ai/agent-core-v2/session/subagent/mirrorAgentRun';
+} from '@legacy-ai/agent-core-v2/session/subagent/mirrorAgentRun';
 import {
   projectTranscriptUserOrigin,
   projectTranscriptUserTurnOrigin,
@@ -83,7 +83,7 @@ import {
   type TurnHeader,
   type TurnOrigin,
   type TurnState,
-} from '@moonshot-ai/transcript';
+} from '@legacy-ai/transcript';
 
 import { toLegacyPhase, type LegacyActivityApproval } from '../legacyStatus/legacyStatus';
 import { LegacyActivityTracker, phaseFromDomainEvent } from '../legacyStatus/legacyActivity';

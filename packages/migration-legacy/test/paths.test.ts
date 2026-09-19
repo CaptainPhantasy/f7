@@ -3,8 +3,8 @@ import { join } from 'node:path';
 import * as paths from '../src/paths.js';
 
 describe('paths', () => {
-  it('sourceCredentialsDir joins ~/.kimi/credentials', () => {
-    expect(paths.sourceCredentialsDir('/x/.kimi')).toBe(join('/x/.kimi', 'credentials'));
+  it('sourceCredentialsDir joins ~/.floyd/credentials', () => {
+    expect(paths.sourceCredentialsDir('/x/.floyd')).toBe(join('/x/.floyd', 'credentials'));
   });
 
   it('targetConfigFile and targetTuiFile', () => {
@@ -17,20 +17,20 @@ describe('paths', () => {
   });
 
   it('migratedMarker is under source', () => {
-    expect(paths.migratedMarker('/x/.kimi')).toBe(join('/x/.kimi', '.migrated-to-kimi-code'));
+    expect(paths.migratedMarker('/x/.floyd')).toBe(join('/x/.floyd', '.migrated-to-floyd-code'));
   });
 
   it('skipMarker is under target', () => {
-    expect(paths.skipMarker('/y/.kimi-code')).toBe(join('/y/.kimi-code', '.skip-migration-from-kimi-cli'));
+    expect(paths.skipMarker('/y/.floyd-code')).toBe(join('/y/.floyd-code', '.skip-migration-from-floyd-cli'));
   });
 
   it('migrationReportFile is under target', () => {
     expect(paths.migrationReportFile('/y')).toBe(join('/y', 'migration-report.json'));
   });
 
-  it('sourceSessionsDir / sourceUserHistoryDir / sourceKimiJson', () => {
+  it('sourceSessionsDir / sourceUserHistoryDir / sourceFloydJson', () => {
     expect(paths.sourceSessionsDir('/x')).toBe(join('/x', 'sessions'));
     expect(paths.sourceUserHistoryDir('/x')).toBe(join('/x', 'user-history'));
-    expect(paths.sourceKimiJson('/x')).toBe(join('/x', 'kimi.json'));
+    expect(paths.sourceFloydJson('/x')).toBe(join('/x', 'floyd.json'));
   });
 });

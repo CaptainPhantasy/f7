@@ -44,7 +44,7 @@ function sample(overrides: Partial<Extract<AgentTaskInfo, { kind: 'process' }>> 
 beforeEach(async () => {
   sessionDir = join(
     tmpdir(),
-    `kimi-bg-persist-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `floyd-bg-persist-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await mkdir(sessionDir, { recursive: true });
 

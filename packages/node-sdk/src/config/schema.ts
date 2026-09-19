@@ -1,7 +1,7 @@
-import { parsePattern } from '@moonshot-ai/agent-core-v2/agent/permissionRules/matchesRule';
+import { parsePattern } from '@legacy-ai/agent-core-v2/agent/permissionRules/matchesRule';
 import { z } from 'zod';
 
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, FloydError } from '#/errors';
 
 const HOOK_EVENT_TYPES = [
   'PreToolUse',
@@ -25,7 +25,7 @@ const HOOK_EVENT_TYPES = [
 export const ProviderTypeSchema = z.enum([
   'anthropic',
   'openai',
-  'kimi',
+  'floyd',
   'google-genai',
   'openai_responses',
   'vertexai',
@@ -202,18 +202,18 @@ export const HookDefSchema = z
 
 export type HookDefConfig = z.infer<typeof HookDefSchema>;
 
-export const MoonshotServiceConfigSchema = z.object({
+export const LegacyServiceConfigSchema = z.object({
   baseUrl: z.string().optional(),
   apiKey: z.string().optional(),
   oauth: OAuthRefSchema.optional(),
   customHeaders: StringRecordSchema.optional(),
 });
 
-export type MoonshotServiceConfig = z.infer<typeof MoonshotServiceConfigSchema>;
+export type LegacyServiceConfig = z.infer<typeof LegacyServiceConfigSchema>;
 
 export const ServicesConfigSchema = z.object({
-  moonshotSearch: MoonshotServiceConfigSchema.optional(),
-  moonshotFetch: MoonshotServiceConfigSchema.optional(),
+  legacySearch: LegacyServiceConfigSchema.optional(),
+  legacyFetch: LegacyServiceConfigSchema.optional(),
 });
 
 export type ServicesConfig = z.infer<typeof ServicesConfigSchema>;
@@ -279,7 +279,7 @@ export const McpServerConfigSchema = z.preprocess((raw) => {
 
 export type McpServerConfig = z.infer<typeof McpServerConfigSchema>;
 
-export const KimiConfigSchema = z.object({
+export const FloydConfigSchema = z.object({
   providers: z.record(z.string(), ProviderConfigSchema).default({}),
   defaultProvider: z.string().optional(),
   defaultModel: z.string().optional(),
@@ -307,7 +307,7 @@ export const KimiConfigSchema = z.object({
   raw: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type KimiConfig = z.infer<typeof KimiConfigSchema>;
+export type FloydConfig = z.infer<typeof FloydConfigSchema>;
 
 const ProviderConfigPatchSchema = ProviderConfigSchema.partial();
 const ModelAliasPatchSchema = ModelAliasSchema.partial();
@@ -321,13 +321,13 @@ const McpConfigPatchSchema = McpConfigSchema.partial();
 const ImageConfigPatchSchema = ImageConfigSchema.partial();
 const ModelCatalogConfigPatchSchema = ModelCatalogConfigSchema.partial();
 const ExperimentalConfigPatchSchema = ExperimentalConfigSchema;
-const MoonshotServiceConfigPatchSchema = MoonshotServiceConfigSchema.partial();
+const LegacyServiceConfigPatchSchema = LegacyServiceConfigSchema.partial();
 const ServicesConfigPatchSchema = z.object({
-  moonshotSearch: MoonshotServiceConfigPatchSchema.optional(),
-  moonshotFetch: MoonshotServiceConfigPatchSchema.optional(),
+  legacySearch: LegacyServiceConfigPatchSchema.optional(),
+  legacyFetch: LegacyServiceConfigPatchSchema.optional(),
 });
 
-export const KimiConfigPatchSchema = z
+export const FloydConfigPatchSchema = z
   .object({
     providers: z.record(z.string(), ProviderConfigPatchSchema).optional(),
     defaultProvider: z.string().optional(),
@@ -356,19 +356,19 @@ export const KimiConfigPatchSchema = z
   })
   .strict();
 
-export type KimiConfigPatch = z.infer<typeof KimiConfigPatchSchema>;
+export type FloydConfigPatch = z.infer<typeof FloydConfigPatchSchema>;
 
-export function getDefaultConfig(): KimiConfig {
+export function getDefaultConfig(): FloydConfig {
   return {
     providers: {},
   };
 }
 
-export function validateConfig(config: unknown): KimiConfig {
+export function validateConfig(config: unknown): FloydConfig {
   try {
-    return KimiConfigSchema.parse(config);
+    return FloydConfigSchema.parse(config);
   } catch (error) {
-    throw new KimiError(ErrorCodes.CONFIG_INVALID, `Invalid configuration: ${formatConfigValidationError(error)}`, {
+    throw new FloydError(ErrorCodes.CONFIG_INVALID, `Invalid configuration: ${formatConfigValidationError(error)}`, {
       cause: error,
     });
   }

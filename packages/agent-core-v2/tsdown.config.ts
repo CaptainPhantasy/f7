@@ -11,8 +11,8 @@ export default defineConfig({
   plugins: [rawTextPlugin()],
   deps: {
     neverBundle: [
-      '@moonshot-ai/kimi-code-oauth',
-      '@moonshot-ai/kimi-telemetry',
+      '@legacy-ai/floyd-code-oauth',
+      '@legacy-ai/floyd-telemetry',
     ],
   },
 });

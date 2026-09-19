@@ -1,11 +1,11 @@
-import type { HostUiCapability } from '@moonshot-ai/agent-core-v2';
+import type { HostUiCapability } from '@legacy-ai/agent-core-v2';
 import type {
   ExportSessionManifest,
   ShellEnvironment,
-} from '@moonshot-ai/agent-core-v2/app/sessionExport/sessionExport';
-import type { Kaos } from '@moonshot-ai/kaos';
-import type { KimiHostIdentity, OAuthRefreshOutcome } from '@moonshot-ai/kimi-code-oauth';
-import type { ContentPart } from '@moonshot-ai/kosong';
+} from '@legacy-ai/agent-core-v2/app/sessionExport/sessionExport';
+import type { Kaos } from '@legacy-ai/kaos';
+import type { FloydHostIdentity, OAuthRefreshOutcome } from '@legacy-ai/floyd-code-oauth';
+import type { ContentPart } from '@legacy-ai/kosong';
 
 import type { ResumeSessionResult } from '#/replay';
 import type { PermissionMode } from '#/permission';
@@ -19,7 +19,7 @@ export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { readonly [key: string]: JsonValue };
 export type JsonObject = { readonly [key: string]: JsonValue };
 
-export type { ImportCustomRegistryOptions, ImportCustomRegistryResult } from '@moonshot-ai/klient';
+export type { ImportCustomRegistryOptions, ImportCustomRegistryResult } from '@legacy-ai/klient';
 
 export type Unsubscribe = () => void;
 
@@ -28,7 +28,7 @@ export interface AgentRuntimeBinding {
   readonly runtimeId: string;
 }
 
-export type { CapabilityStatus } from '@moonshot-ai/agent-core-v2/app/capability/types';
+export type { CapabilityStatus } from '@legacy-ai/agent-core-v2/app/capability/types';
 
 export type {
   AgentReplayRecord,
@@ -59,11 +59,11 @@ export type {
 export type {
   BackgroundConfig,
   ConfigDiagnostics,
-  KimiConfig,
-  KimiConfigPatch,
+  FloydConfig,
+  FloydConfigPatch,
   LoopControl,
   ModelAlias,
-  MoonshotServiceConfig,
+  LegacyServiceConfig,
   OAuthRef,
   ProviderConfig,
   ProviderType,
@@ -75,7 +75,7 @@ export type {
   ExperimentalFeatureState,
   ExperimentalFlagMap,
   ExperimentalFlagSource,
-} from '@moonshot-ai/agent-core-v2/app/flag/flag';
+} from '@legacy-ai/agent-core-v2/app/flag/flag';
 export type {
   GoalBudgetLimits,
   GoalBudgetReport,
@@ -84,7 +84,7 @@ export type {
   GoalSnapshot,
   GoalStatus,
   GoalToolResult,
-} from '@moonshot-ai/agent-core-v2/features/goal/types';
+} from '@legacy-ai/agent-core-v2/features/goal/types';
 export type {
   PluginCommandDef,
   PluginGithubMetadata,
@@ -94,13 +94,13 @@ export type {
   PluginSource,
   PluginSummary,
   ReloadSummary,
-} from '@moonshot-ai/agent-core-v2/app/plugin/types';
-export type { SkillSummary } from '@moonshot-ai/agent-core-v2/features/skill/catalog/types';
+} from '@legacy-ai/agent-core-v2/app/plugin/types';
+export type { SkillSummary } from '@legacy-ai/agent-core-v2/features/skill/catalog/types';
 export type { ToolInfo } from '#/tool';
 export type {
   ExportSessionManifest,
   ShellEnvironment,
-} from '@moonshot-ai/agent-core-v2/app/sessionExport/sessionExport';
+} from '@legacy-ai/agent-core-v2/app/sessionExport/sessionExport';
 
 export interface CronTaskSnapshot {
   readonly id: string;
@@ -115,15 +115,15 @@ export interface GetCronTasksResult {
   readonly tasks: readonly CronTaskSnapshot[];
 }
 
-export type { KimiHostIdentity, OAuthRefreshOutcome };
+export type { FloydHostIdentity, OAuthRefreshOutcome };
 // Host UI capabilities are an agent-core-v2 seam (`BootstrapInput.args.uiCapabilities`);
-// hosts name them through `KimiHarnessOptions.uiCapabilities`, so the type is public here.
+// hosts name them through `FloydHarnessOptions.uiCapabilities`, so the type is public here.
 export type { HostUiCapability };
 export type { TelemetryClient, TelemetryContextPatch, TelemetryProperties };
-export type { ContentPart, Role, ThinkingEffort, ToolCall } from '@moonshot-ai/kosong';
+export type { ContentPart, Role, ThinkingEffort, ToolCall } from '@legacy-ai/kosong';
 // Contributed commands are an agent-core-v2 seam; the type is re-exported
 // from the v2 engine (v1 sessions report an empty command set).
-export type { AgentCommandInfo } from '@moonshot-ai/agent-core-v2/agent/command/agentCommand';
+export type { AgentCommandInfo } from '@legacy-ai/agent-core-v2/agent/command/agentCommand';
 
 export type { PermissionMode };
 
@@ -171,7 +171,7 @@ export interface SuggestFilesResult {
 }
 
 /** Metadata of one upload in the engine's daemon file store. */
-export type { FileMeta } from '@moonshot-ai/agent-core-v2/app/file/fileService';
+export type { FileMeta } from '@legacy-ai/agent-core-v2/app/file/fileService';
 
 /** Input for `uploadFile`: the upload's display name and MIME type. */
 export interface UploadFileOptions {
@@ -196,8 +196,8 @@ export interface PromptSkillActivation {
   readonly args?: string;
 }
 
-export interface KimiHarnessOptions {
-  readonly identity?: KimiHostIdentity | undefined;
+export interface FloydHarnessOptions {
+  readonly identity?: FloydHostIdentity | undefined;
   readonly homeDir?: string | undefined;
   readonly configPath?: string | undefined;
   readonly autoLoadConfig?: boolean | undefined;
@@ -239,7 +239,7 @@ export interface CreateSessionOptions {
   readonly agentFiles?: readonly string[];
   readonly sessionStartedProperties?: TelemetryProperties;
   /**
-   * Print-mode (`kimi -p`) only: when the main agent ends a turn while
+   * Print-mode (`floyd -p`) only: when the main agent ends a turn while
    * background subagents (`kind === 'agent'`) are still running, hold the turn
    * open and idle-wait until they all finish, flushing their completions into
    * the turn so the model can react before the run exits. Ignored by

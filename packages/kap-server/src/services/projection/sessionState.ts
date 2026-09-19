@@ -3,7 +3,7 @@ import type {
   SessionActivityState,
   TokenUsage,
   UsageStatus,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 
 import type {
   SessionStateGoal,

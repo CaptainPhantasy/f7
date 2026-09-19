@@ -1,9 +1,9 @@
-import type { BearerTokenProvider } from '@moonshot-ai/kimi-code-oauth';
+import type { BearerTokenProvider } from '@legacy-ai/floyd-code-oauth';
 import type {
   ModelCapability,
   ProviderConfig as KosongProviderConfig,
   ProviderRequestAuth,
-} from '@moonshot-ai/kosong';
+} from '@legacy-ai/kosong';
 
 import type { ModelAlias, OAuthRef, ProviderType } from '#/config/index';
 import type { Logger } from '#/logging/index';

@@ -2,7 +2,7 @@
  * select_tools progressive disclosure — kosong-side contract tests.
  *
  * Covers the three primitives this package contributes:
- *   - `Message.tools` serialization on the Kimi wire (`messages[].tools`,
+ *   - `Message.tools` serialization on the Floyd wire (`messages[].tools`,
  *     `{type:'function', function:{...}}` wrapping, no `content`, schema
  *     normalization and the `$` builtin branch shared with top-level tools);
  *   - `Tool.deferred` stripping in `generate()` (single strip point for every
@@ -17,7 +17,7 @@ import { isToolDeclarationOnlyMessage } from '#/message';
 import type { Message, StreamedMessagePart } from '#/message';
 import { AnthropicChatProvider } from '#/providers/anthropic';
 import { messagesToGoogleGenAIContents } from '#/providers/google-genai';
-import { KimiChatProvider } from '#/providers/kimi';
+import { FloydChatProvider } from '#/providers/floyd';
 import { OpenAILegacyChatProvider } from '#/providers/openai-legacy';
 import { OpenAIResponsesChatProvider } from '#/providers/openai-responses';
 import type { ChatProvider, StreamedMessage, ThinkingEffort } from '#/provider';
@@ -48,7 +48,7 @@ function makeChatCompletionResponse() {
     id: 'chatcmpl-test123',
     object: 'chat.completion',
     created: 1234567890,
-    model: 'kimi-test',
+    model: 'floyd-test',
     choices: [
       {
         index: 0,
@@ -64,8 +64,8 @@ async function captureRequestBody(
   tools: Tool[],
   history: Message[],
 ): Promise<Record<string, unknown>> {
-  const provider = new KimiChatProvider({
-    model: 'kimi-test',
+  const provider = new FloydChatProvider({
+    model: 'floyd-test',
     apiKey: 'test-key',
     stream: false,
   });
@@ -74,7 +74,7 @@ async function captureRequestBody(
     .fn()
     .mockImplementation((params: unknown) => {
       capturedBody = params as Record<string, unknown>;
-      // The Kimi provider consumes `APIPromise.withResponse()` to read the
+      // The Floyd provider consumes `APIPromise.withResponse()` to read the
       // `x-trace-id` header, so the mock must expose that method.
       return {
         withResponse: () =>
@@ -94,7 +94,7 @@ async function captureRequestBody(
   return capturedBody;
 }
 
-describe('Kimi messages[].tools serialization', () => {
+describe('Floyd messages[].tools serialization', () => {
   it('serializes a system message carrying tools with function wrapping and no content', async () => {
     const history: Message[] = [
       { role: 'user', content: [{ type: 'text', text: 'hi' }], toolCalls: [] },

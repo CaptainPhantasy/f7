@@ -320,7 +320,7 @@ describe('task notification → main agent (real Agent instance)', () => {
     let loop: IAgentLoopService;
 
     beforeEach(async () => {
-      sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-resume-repro-'));
+      sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-resume-repro-'));
       const backgroundPersistence = createAgentTaskPersistence(sessionDir);
       await backgroundPersistence.writeTask({
         taskId: 'bash-prev0000',

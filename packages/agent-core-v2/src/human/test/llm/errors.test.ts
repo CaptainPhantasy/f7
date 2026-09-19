@@ -9,8 +9,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { UNKNOWN_CAPABILITY } from '#/llm/capability';
 import { createAssistantMessage, createUserMessage, type Message } from '#/llm/message';
 import type { LlmModel } from '#/llm/model';
-import { classifyKimiQuotaError } from '#/llm-kimi/errors';
-import { kimiConnection, kimiOpenAITrait } from '#/llm-kimi/trait';
+import { classifyFloydQuotaError } from '#/llm-floyd/errors';
+import { floydConnection, floydOpenAITrait } from '#/llm-floyd/trait';
 import { createGoogleGenAIRequester } from '#/llm/requester/bases/google-genai/requester';
 import { convertOpenAIError } from '#/llm/requester/bases/openai/format';
 import { createOpenAIRequester } from '#/llm/requester/bases/openai/requester';
@@ -203,9 +203,9 @@ describe('convertOpenAIError', () => {
   });
 });
 
-describe('classifyKimiQuotaError', () => {
+describe('classifyFloydQuotaError', () => {
   it('classifies by structured error code', () => {
-    const classified = classifyKimiQuotaError({
+    const classified = classifyFloydQuotaError({
       status: 429,
       message: 'quota',
       code: 'exceeded_current_quota_error',
@@ -224,7 +224,7 @@ describe('classifyKimiQuotaError', () => {
   });
 
   it('classifies by message wording', () => {
-    const classified = classifyKimiQuotaError({
+    const classified = classifyFloydQuotaError({
       status: 429,
       message: 'insufficient balance',
       headers: new Headers(),
@@ -234,13 +234,13 @@ describe('classifyKimiQuotaError', () => {
 
   it('ignores 429 without quota signals', () => {
     expect(
-      classifyKimiQuotaError({ status: 429, message: 'slow down', headers: new Headers() }),
+      classifyFloydQuotaError({ status: 429, message: 'slow down', headers: new Headers() }),
     ).toBeUndefined();
   });
 
   it('ignores non-429 errors', () => {
     expect(
-      classifyKimiQuotaError({ status: 400, message: 'insufficient balance' }),
+      classifyFloydQuotaError({ status: 400, message: 'insufficient balance' }),
     ).toBeUndefined();
   });
 });
@@ -290,11 +290,11 @@ describe('requester error conversion', () => {
     });
   });
 
-  it('converts a kimi quota response to quota_exhausted', async () => {
+  it('converts a floyd quota response to quota_exhausted', async () => {
     const requester = createOpenAIRequester({
-      connection: kimiConnection,
-      trait: kimiOpenAITrait,
-      classifyError: classifyKimiQuotaError,
+      connection: floydConnection,
+      trait: floydOpenAITrait,
+      classifyError: classifyFloydQuotaError,
       clientFactory: failingOpenAIClient(
         new RawOpenAISDKAPIError(
           429,

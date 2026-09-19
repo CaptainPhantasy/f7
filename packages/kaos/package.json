@@ -1,21 +1,21 @@
 {
-  "name": "@moonshot-ai/kaos",
+  "name": "@legacy-ai/kaos",
   "version": "0.1.6",
   "private": true,
   "description": "Execution environment abstraction for AI agent applications",
   "license": "MIT",
-  "author": "Moonshot AI",
-  "homepage": "https://github.com/MoonshotAI/kimi-code/tree/main/packages/kaos#readme",
+  "author": "Legacy AI",
+  "homepage": "https://github.com/LegacyAI/floyd-code/tree/main/packages/kaos#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MoonshotAI/kimi-code.git",
+    "url": "git+https://github.com/LegacyAI/floyd-code.git",
     "directory": "packages/kaos"
   },
   "bugs": {
-    "url": "https://github.com/MoonshotAI/kimi-code/issues"
+    "url": "https://github.com/LegacyAI/floyd-code/issues"
   },
   "keywords": [
-    "kimi",
+    "floyd",
     "agent",
     "execution",
     "sandbox",

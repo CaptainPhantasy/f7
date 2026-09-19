@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { encodeWorkDirKey } from '@moonshot-ai/agent-core-v2/_base/utils/workdir-slug';
+import { encodeWorkDirKey } from '@legacy-ai/agent-core-v2/_base/utils/workdir-slug';
 
 import { type RunningServer, startServer } from '../src/start';
 import { TEST_HOST_IDENTITY } from './helpers/hostIdentity';
@@ -44,7 +44,7 @@ describe('server-v2 /api/v1/workspaces', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-workspaces-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-workspaces-'));
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',
@@ -269,14 +269,14 @@ describe('server-v2 /api/v1/workspaces', () => {
     expect(body.data.persisted).toBe(true);
     expect(body.data.additional_dirs).toContain(extra);
     expect(body.data.project_root).toBe(root);
-    expect(body.data.config_path).toBe(join(root, '.kimi-code', 'local.toml'));
+    expect(body.data.config_path).toBe(join(root, '.floyd-code', 'local.toml'));
     const toml = await readFile(body.data.config_path, 'utf8');
     expect(toml).toContain('additional_dir');
     expect(toml).toContain(extra);
   });
 
   it('adds a relative directory without persisting when persist is false', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'kimi-server-v2-workspaces-rel-'));
+    const root = await mkdtemp(join(tmpdir(), 'floyd-server-v2-workspaces-rel-'));
     const extra = join(root, 'extra-rel');
     await mkdir(extra);
     const created = await postJson<WorkspaceWire>('/api/v1/workspaces', { root });

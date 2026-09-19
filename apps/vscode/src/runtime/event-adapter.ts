@@ -1,4 +1,4 @@
-import type { Event } from '@moonshot-ai/kimi-code-sdk';
+import type { Event } from '@legacy-ai/floyd-code-sdk';
 
 import type {
   DisplayBlock,

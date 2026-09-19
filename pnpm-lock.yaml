@@ -11,10 +11,10 @@ catalogs:
       version: 4.3.6
 
 overrides:
-  kimi-code>@tailwindcss/vite: 4.1.18
+  floyd-code>@tailwindcss/vite: 4.1.18
   ssh2@1.17.0>cpu-features: '-'
   ssh2@1.17.0>nan: '-'
-  kimi-code>tailwindcss: 4.1.18
+  floyd-code>tailwindcss: 4.1.18
 
 importers:
 
@@ -72,7 +72,7 @@ importers:
         specifier: 4.1.4
         version: 4.1.4(@types/node@22.19.17)(@vitest/coverage-v8@4.1.4)(jsdom@30.0.1)(msw@2.15.0(@types/node@22.19.17)(typescript@6.0.2))(vite@8.0.8(@types/node@22.19.17)(esbuild@0.27.7)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))
 
-  apps/kimi-code:
+  apps/floyd-code:
     dependencies:
       qrcode:
         specifier: ^1.5.4
@@ -81,40 +81,40 @@ importers:
         specifier: ^8.18.0
         version: 8.20.0
     devDependencies:
-      '@moonshot-ai/acp-server':
+      '@legacy-ai/acp-server':
         specifier: workspace:^
         version: link:../../packages/acp-server
-      '@moonshot-ai/agent-core-v2':
+      '@legacy-ai/agent-core-v2':
         specifier: workspace:^
         version: link:../../packages/agent-core-v2
-      '@moonshot-ai/kap-server':
+      '@legacy-ai/kap-server':
         specifier: workspace:^
         version: link:../../packages/kap-server
-      '@moonshot-ai/kimi-code-oauth':
+      '@legacy-ai/floyd-code-oauth':
         specifier: workspace:^
         version: link:../../packages/oauth
-      '@moonshot-ai/kimi-code-sdk':
+      '@legacy-ai/floyd-code-sdk':
         specifier: workspace:^
         version: link:../../packages/node-sdk
-      '@moonshot-ai/kimi-telemetry':
+      '@legacy-ai/floyd-telemetry':
         specifier: workspace:^
         version: link:../../packages/telemetry
-      '@moonshot-ai/migration-legacy':
+      '@legacy-ai/migration-legacy':
         specifier: workspace:^
         version: link:../../packages/migration-legacy
-      '@moonshot-ai/minidb':
+      '@legacy-ai/minidb':
         specifier: workspace:^
         version: link:../../packages/minidb
-      '@moonshot-ai/pi-tui':
+      '@legacy-ai/pi-tui':
         specifier: workspace:^
         version: link:../../packages/pi-tui
-      '@moonshot-ai/remote-control':
+      '@legacy-ai/remote-control':
         specifier: workspace:^
         version: link:../../packages/remote-control
-      '@moonshot-ai/vis-server':
+      '@legacy-ai/vis-server':
         specifier: workspace:^
         version: link:../vis/server
-      '@moonshot-ai/vis-web':
+      '@legacy-ai/vis-web':
         specifier: workspace:*
         version: link:../vis/web
       '@types/qrcode':
@@ -173,12 +173,12 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
 
-  apps/kimi-inspect:
+  apps/floyd-inspect:
     dependencies:
-      '@moonshot-ai/agent-core-v2':
+      '@legacy-ai/agent-core-v2':
         specifier: workspace:^
         version: link:../../packages/agent-core-v2
-      '@moonshot-ai/kap-server':
+      '@legacy-ai/kap-server':
         specifier: workspace:^
         version: link:../../packages/kap-server
       '@tanstack/react-query':
@@ -227,7 +227,7 @@ importers:
       '@hono/node-server':
         specifier: ^1.13.7
         version: 1.19.14(hono@4.12.14)
-      '@moonshot-ai/agent-core-v2':
+      '@legacy-ai/agent-core-v2':
         specifier: workspace:^
         version: link:../../../packages/agent-core-v2
       hono:
@@ -307,16 +307,16 @@ importers:
       '@fontsource-variable/inter':
         specifier: 5.2.8
         version: 5.2.8
-      '@moonshot-ai/kimi-code-oauth':
+      '@legacy-ai/floyd-code-oauth':
         specifier: workspace:^
         version: link:../../packages/oauth
-      '@moonshot-ai/kimi-code-sdk':
+      '@legacy-ai/floyd-code-sdk':
         specifier: workspace:^
         version: link:../../packages/node-sdk
-      '@moonshot-ai/kimi-telemetry':
+      '@legacy-ai/floyd-telemetry':
         specifier: workspace:^
         version: link:../../packages/telemetry
-      '@moonshot-ai/migration-legacy':
+      '@legacy-ai/migration-legacy':
         specifier: workspace:^
         version: link:../../packages/migration-legacy
       '@radix-ui/react-accordion':
@@ -489,10 +489,10 @@ importers:
       '@agentclientprotocol/sdk':
         specifier: ^1.3.0
         version: 1.3.0(zod@4.3.6)
-      '@moonshot-ai/agent-core-v2':
+      '@legacy-ai/agent-core-v2':
         specifier: workspace:^
         version: link:../agent-core-v2
-      '@moonshot-ai/klient':
+      '@legacy-ai/klient':
         specifier: workspace:^
         version: link:../klient
 
@@ -513,13 +513,13 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
         version: 1.29.0(zod@4.3.6)
-      '@moonshot-ai/kimi-code-oauth':
+      '@legacy-ai/floyd-code-oauth':
         specifier: workspace:^
         version: link:../oauth
-      '@moonshot-ai/minidb':
+      '@legacy-ai/minidb':
         specifier: workspace:^
         version: link:../minidb
-      '@moonshot-ai/tree-sitter-bash':
+      '@legacy-ai/tree-sitter-bash':
         specifier: workspace:^
         version: link:../tree-sitter-bash
       '@mozilla/readability':
@@ -653,19 +653,19 @@ importers:
       '@fastify/swagger':
         specifier: ^9.7.0
         version: 9.7.0
-      '@moonshot-ai/agent-core-v2':
+      '@legacy-ai/agent-core-v2':
         specifier: workspace:^
         version: link:../agent-core-v2
-      '@moonshot-ai/kimi-code-oauth':
+      '@legacy-ai/floyd-code-oauth':
         specifier: workspace:^
         version: link:../oauth
-      '@moonshot-ai/minidb':
+      '@legacy-ai/minidb':
         specifier: workspace:*
         version: link:../minidb
-      '@moonshot-ai/remote-control':
+      '@legacy-ai/remote-control':
         specifier: workspace:^
         version: link:../remote-control
-      '@moonshot-ai/transcript':
+      '@legacy-ai/transcript':
         specifier: workspace:^
         version: link:../transcript
       bcryptjs:
@@ -708,14 +708,14 @@ importers:
 
   packages/klient:
     dependencies:
-      '@moonshot-ai/agent-core-v2':
+      '@legacy-ai/agent-core-v2':
         specifier: workspace:^
         version: link:../agent-core-v2
       zod:
         specifier: 'catalog:'
         version: 4.3.6
     devDependencies:
-      '@moonshot-ai/kap-server':
+      '@legacy-ai/kap-server':
         specifier: workspace:^
         version: link:../kap-server
       '@types/ws':
@@ -755,7 +755,7 @@ importers:
 
   packages/migration-legacy:
     dependencies:
-      '@moonshot-ai/agent-core-v2':
+      '@legacy-ai/agent-core-v2':
         specifier: workspace:^
         version: link:../agent-core-v2
       smol-toml:
@@ -765,7 +765,7 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
-      '@moonshot-ai/transcript':
+      '@legacy-ai/transcript':
         specifier: workspace:^
         version: link:../transcript
 
@@ -786,19 +786,19 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
-      '@moonshot-ai/agent-core-v2':
+      '@legacy-ai/agent-core-v2':
         specifier: workspace:^
         version: link:../agent-core-v2
-      '@moonshot-ai/kaos':
+      '@legacy-ai/kaos':
         specifier: workspace:^
         version: link:../kaos
-      '@moonshot-ai/kimi-code-oauth':
+      '@legacy-ai/floyd-code-oauth':
         specifier: workspace:^
         version: link:../oauth
-      '@moonshot-ai/klient':
+      '@legacy-ai/klient':
         specifier: workspace:^
         version: link:../klient
-      '@moonshot-ai/kosong':
+      '@legacy-ai/kosong':
         specifier: workspace:^
         version: link:../kosong
       '@types/yazl':
@@ -839,10 +839,10 @@ importers:
 
   packages/remote-control:
     dependencies:
-      '@moonshot-ai/agent-core-v2':
+      '@legacy-ai/agent-core-v2':
         specifier: workspace:^
         version: link:../agent-core-v2
-      '@moonshot-ai/kimi-code-oauth':
+      '@legacy-ai/floyd-code-oauth':
         specifier: workspace:^
         version: link:../oauth
       ws:

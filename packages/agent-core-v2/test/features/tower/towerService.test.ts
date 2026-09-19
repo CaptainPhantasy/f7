@@ -2998,7 +2998,7 @@ describe('towerEnterFailureMessage', () => {
     ],
     [
       { entered: false, reason: 'experiment-off' },
-      'the tower experiment is disabled; enable it with KIMI_CODE_EXPERIMENTAL_TOWER=1 or `[experimental] tower = true` in config.toml',
+      'the tower experiment is disabled; enable it with FLOYD_CODE_EXPERIMENTAL_TOWER=1 or `[experimental] tower = true` in config.toml',
     ],
     [
       { entered: false, reason: 'feature-not-assembled' },

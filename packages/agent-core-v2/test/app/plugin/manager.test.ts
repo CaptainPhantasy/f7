@@ -19,7 +19,7 @@ describe('PluginManager', () => {
     await mkdir(join(root, 'commands'), { recursive: true });
     await writeFile(join(root, 'commands', 'deploy.md'), '---\ndescription: Deploy\n---\n\nBody', 'utf8');
     await writeFile(
-      join(root, 'kimi.plugin.json'),
+      join(root, 'floyd.plugin.json'),
       JSON.stringify({
         name: 'demo',
         commands: ['./commands'],
@@ -52,7 +52,7 @@ describe('PluginManager', () => {
   });
 
   it('loads installed plugins and exposes summaries, hooks, and commands', async () => {
-    const manager = new PluginManager({ kimiHomeDir: home });
+    const manager = new PluginManager({ floydHomeDir: home });
     await manager.load();
 
     expect(manager.summaries()).toEqual([
@@ -68,7 +68,7 @@ describe('PluginManager', () => {
         event: 'Stop',
         command: 'echo stop',
         cwd: root,
-        env: { KIMI_CODE_HOME: home, KIMI_PLUGIN_ROOT: root },
+        env: { FLOYD_CODE_HOME: home, FLOYD_PLUGIN_ROOT: root },
       },
     ]);
     await expect(manager.enabledCommands()).resolves.toEqual([
@@ -79,8 +79,8 @@ describe('PluginManager', () => {
   it('installs a local-path plugin into the managed root', async () => {
     const sourceRoot = await mkdtemp(join(tmpdir(), 'plugin-install-source-'));
     try {
-      await writeFile(join(sourceRoot, 'kimi.plugin.json'), JSON.stringify({ name: 'other' }), 'utf8');
-      const manager = new PluginManager({ kimiHomeDir: home });
+      await writeFile(join(sourceRoot, 'floyd.plugin.json'), JSON.stringify({ name: 'other' }), 'utf8');
+      const manager = new PluginManager({ floydHomeDir: home });
 
       const record = await manager.install(sourceRoot);
 
@@ -99,12 +99,12 @@ describe('PluginManager', () => {
       void readFile(zipPath).then((data) => res.end(data));
     });
     try {
-      await writeFile(join(sourceRoot, 'kimi.plugin.json'), JSON.stringify({ name: 'zip-plugin' }), 'utf8');
+      await writeFile(join(sourceRoot, 'floyd.plugin.json'), JSON.stringify({ name: 'zip-plugin' }), 'utf8');
       execFileSync('zip', ['-qr', zipPath, '.'], { cwd: sourceRoot });
       await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
       const address = server.address();
       if (address === null || typeof address === 'string') throw new Error('bad server address');
-      const manager = new PluginManager({ kimiHomeDir: home });
+      const manager = new PluginManager({ floydHomeDir: home });
 
       const record = await manager.install(`http://127.0.0.1:${address.port}/plugin.zip`);
 
@@ -122,7 +122,7 @@ describe('PluginManager', () => {
     const sourceRoot = await mkdtemp(join(tmpdir(), 'plugin-github-source-'));
     const zipPath = join(tmpdir(), `plugin-github-${Date.now()}.zip`);
     try {
-      await writeFile(join(sourceRoot, 'kimi.plugin.json'), JSON.stringify({ name: 'github-plugin' }), 'utf8');
+      await writeFile(join(sourceRoot, 'floyd.plugin.json'), JSON.stringify({ name: 'github-plugin' }), 'utf8');
       execFileSync('zip', ['-qr', zipPath, '.'], { cwd: sourceRoot });
       const zip = await readFile(zipPath);
       const fetchMock = vi.fn(async (input: Parameters<typeof fetch>[0]) => {
@@ -136,7 +136,7 @@ describe('PluginManager', () => {
         return new Response(zip);
       });
       vi.stubGlobal('fetch', fetchMock as typeof fetch);
-      const manager = new PluginManager({ kimiHomeDir: home });
+      const manager = new PluginManager({ floydHomeDir: home });
 
       const record = await manager.install('https://github.com/owner/repo/tree/v1');
 
@@ -191,7 +191,7 @@ describe('PluginManager', () => {
         headers: new Headers({ location: 'https://github.com/owner/repo/releases/tag/v2' }),
       }),
     );
-    const manager = new PluginManager({ kimiHomeDir: home });
+    const manager = new PluginManager({ floydHomeDir: home });
     await manager.load();
 
     await expect(manager.checkUpdates()).resolves.toEqual([
@@ -245,7 +245,7 @@ describe('PluginManager', () => {
           ),
         ),
     );
-    const manager = new PluginManager({ kimiHomeDir: home });
+    const manager = new PluginManager({ floydHomeDir: home });
     await manager.load();
 
     await expect(manager.checkUpdates()).resolves.toEqual([
@@ -282,7 +282,7 @@ describe('PluginManager', () => {
     );
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    const manager = new PluginManager({ kimiHomeDir: home });
+    const manager = new PluginManager({ floydHomeDir: home });
     await manager.load();
 
     await expect(manager.checkUpdates()).resolves.toEqual([
@@ -327,7 +327,7 @@ describe('PluginManager', () => {
         });
       }) as typeof fetch,
     );
-    const manager = new PluginManager({ kimiHomeDir: home });
+    const manager = new PluginManager({ floydHomeDir: home });
     await manager.load();
 
     await expect(manager.checkUpdates()).resolves.toEqual([
@@ -336,7 +336,7 @@ describe('PluginManager', () => {
   });
 
   it('persists enabled state changes', async () => {
-    const manager = new PluginManager({ kimiHomeDir: home });
+    const manager = new PluginManager({ floydHomeDir: home });
     await manager.load();
 
     await manager.setEnabled('demo', false);

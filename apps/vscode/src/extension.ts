@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { Events } from "../shared/bridge";
-import { KimiWebviewProvider } from "./KimiWebviewProvider";
+import { FloydWebviewProvider } from "./FloydWebviewProvider";
 import { onSettingsChange, VSCodeSettings } from "./config/vscode-settings";
 import {
   LegacyMigrationManager,
@@ -12,19 +12,19 @@ import { updateLoginContext } from "./utils/context";
 import { activateExtensionTelemetry, deactivateExtensionTelemetry } from "./telemetry";
 
 let outputChannel: vscode.OutputChannel | undefined;
-let provider: KimiWebviewProvider | undefined;
+let provider: FloydWebviewProvider | undefined;
 
-const LEGACY_REAUTH_NOTICE_KEY = "kimi.legacyMigration.reauthNotice.v1";
-const LEGACY_WARNING_NOTICE_KEY = "kimi.legacyMigration.warningNotice.v1";
+const LEGACY_REAUTH_NOTICE_KEY = "floyd.legacyMigration.reauthNotice.v1";
+const LEGACY_WARNING_NOTICE_KEY = "floyd.legacyMigration.warningNotice.v1";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  outputChannel = vscode.window.createOutputChannel("Kimi Code");
+  outputChannel = vscode.window.createOutputChannel("Floyd Code");
   const remoteInfo = vscode.env.remoteName ? ` (remote: ${vscode.env.remoteName})` : "";
   const version = VSCodeSettings.getExtensionConfig().version;
-  log(`Kimi Code ${version} activating${remoteInfo}`);
+  log(`Floyd Code ${version} activating${remoteInfo}`);
   context.subscriptions.push(activateExtensionTelemetry({ version, log }));
 
-  provider = new KimiWebviewProvider(
+  provider = new FloydWebviewProvider(
     context.extensionUri,
     context,
     () => outputChannel?.show(),
@@ -40,7 +40,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   }
 
   context.subscriptions.push(
-    vscode.workspace.registerTextDocumentContentProvider("kimi-baseline", {
+    vscode.workspace.registerTextDocumentContentProvider("floyd-baseline", {
       provideTextDocumentContent: async (uri) => {
         const sessionId = new URLSearchParams(uri.query).get("sessionId");
         if (!sessionId || !provider) return "";
@@ -67,7 +67,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           .catch((error) => logError("Unable to update session permission", error));
       }
     }),
-    vscode.window.registerWebviewViewProvider("kimi.webview", provider, {
+    vscode.window.registerWebviewViewProvider("floyd.webview", provider, {
       webviewOptions: { retainContextWhenHidden: true },
     }),
   );
@@ -76,7 +76,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     targetHome: provider.harness.homeDir,
     workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
     legacyEnvironmentVariables: vscode.workspace
-      .getConfiguration("kimi")
+      .getConfiguration("floyd")
       .get<unknown>("environmentVariables"),
   });
   let migrationInFlight: Promise<void> | undefined;
@@ -89,44 +89,44 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   };
 
   const commands: Record<string, () => void | Promise<void>> = {
-    "kimi.clearAllState": async () => {
-      await context.globalState.update("kimi.config", undefined);
-      await context.globalState.update("kimi.mcpServers", undefined);
-      await context.workspaceState.update("kimi.mcpEnabled", undefined);
-      await vscode.window.showInformationMessage("Kimi: Extension UI state cleared.");
+    "floyd.clearAllState": async () => {
+      await context.globalState.update("floyd.config", undefined);
+      await context.globalState.update("floyd.mcpServers", undefined);
+      await context.workspaceState.update("floyd.mcpEnabled", undefined);
+      await vscode.window.showInformationMessage("Floyd: Extension UI state cleared.");
     },
-    "kimi.openInTab": () => {
+    "floyd.openInTab": () => {
       provider?.createPanel();
     },
-    "kimi.openInSideBar": async () => {
-      await vscode.commands.executeCommand("kimi.webview.focus");
+    "floyd.openInSideBar": async () => {
+      await vscode.commands.executeCommand("floyd.webview.focus");
     },
-    "kimi.focusInput": async () => {
-      await vscode.commands.executeCommand("kimi.webview.focus");
+    "floyd.focusInput": async () => {
+      await vscode.commands.executeCommand("floyd.webview.focus");
       provider?.broadcast(Events.FocusInput, {});
     },
-    "kimi.insertMention": async () => {
+    "floyd.insertMention": async () => {
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
         await vscode.window.showWarningMessage("No active editor");
         return;
       }
-      await vscode.commands.executeCommand("kimi.webview.focus");
+      await vscode.commands.executeCommand("floyd.webview.focus");
       if (!(await provider?.insertEditorMention(editor.document.uri, editor.selection))) {
         await vscode.window.showWarningMessage("The active file is outside the selected working directory.");
       }
     },
-    "kimi.newConversation": async () => {
-      await vscode.commands.executeCommand("kimi.webview.focus");
+    "floyd.newConversation": async () => {
+      await vscode.commands.executeCommand("floyd.webview.focus");
       provider?.broadcast(Events.NewConversation, {});
     },
-    "kimi.showLogs": () => outputChannel?.show(),
-    "kimi.resetKimi": () => provider?.resetAllWebviews(),
-    "kimi.logout": async () => {
-      await vscode.commands.executeCommand("kimi.webview.focus");
-      await vscode.window.showInformationMessage("Use the logout button in Kimi settings.");
+    "floyd.showLogs": () => outputChannel?.show(),
+    "floyd.resetFloyd": () => provider?.resetAllWebviews(),
+    "floyd.logout": async () => {
+      await vscode.commands.executeCommand("floyd.webview.focus");
+      await vscode.window.showInformationMessage("Use the logout button in Floyd settings.");
     },
-    "kimi.migrateLegacyData": () => runMigration(true),
+    "floyd.migrateLegacyData": () => runMigration(true),
   };
 
   for (const [id, handler] of Object.entries(commands)) {
@@ -139,13 +139,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     context.globalState,
     isLoggedIn,
   ).catch((error) => {
-    logError("Unable to check for legacy Kimi data", error);
+    logError("Unable to check for legacy Floyd data", error);
   });
-  log("Kimi Code activated");
+  log("Floyd Code activated");
 }
 
 export async function deactivate(): Promise<void> {
-  log("Kimi Code deactivating");
+  log("Floyd Code deactivating");
   try {
     await provider?.shutdown();
   } finally {
@@ -175,7 +175,7 @@ async function offerLegacyMigration(
   const warningNotice =
     discovery.warnings.length === 0
       ? null
-      : "Some legacy Kimi data could not be inspected. Use “Kimi Code: Migrate Legacy Data” to retry.";
+      : "Some legacy Floyd data could not be inspected. Use “Floyd Code: Migrate Legacy Data” to retry.";
   if (discovery.prompt === null) {
     if (reauthNotice !== null && !globalState.get<boolean>(LEGACY_REAUTH_NOTICE_KEY, false)) {
       await vscode.window.showWarningMessage(reauthNotice);
@@ -186,7 +186,7 @@ async function offerLegacyMigration(
       !globalState.get<boolean>(LEGACY_WARNING_NOTICE_KEY, false)
     ) {
       const action = await vscode.window.showWarningMessage(
-        warningNotice ?? "Some legacy Kimi data could not be inspected.",
+        warningNotice ?? "Some legacy Floyd data could not be inspected.",
         "Show Logs",
       );
       await globalState.update(LEGACY_WARNING_NOTICE_KEY, true);
@@ -210,14 +210,14 @@ function legacyReauthNotice(
   discovery: LegacyMigrationDiscovery,
   isLoggedIn: boolean,
 ): string | null {
-  const kimiLogins = isLoggedIn ? 0 : discovery.notices.oauthLoginsRequiringRelogin.length;
+  const floydLogins = isLoggedIn ? 0 : discovery.notices.oauthLoginsRequiringRelogin.length;
   const mcpLogins = discovery.notices.mcpOauthServersRequiringReauth.length;
-  if (kimiLogins === 0 && mcpLogins === 0) return null;
-  if (kimiLogins > 0 && mcpLogins > 0) {
-    return "Legacy OAuth credentials are not copied. Sign in to Kimi Code and authorize your MCP servers again.";
+  if (floydLogins === 0 && mcpLogins === 0) return null;
+  if (floydLogins > 0 && mcpLogins > 0) {
+    return "Legacy OAuth credentials are not copied. Sign in to Floyd Code and authorize your MCP servers again.";
   }
-  return kimiLogins > 0
-    ? "Legacy OAuth credentials are not copied. Sign in to Kimi Code again."
+  return floydLogins > 0
+    ? "Legacy OAuth credentials are not copied. Sign in to Floyd Code again."
     : "Legacy MCP OAuth credentials are not copied. Authorize those MCP servers again.";
 }
 
@@ -225,7 +225,7 @@ async function performMigration(
   manager: LegacyMigrationManager,
   retry: boolean,
 ): Promise<void> {
-  log(`${retry ? "Retrying" : "Starting"} legacy Kimi data migration`);
+  log(`${retry ? "Retrying" : "Starting"} legacy Floyd data migration`);
   const result = retry ? await manager.retry() : await manager.migrateNow();
   logMigrationResult(result);
 

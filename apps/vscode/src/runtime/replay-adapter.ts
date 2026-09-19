@@ -4,7 +4,7 @@ import type {
   PromptOrigin,
   ResumedAgentState,
   ResumedSessionState,
-} from "@moonshot-ai/kimi-code-sdk";
+} from "@legacy-ai/floyd-code-sdk";
 
 import type {
   ContentPart as LegacyContentPart,

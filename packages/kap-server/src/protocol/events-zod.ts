@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { isoDateTimeSchema } from '@moonshot-ai/agent-core-v2/_base/utils/isoDateTime';
-import type { TurnEndReason } from '@moonshot-ai/agent-core-v2/agent/loop/turnEvents';
+import { isoDateTimeSchema } from '@legacy-ai/agent-core-v2/_base/utils/isoDateTime';
+import type { TurnEndReason } from '@legacy-ai/agent-core-v2/agent/loop/turnEvents';
 import type {
   BundledSkillActivation,
   CompactionSummaryOrigin,
@@ -17,15 +17,15 @@ import type {
   SystemTriggerOrigin,
   TaskOrigin,
   UserPromptOrigin,
-} from '@moonshot-ai/agent-core-v2/agent/contextMemory/types';
+} from '@legacy-ai/agent-core-v2/agent/contextMemory/types';
 import { messageContentSchema } from './message';
-import type { HookResultPayload } from '@moonshot-ai/agent-core-v2/features/externalHooks/agent/agentExternalHooksService';
+import type { HookResultPayload } from '@legacy-ai/agent-core-v2/features/externalHooks/agent/agentExternalHooksService';
 import type {
   CompactionBlockedPayload,
   CompactionCompletedPayload,
   CompactionStartedPayload,
-} from '@moonshot-ai/agent-core-v2/agent/fullCompaction/compactionOps';
-import type { CompactionResult } from '@moonshot-ai/agent-core-v2/agent/fullCompaction/types';
+} from '@legacy-ai/agent-core-v2/agent/fullCompaction/compactionOps';
+import type { CompactionResult } from '@legacy-ai/agent-core-v2/agent/fullCompaction/types';
 import type {
   GoalActor,
   GoalBudgetLimits,
@@ -36,7 +36,7 @@ import type {
   GoalSnapshot,
   GoalStatus,
   GoalToolResult,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import type {
   AssistantDeltaPayload,
   ThinkingDeltaPayload,
@@ -44,42 +44,42 @@ import type {
   TurnStepCompletedPayload,
   TurnStepInterruptedPayload,
   TurnStepStartedPayload,
-} from '@moonshot-ai/agent-core-v2/agent/loop/turnEvents';
+} from '@legacy-ai/agent-core-v2/agent/loop/turnEvents';
 import type {
   McpServerStatusEventPayload,
   McpServerStatusPayload,
   ToolListUpdatedPayload,
   ToolListUpdatedReason,
-} from '@moonshot-ai/agent-core-v2/agent/mcp/mcpEvents';
-import type { McpOAuthAuthorizationUrlUpdateData } from '@moonshot-ai/agent-core-v2/agent/mcp/tools/auth';
-import type { PermissionMode } from '@moonshot-ai/agent-core-v2/agent/permissionPolicy/types';
-import type { WarningEvent } from '@moonshot-ai/agent-core-v2/agent/profile/profileService';
-import type { PluginCommandActivatedPayload } from '@moonshot-ai/agent-core-v2/agent/pluginCommand/pluginCommand';
+} from '@legacy-ai/agent-core-v2/agent/mcp/mcpEvents';
+import type { McpOAuthAuthorizationUrlUpdateData } from '@legacy-ai/agent-core-v2/agent/mcp/tools/auth';
+import type { PermissionMode } from '@legacy-ai/agent-core-v2/agent/permissionPolicy/types';
+import type { WarningEvent } from '@legacy-ai/agent-core-v2/agent/profile/profileService';
+import type { PluginCommandActivatedPayload } from '@legacy-ai/agent-core-v2/agent/pluginCommand/pluginCommand';
 import type {
   ShellCompletedPayload,
   ShellOutputPayload,
   ShellStartedPayload,
-} from '@moonshot-ai/agent-core-v2/agent/shellCommand/shellCommandService';
+} from '@legacy-ai/agent-core-v2/agent/shellCommand/shellCommandService';
 
-import type { TurnStepRetryingPayload } from '@moonshot-ai/agent-core-v2/agent/loop/turnEvents';
-import type { AgentTaskStatus } from '@moonshot-ai/agent-core-v2/agent/task/types';
+import type { TurnStepRetryingPayload } from '@legacy-ai/agent-core-v2/agent/loop/turnEvents';
+import type { AgentTaskStatus } from '@legacy-ai/agent-core-v2/agent/task/types';
 import type {
   ToolCallStartedPayload,
   ToolProgressPayload,
   ToolResultEventPayload,
-} from '@moonshot-ai/agent-core-v2/agent/toolExecutor/toolExecutorEvents';
-import type { UsageStatus } from '@moonshot-ai/agent-core-v2/agent/usage/usage';
-import type { FinishReason } from '@moonshot-ai/agent-core-v2/human/llm/finish-reason';
-import type { TokenUsage } from '@moonshot-ai/agent-core-v2/human/llm/usage';
+} from '@legacy-ai/agent-core-v2/agent/toolExecutor/toolExecutorEvents';
+import type { UsageStatus } from '@legacy-ai/agent-core-v2/agent/usage/usage';
+import type { FinishReason } from '@legacy-ai/agent-core-v2/human/llm/finish-reason';
+import type { TokenUsage } from '@legacy-ai/agent-core-v2/human/llm/usage';
 import type {
   SubagentCancelledPayload,
   SubagentCompletedPayload,
   SubagentFailedPayload,
   SubagentSpawnedPayload,
   SubagentStartedPayload,
-} from '@moonshot-ai/agent-core-v2/session/subagent/mirrorAgentRun';
-import type { SubagentSuspendedPayload } from '@moonshot-ai/agent-core-v2/features/swarm/session/sessionSwarmService';
-import type { ToolUpdate } from '@moonshot-ai/agent-core-v2/tool/toolContract';
+} from '@legacy-ai/agent-core-v2/session/subagent/mirrorAgentRun';
+import type { SubagentSuspendedPayload } from '@legacy-ai/agent-core-v2/features/swarm/session/sessionSwarmService';
+import type { ToolUpdate } from '@legacy-ai/agent-core-v2/tool/toolContract';
 
 import { ToolInputDisplaySchema } from './display';
 import { configResponseSchema } from './rest-config';
@@ -285,7 +285,7 @@ export const goalChangeSchema = z.object({
   actor: goalActorSchema.optional(),
 }) satisfies z.ZodType<GoalChange>;
 
-export const kimiErrorCodeSchema = z.enum([
+export const floydErrorCodeSchema = z.enum([
   'config.invalid',
   'session.not_found',
   'session.already_exists',
@@ -401,17 +401,17 @@ export const kimiErrorCodeSchema = z.enum([
   'internal',
 ]);
 
-export const kimiErrorPayloadSchema: z.ZodType<unknown> = z.lazy(
-  () => kimiErrorPayloadObjectSchema,
+export const floydErrorPayloadSchema: z.ZodType<unknown> = z.lazy(
+  () => floydErrorPayloadObjectSchema,
 );
 
-const kimiErrorPayloadObjectSchema = z.object({
-  code: kimiErrorCodeSchema,
+const floydErrorPayloadObjectSchema = z.object({
+  code: floydErrorCodeSchema,
   message: z.string(),
   name: z.string().optional(),
   details: z.record(z.string(), z.unknown()).optional(),
   retryable: z.boolean(),
-  cause: kimiErrorPayloadSchema.optional(),
+  cause: floydErrorPayloadSchema.optional(),
 });
 
 export const taskInfoBaseSchema = z.object({
@@ -705,7 +705,7 @@ export const pluginCommandActivatedEventSchema = z.object({
   trigger: z.literal('user-slash'),
 }) satisfies z.ZodType<PluginCommandActivatedPayload>;
 
-export const errorEventSchema = kimiErrorPayloadObjectSchema.extend({
+export const errorEventSchema = floydErrorPayloadObjectSchema.extend({
   type: z.literal('error'),
   agentId: z.string(),
 });
@@ -746,7 +746,7 @@ export const turnEndedEventSchema = z.object({
   time: z.number().optional(),
   turnId: z.number(),
   reason: turnEndReasonSchema,
-  error: kimiErrorPayloadSchema.optional(),
+  error: floydErrorPayloadSchema.optional(),
   durationMs: z.number().optional(),
   interruptReason: z
     .enum(['user_cancelled', 'aborted', 'max_steps', 'error', 'filtered', 'blocked'])

@@ -1,4 +1,4 @@
-import type { UserPromptOrigin } from '@moonshot-ai/agent-core-v2/agent/contextMemory/types';
+import type { UserPromptOrigin } from '@legacy-ai/agent-core-v2/agent/contextMemory/types';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 
@@ -20,11 +20,11 @@ import {
   type IDisposable,
   type Scope,
   type SessionMeta,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import {
   TowerStore,
   resolveTowerRepoRoot,
-} from '@moonshot-ai/agent-core-v2/features/tower/protocol/index';
+} from '@legacy-ai/agent-core-v2/features/tower/protocol/index';
 import {
   TranscriptStore,
   foldWireRecordFacts,
@@ -39,7 +39,7 @@ import {
   type TranscriptOperation,
   type TranscriptTaskRef,
   type TranscriptTurn,
-} from '@moonshot-ai/transcript';
+} from '@legacy-ai/transcript';
 
 import { WireRecordCache, type ContextRecord } from './wireCache';
 import { toWireQuestion } from '../../protocol/question-wire';

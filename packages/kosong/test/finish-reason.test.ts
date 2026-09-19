@@ -4,7 +4,7 @@ import { MockChatProvider } from './fixtures/mock-provider';
 import type { FinishReason } from '#/provider';
 import { AnthropicChatProvider } from '#/providers/anthropic';
 import { GoogleGenAIChatProvider, GoogleGenAIStreamedMessage } from '#/providers/google-genai';
-import { KimiChatProvider } from '#/providers/kimi';
+import { FloydChatProvider } from '#/providers/floyd';
 import { OpenAILegacyChatProvider } from '#/providers/openai-legacy';
 import { OpenAIResponsesStreamedMessage } from '#/providers/openai-responses';
 import { normalizeOpenAIFinishReason } from '#/providers/openai-common';
@@ -40,8 +40,8 @@ const EMPTY_TOOLSET: Toolset = {
 // A. Normalization table coverage (direct helper tests where possible).
 // =====================================================================
 
-describe('normalizeOpenAIFinishReason (Kimi + OpenAILegacy shared helper)', () => {
-  // Covers A for Kimi + OpenAILegacy.
+describe('normalizeOpenAIFinishReason (Floyd + OpenAILegacy shared helper)', () => {
+  // Covers A for Floyd + OpenAILegacy.
   it.each<[string | null | undefined, FinishReason | null, string | null]>([
     ['stop', 'completed', 'stop'],
     ['tool_calls', 'tool_calls', 'tool_calls'],
@@ -60,8 +60,8 @@ describe('normalizeOpenAIFinishReason (Kimi + OpenAILegacy shared helper)', () =
     },
   );
 });
-function makeKimiStream(rawFinish: string | null | undefined): AsyncIterable<unknown> {
-  // Kimi / Chat Completions stream: emit one content chunk + a terminal
+function makeFloydStream(rawFinish: string | null | undefined): AsyncIterable<unknown> {
+  // Floyd / Chat Completions stream: emit one content chunk + a terminal
   // chunk carrying finish_reason.
   const chunks: Array<Record<string, unknown>> = [
     {
@@ -86,9 +86,9 @@ function makeOpenAIChatClient(response: unknown) {
   };
 }
 
-// The Kimi provider consumes `APIPromise.withResponse()` to read the
+// The Floyd provider consumes `APIPromise.withResponse()` to read the
 // `x-trace-id` response header, so its mocked client must expose that method.
-function makeKimiChatClient(response: unknown) {
+function makeFloydChatClient(response: unknown) {
   return {
     chat: {
       completions: {
@@ -101,11 +101,11 @@ function makeKimiChatClient(response: unknown) {
   };
 }
 
-function createKimiProvider(response: unknown, stream: boolean): KimiChatProvider {
-  return new KimiChatProvider({
-    model: 'kimi-k2-turbo-preview',
+function createFloydProvider(response: unknown, stream: boolean): FloydChatProvider {
+  return new FloydChatProvider({
+    model: 'floyd-k2-turbo-preview',
     stream,
-    clientFactory: () => makeKimiChatClient(response) as never,
+    clientFactory: () => makeFloydChatClient(response) as never,
   });
 }
 
@@ -117,8 +117,8 @@ function createOpenAILegacyProvider(response: unknown, stream: boolean): OpenAIL
   });
 }
 
-describe('KimiChatProvider finish reason (stream, table coverage)', () => {
-  // A + B coverage for Kimi.
+describe('FloydChatProvider finish reason (stream, table coverage)', () => {
+  // A + B coverage for Floyd.
   it.each<[string, FinishReason, string]>([
     ['stop', 'completed', 'stop'],
     ['tool_calls', 'tool_calls', 'tool_calls'],
@@ -129,7 +129,7 @@ describe('KimiChatProvider finish reason (stream, table coverage)', () => {
   ])(
     'raw stream finish_reason %j maps to %j (raw=%j)',
     async (raw, expectedFinish, expectedRaw) => {
-      const provider = createKimiProvider(makeKimiStream(raw), true);
+      const provider = createFloydProvider(makeFloydStream(raw), true);
 
       const stream = await provider.generate('', [], [USER_MSG]);
       for await (const _ of stream) {
@@ -140,7 +140,7 @@ describe('KimiChatProvider finish reason (stream, table coverage)', () => {
     },
   );
 
-  // D coverage for Kimi.
+  // D coverage for Floyd.
   it('returns null finishReason when stream never emits finish_reason', async () => {
     const chunks = [
       {
@@ -148,7 +148,7 @@ describe('KimiChatProvider finish reason (stream, table coverage)', () => {
         choices: [{ index: 0, delta: { content: 'partial' } }],
       },
     ];
-    const provider = createKimiProvider(makeAsyncIterable(chunks), true);
+    const provider = createFloydProvider(makeAsyncIterable(chunks), true);
 
     const stream = await provider.generate('', [], [USER_MSG]);
     for await (const _ of stream) {
@@ -158,9 +158,9 @@ describe('KimiChatProvider finish reason (stream, table coverage)', () => {
     expect(stream.rawFinishReason).toBeNull();
   });
 
-  // C coverage for Kimi.
+  // C coverage for Floyd.
   it('captures finish_reason from a non-stream response', async () => {
-    const provider = createKimiProvider(
+    const provider = createFloydProvider(
       {
         id: 'chatcmpl-ns',
         choices: [
@@ -183,9 +183,9 @@ describe('KimiChatProvider finish reason (stream, table coverage)', () => {
     expect(stream.rawFinishReason).toBe('length');
   });
 
-  // D (non-stream) coverage for Kimi.
+  // D (non-stream) coverage for Floyd.
   it('returns null finishReason when non-stream response omits finish_reason', async () => {
-    const provider = createKimiProvider(
+    const provider = createFloydProvider(
       {
         id: 'chatcmpl-ns-null',
         choices: [
@@ -219,7 +219,7 @@ describe('OpenAILegacyChatProvider finish reason (stream + non-stream)', () => {
   ])(
     'raw stream finish_reason %j maps to %j (raw=%j)',
     async (raw, expectedFinish, expectedRaw) => {
-      const provider = createOpenAILegacyProvider(makeKimiStream(raw), true);
+      const provider = createOpenAILegacyProvider(makeFloydStream(raw), true);
 
       const stream = await provider.generate('', [], [USER_MSG]);
       for await (const _ of stream) {

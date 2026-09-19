@@ -297,7 +297,7 @@ describe('TelemetryService (layered ambient)', () => {
       turn_id: 3,
       trace_id: 'trace-1',
       thinking_effort: 'high',
-      provider_type: 'kimi',
+      provider_type: 'floyd',
       protocol: 'openai',
     });
     agent.telemetry.track2('skill_invoked', {
@@ -310,7 +310,7 @@ describe('TelemetryService (layered ambient)', () => {
       turn_id: 3,
       trace_id: 'trace-1',
       thinking_effort: 'high',
-      provider_type: 'kimi',
+      provider_type: 'floyd',
       protocol: 'openai',
       skill_name: 'review',
       trigger: 'user-slash',
@@ -384,7 +384,7 @@ describe('TelemetryService (layered ambient)', () => {
       agent_id: 'a1',
       mode: 'agent',
     });
-    agent.telemetry.setContext({ provider_type: 'kimi', protocol: 'openai' });
+    agent.telemetry.setContext({ provider_type: 'floyd', protocol: 'openai' });
     agent.telemetry.setContext({ mode: 'plan' });
     agent.telemetry.setContext({ turn_id: 1 });
     const { mode, provider_type, protocol } = agent.telemetry.getContext();
@@ -400,7 +400,7 @@ describe('TelemetryService (layered ambient)', () => {
       agent_id: 'a1',
       turn_id: 1,
       mode: 'plan',
-      provider_type: 'kimi',
+      provider_type: 'floyd',
       protocol: 'openai',
       thinking_effort: 'off',
     });

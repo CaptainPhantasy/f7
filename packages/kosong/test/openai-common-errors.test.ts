@@ -10,7 +10,7 @@ import {
   normalizeAPIStatusError,
 } from '#/errors';
 import type { ContentPart } from '#/message';
-import { classifyKimiQuotaError } from '#/providers/kimi-errors';
+import { classifyFloydQuotaError } from '#/providers/floyd-errors';
 import {
   convertContentPart,
   convertOpenAIError,
@@ -405,9 +405,9 @@ describe('normalizeAPIStatusError thinking effort guidance', () => {
   it('adds configuration guidance when a provider rejects reasoning_effort', () => {
     const error = normalizeAPIStatusError(400, 'Invalid reasoning_effort: xhigh');
 
-    expect(error.message).toContain('Non-Kimi providers receive effort strings');
+    expect(error.message).toContain('Non-Floyd providers receive effort strings');
     expect(error.message).toContain(
-      'https://moonshotai.github.io/kimi-code/en/configuration/config-files.html#thinking',
+      'https://legacyai.github.io/floyd-code/en/configuration/config-files.html#thinking',
     );
   });
 });
@@ -445,7 +445,7 @@ describe('convertOpenAIError: quota-exhausted 429', () => {
   });
 
   it('keeps vendor quota signals a rate limit without the vendor hook', () => {
-    // Moonshot's structured type and billing wordings are vendor knowledge —
+    // Legacy's structured type and billing wordings are vendor knowledge —
     // the shared base must not decide what another vendor's 429 means.
     const err = new OpenAIAPIError(
       429,
@@ -465,7 +465,7 @@ describe('convertOpenAIError: quota-exhausted 429', () => {
       `429 ${QUOTA_MESSAGE}`,
       new Headers(),
     );
-    const result = convertOpenAIError(err, classifyKimiQuotaError);
+    const result = convertOpenAIError(err, classifyFloydQuotaError);
     expect(result).toBeInstanceOf(APIProviderQuotaExhaustedError);
     expect(isRetryableGenerateError(result)).toBe(false);
   });
@@ -477,7 +477,7 @@ describe('convertOpenAIError: quota-exhausted 429', () => {
       'Too many requests',
       new Headers(),
     );
-    const result = convertOpenAIError(err, classifyKimiQuotaError);
+    const result = convertOpenAIError(err, classifyFloydQuotaError);
     expect(result).toBeInstanceOf(APIProviderRateLimitError);
     expect(result).not.toBeInstanceOf(APIProviderQuotaExhaustedError);
     expect(isRetryableGenerateError(result)).toBe(true);

@@ -84,8 +84,8 @@ describe('AgentProfileService.applyProfile', () => {
   let workDir: string;
 
   beforeEach(async () => {
-    homeDir = await mkdtemp(join(tmpdir(), 'kimi-apply-home-'));
-    workDir = await mkdtemp(join(tmpdir(), 'kimi-apply-work-'));
+    homeDir = await mkdtemp(join(tmpdir(), 'floyd-apply-home-'));
+    workDir = await mkdtemp(join(tmpdir(), 'floyd-apply-work-'));
   });
 
   afterEach(async () => {
@@ -156,9 +156,9 @@ describe('AgentProfileService.applyProfile', () => {
   });
 
   it('maps prompt context roots through the bound runtime workspace view', async () => {
-    const mappedDir = await mkdtemp(join(tmpdir(), 'kimi-apply-mapped-'));
-    const localExtra = await mkdtemp(join(tmpdir(), 'kimi-apply-extra-local-'));
-    const mappedExtra = await mkdtemp(join(tmpdir(), 'kimi-apply-extra-mapped-'));
+    const mappedDir = await mkdtemp(join(tmpdir(), 'floyd-apply-mapped-'));
+    const localExtra = await mkdtemp(join(tmpdir(), 'floyd-apply-extra-local-'));
+    const mappedExtra = await mkdtemp(join(tmpdir(), 'floyd-apply-extra-mapped-'));
     try {
       await writeFile(join(workDir, 'local-only.txt'), 'x', 'utf-8');
       await writeFile(join(mappedDir, 'mapped-only.txt'), 'x', 'utf-8');

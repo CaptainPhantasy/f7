@@ -32,7 +32,7 @@ import {
 } from '../harness';
 
 const MOCK_PROVIDER = {
-  type: 'kimi',
+  type: 'floyd',
   apiKey: 'test-key',
   model: 'mock-model',
 } as const;
@@ -602,7 +602,7 @@ describe('Agent resume', () => {
         tokensAfter: 3,
       },
     ] as unknown as WireRecord[]);
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-bg-resume-delivered-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-bg-resume-delivered-'));
     try {
       const backgroundPersistence = createAgentTaskPersistence(homeDir);
       const ctx = testAgent(homeDirServices(homeDir), { autoConfigure: false, persistence });
@@ -694,7 +694,7 @@ describe('Agent resume', () => {
         origin: { kind: 'user' },
       },
     ] as unknown as WireRecord[]);
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-bg-resume-undelivered-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-bg-resume-undelivered-'));
     try {
       const backgroundPersistence = createAgentTaskPersistence(homeDir);
       const ctx = testAgent(homeDirServices(homeDir), { autoConfigure: false, persistence });

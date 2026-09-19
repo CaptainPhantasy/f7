@@ -8,7 +8,7 @@ import {
   type AgentReplayRecord as V2AgentReplayRecord,
   type ContextMessage as V2ContextMessage,
   type WireRecord,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 
 import type { ContextMessage } from '#/context';
 import {

@@ -26,8 +26,8 @@ export interface InstalledFile {
 
 const EMPTY: InstalledFile = { version: 1, plugins: [] };
 
-export async function readInstalled(kimiHomeDir: string): Promise<InstalledFile> {
-  const filePath = path.join(kimiHomeDir, INSTALLED_REL);
+export async function readInstalled(floydHomeDir: string): Promise<InstalledFile> {
+  const filePath = path.join(floydHomeDir, INSTALLED_REL);
   let text: string;
   try {
     text = await readFile(filePath, 'utf8');
@@ -55,8 +55,8 @@ export async function readInstalled(kimiHomeDir: string): Promise<InstalledFile>
   return parsed;
 }
 
-export async function writeInstalled(kimiHomeDir: string, data: InstalledFile): Promise<void> {
-  const dir = path.join(kimiHomeDir, 'plugins');
+export async function writeInstalled(floydHomeDir: string, data: InstalledFile): Promise<void> {
+  const dir = path.join(floydHomeDir, 'plugins');
   await mkdir(dir, { recursive: true });
   const final = path.join(dir, 'installed.json');
   const tmp = `${final}.tmp`;

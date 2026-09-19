@@ -68,8 +68,8 @@ describe('WorkspaceMcpConfigService', () => {
   let changes: McpServersChange[];
 
   beforeEach(() => {
-    cwd = mkdtempSync(join(tmpdir(), 'kimi-workspace-mcp-config-cwd-'));
-    homeDir = mkdtempSync(join(tmpdir(), 'kimi-workspace-mcp-config-home-'));
+    cwd = mkdtempSync(join(tmpdir(), 'floyd-workspace-mcp-config-cwd-'));
+    homeDir = mkdtempSync(join(tmpdir(), 'floyd-workspace-mcp-config-home-'));
     disposables = new DisposableStore();
     watchFires.clear();
     pluginServers = {};
@@ -121,7 +121,7 @@ describe('WorkspaceMcpConfigService', () => {
   }
 
   async function writeProjectConfig(servers: Record<string, McpServerConfig>): Promise<string> {
-    const dir = join(cwd, '.kimi-code');
+    const dir = join(cwd, '.floyd-code');
     await mkdir(dir, { recursive: true });
     const file = join(dir, 'mcp.json');
     await writeFile(file, JSON.stringify({ mcpServers: servers }), 'utf8');

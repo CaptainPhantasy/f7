@@ -10,7 +10,7 @@ const BASELINE_IMAGE_POLICY: ProviderImagePolicy = {
   inlineByteBudget: DEFAULT_INLINE_IMAGE_BYTE_BUDGET,
 };
 
-const KIMI_IMAGE_POLICY: ProviderImagePolicy = {
+const FLOYD_IMAGE_POLICY: ProviderImagePolicy = {
   acceptedMimes: new Set([
     ...BASELINE_IMAGE_POLICY.acceptedMimes,
     'image/bmp',
@@ -21,5 +21,5 @@ const KIMI_IMAGE_POLICY: ProviderImagePolicy = {
 };
 
 export function providerImagePolicy(provider?: string): ProviderImagePolicy {
-  return provider === 'kimi' ? KIMI_IMAGE_POLICY : BASELINE_IMAGE_POLICY;
+  return provider === 'floyd' ? FLOYD_IMAGE_POLICY : BASELINE_IMAGE_POLICY;
 }

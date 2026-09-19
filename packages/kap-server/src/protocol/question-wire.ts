@@ -2,7 +2,7 @@ import type {
   QuestionItem,
   QuestionOption,
   QuestionRequest,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 
 import type {
   QuestionItem as ProtocolQuestionItem,

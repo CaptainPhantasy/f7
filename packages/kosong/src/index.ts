@@ -27,12 +27,12 @@ export type {
 export * from './provider';
 export { createProvider, getModelCapability } from './providers';
 export type { ProviderConfig, ProviderType } from './providers';
-// Kimi provider: exported so callers can narrow a `ChatProvider` to the Kimi
-// backend (instanceof) and apply Kimi-specific request params (generation
+// Floyd provider: exported so callers can narrow a `ChatProvider` to the Floyd
+// backend (instanceof) and apply Floyd-specific request params (generation
 // kwargs, `thinking.keep` extra body).
-export { KimiChatProvider } from './providers/kimi';
-export type { ExtraBody, GenerationKwargs, KimiOptions, ThinkingConfig } from './providers/kimi';
-export { classifyKimiQuotaError } from './providers/kimi-errors';
+export { FloydChatProvider } from './providers/floyd';
+export type { ExtraBody, GenerationKwargs, FloydOptions, ThinkingConfig } from './providers/floyd';
+export { classifyFloydQuotaError } from './providers/floyd-errors';
 
 // Model capability matrix
 export { isUnknownCapability, UNKNOWN_CAPABILITY } from './capability';
@@ -92,6 +92,6 @@ export {
 /**
  * Concrete provider adapters stay off the root barrel because their SDK type
  * graphs pollute downstream declaration bundles. Import them from subpaths:
- * `@moonshot-ai/kosong/providers/kimi`,
- * `@moonshot-ai/kosong/providers/openai-legacy`, etc.
+ * `@legacy-ai/kosong/providers/floyd`,
+ * `@legacy-ai/kosong/providers/openai-legacy`, etc.
  */

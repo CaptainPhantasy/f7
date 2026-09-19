@@ -1,4 +1,4 @@
-// Public API surface for the kimi-cli → kimi-code migration tool.
+// Public API surface for the floyd-cli → floyd-code migration tool.
 
 export * from './types.js';
 export { detectMigration } from './detect.js';

@@ -14,7 +14,7 @@ import {
   type MarketplaceLocation,
   type PluginMarketplace,
   type Scope,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import { z } from 'zod';
 
 import { errEnvelope, okEnvelope } from '../envelope';
@@ -76,14 +76,14 @@ async function removePluginAction(ctx: PluginActionCtx): Promise<void> {
 const CAPABILITY_ROW_IDS: Readonly<
   Record<string, { capabilityId: string; wiringPluginIds: readonly string[] }>
 > = {
-  'kimi-cu': { capabilityId: 'kimi-cu', wiringPluginIds: ['kimi-cu', 'kimi-cu-win'] },
-  'kimi-cu-win': { capabilityId: 'kimi-cu', wiringPluginIds: ['kimi-cu', 'kimi-cu-win'] },
-  'kimi-webbridge': { capabilityId: 'kimi-webbridge', wiringPluginIds: ['kimi-webbridge'] },
+  'floyd-cu': { capabilityId: 'floyd-cu', wiringPluginIds: ['floyd-cu', 'floyd-cu-win'] },
+  'floyd-cu-win': { capabilityId: 'floyd-cu', wiringPluginIds: ['floyd-cu', 'floyd-cu-win'] },
+  'floyd-webbridge': { capabilityId: 'floyd-webbridge', wiringPluginIds: ['floyd-webbridge'] },
 };
 
 function orderedWiringPluginIds(ids: readonly string[]): readonly string[] {
-  if (process.platform === 'win32' && process.arch === 'x64' && ids.includes('kimi-cu-win')) {
-    return ['kimi-cu-win', ...ids.filter((id) => id !== 'kimi-cu-win')];
+  if (process.platform === 'win32' && process.arch === 'x64' && ids.includes('floyd-cu-win')) {
+    return ['floyd-cu-win', ...ids.filter((id) => id !== 'floyd-cu-win')];
   }
   return ids;
 }

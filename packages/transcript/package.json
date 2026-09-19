@@ -1,17 +1,17 @@
 {
-  "name": "@moonshot-ai/transcript",
+  "name": "@legacy-ai/transcript",
   "version": "0.0.2",
   "private": true,
   "description": "Isomorphic transcript rendering data layer: agent-granular L1 store, idempotent L2 operations, granularity-gated L3 subscriptions, framework-free L4 view registry.",
   "license": "MIT",
-  "author": "Moonshot AI",
+  "author": "Legacy AI",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MoonshotAI/kimi-code.git",
+    "url": "git+https://github.com/LegacyAI/floyd-code.git",
     "directory": "packages/transcript"
   },
   "bugs": {
-    "url": "https://github.com/MoonshotAI/kimi-code/issues"
+    "url": "https://github.com/LegacyAI/floyd-code/issues"
   },
   "type": "module",
   "imports": {

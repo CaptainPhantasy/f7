@@ -1109,7 +1109,7 @@ describe('OpenAIResponsesChatProvider', () => {
 
     it('passes concrete effort strings through verbatim', async () => {
       const provider = new OpenAIResponsesChatProvider({
-        model: 'kimi-for-coding',
+        model: 'floyd-for-coding',
         apiKey: 'test-key',
       }).withThinking('extreme');
       const history: Message[] = [
@@ -1123,7 +1123,7 @@ describe('OpenAIResponsesChatProvider', () => {
 
     it('does not filter concrete efforts through a client-side allow-list', async () => {
       const provider = new OpenAIResponsesChatProvider({
-        model: 'kimi-for-coding',
+        model: 'floyd-for-coding',
         apiKey: 'test-key',
       });
       const history: Message[] = [

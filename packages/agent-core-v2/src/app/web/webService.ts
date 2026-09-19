@@ -1,7 +1,7 @@
 import {
-  KIMI_CODE_PROVIDER_NAME,
-  kimiCodeBaseUrl,
-} from '@moonshot-ai/kimi-code-oauth';
+  FLOYD_CODE_PROVIDER_NAME,
+  floydCodeBaseUrl,
+} from '@legacy-ai/floyd-code-oauth';
 import { LifecycleScope } from '#/app/scopes';
 import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
 import { IOAuthService } from '#/app/auth/auth';
@@ -14,7 +14,7 @@ import { IProviderService } from '#/llm-adapter/provider/provider';
 import { isOAuthCatalogVendor } from '#/llm-adapter/provider/provider-definition';
 
 import { LocalFetchURLProvider } from './providers/local-fetch-url';
-import { MoonshotFetchURLProvider } from './providers/moonshot-fetch-url';
+import { LegacyFetchURLProvider } from './providers/legacy-fetch-url';
 import type { UrlFetcher } from './tools/fetch-url-types';
 import { IWebFetchService } from './web';
 
@@ -38,15 +38,15 @@ export class WebFetchService implements IWebFetchService {
   }
 
   private fromServicesConfig(): UrlFetcher | undefined {
-    const fetchConfig = this.config.get<ServicesConfig>(SERVICES_SECTION)?.moonshotFetch;
+    const fetchConfig = this.config.get<ServicesConfig>(SERVICES_SECTION)?.legacyFetch;
     if (fetchConfig?.baseUrl === undefined) {
       return undefined;
     }
     const tokenProvider =
       fetchConfig.oauth === undefined
         ? undefined
-        : this.oauth.resolveTokenProvider(KIMI_CODE_PROVIDER_NAME, fetchConfig.oauth);
-    return new MoonshotFetchURLProvider({
+        : this.oauth.resolveTokenProvider(FLOYD_CODE_PROVIDER_NAME, fetchConfig.oauth);
+    return new LegacyFetchURLProvider({
       baseUrl: fetchConfig.baseUrl,
       tokenProvider,
       apiKey: nonEmptyString(fetchConfig.apiKey),
@@ -58,19 +58,19 @@ export class WebFetchService implements IWebFetchService {
   }
 
   private fromManagedOAuth(): UrlFetcher | undefined {
-    const provider = this.providers.get(KIMI_CODE_PROVIDER_NAME);
+    const provider = this.providers.get(FLOYD_CODE_PROVIDER_NAME);
     if (provider === undefined || !isOAuthCatalogVendor(provider.type) || provider.oauth === undefined) {
       return undefined;
     }
     const tokenProvider = this.oauth.resolveTokenProvider(
-      KIMI_CODE_PROVIDER_NAME,
+      FLOYD_CODE_PROVIDER_NAME,
       provider.oauth,
     );
     if (tokenProvider === undefined) {
       return undefined;
     }
-    const baseUrl = `${(provider.baseUrl ?? kimiCodeBaseUrl()).replace(/\/+$/, '')}/fetch`;
-    return new MoonshotFetchURLProvider({
+    const baseUrl = `${(provider.baseUrl ?? floydCodeBaseUrl()).replace(/\/+$/, '')}/fetch`;
+    return new LegacyFetchURLProvider({
       baseUrl,
       tokenProvider,
       defaultHeaders: { ...this.bootstrap.args.requestHeaders },

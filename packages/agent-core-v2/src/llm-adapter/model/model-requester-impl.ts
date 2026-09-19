@@ -367,7 +367,7 @@ function readVideoFile(path: string): VideoUploadInput {
   const mimeType = EXT_TO_MIME[ext];
   if (mimeType === undefined) {
     throw new ChatProviderError(
-      `KimiFiles.uploadVideo: file extension does not indicate a video type: ${filename}`,
+      `FloydFiles.uploadVideo: file extension does not indicate a video type: ${filename}`,
     );
   }
   const data = fs.readFileSync(path);

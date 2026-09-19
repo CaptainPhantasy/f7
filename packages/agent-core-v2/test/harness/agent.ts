@@ -244,7 +244,7 @@ import {
 const TEST_HOME_DIR = '/home/test';
 
 const MOCK_PROVIDER = {
-  type: 'kimi',
+  type: 'floyd',
   apiKey: 'test-key',
   baseUrl: 'https://api.example.test/v1',
   model: 'mock-model',
@@ -252,7 +252,7 @@ const MOCK_PROVIDER = {
 
 interface TestModelProviderOptions {
   readonly promptCacheKey?: string;
-  readonly kimiRequestHeaders?: Record<string, string>;
+  readonly floydRequestHeaders?: Record<string, string>;
 }
 
 function mutedDateChangeEnvironment(): EnvironmentDisclosureSnapshot {
@@ -261,7 +261,7 @@ function mutedDateChangeEnvironment(): EnvironmentDisclosureSnapshot {
 
 const DATE_CHANGE_MUTED_CWD = '/__harness_date_change_muted__';
 
-interface KimiConfig {
+interface FloydConfig {
   readonly providers: Record<string, ProviderConfigForConfig>;
   readonly models?: Record<string, ModelConfigForConfig>;
   readonly defaultProvider?: string;
@@ -452,7 +452,7 @@ export interface TestAgentOptions {
   readonly hookEngine?:
   | Pick<IExternalHooksRunnerService, 'trigger' | 'triggerBlock' | 'fireAndForgetTrigger'>
   | undefined;
-  readonly initialConfig?: Partial<KimiConfig> | undefined;
+  readonly initialConfig?: Partial<FloydConfig> | undefined;
   readonly autoConfigure?: boolean | undefined;
   readonly cwd?: string | undefined;
   readonly [key: string]: unknown;
@@ -660,7 +660,7 @@ export function modelProviderOptionServices(
   );
 }
 
-export function configServices(readConfig: () => KimiConfig): TestAgentServiceOverride {
+export function configServices(readConfig: () => FloydConfig): TestAgentServiceOverride {
   return appService(IConfigService, configService(readConfig));
 }
 
@@ -1098,7 +1098,7 @@ export class AgentTestContext {
   private agentLifecycleScope: Scope | undefined;
   private readonly disposables: IDisposable[] = [];
   private suppressWireSnapshot = false;
-  kimiConfig: KimiConfig;
+  floydConfig: FloydConfig;
   private cwd = process.cwd();
   private closed = false;
 
@@ -1117,7 +1117,7 @@ export class AgentTestContext {
     if (options.cwd !== undefined) this.cwd = options.cwd;
     this.serviceOverrides = flattenServiceOverrides(overrides);
     this.emitter.on('error', () => { });
-    this.kimiConfig = applyTestAgentOptionsToConfig(emptyConfig(), options);
+    this.floydConfig = applyTestAgentOptionsToConfig(emptyConfig(), options);
 
     const sessionId = 'test-session';
     const agentId = 'main';
@@ -1127,7 +1127,7 @@ export class AgentTestContext {
       [
         (reg) => {
           for (const [id, value] of bootstrapSeed({
-            homeDir: '/tmp/kimi-code-agent-app-v2-test',
+            homeDir: '/tmp/floyd-code-agent-app-v2-test',
             cwd: this.cwd,
             osHomeDir: TEST_HOME_DIR,
             env: process.env,
@@ -1141,7 +1141,7 @@ export class AgentTestContext {
           reg.define(IBlobStore, BlobStoreService);
           reg.defineInstance(
             IConfigService,
-            configService(() => this.kimiConfig),
+            configService(() => this.floydConfig),
           );
           reg.defineInstance(IAgentIdentity, stubAgentIdentity());
           reg.defineInstance(
@@ -1157,7 +1157,7 @@ export class AgentTestContext {
             ILogOptions,
             {
               level: 'off',
-              globalLogPath: '/tmp/kimi-code-agent-app-v2-test/logs/kimi-code.log',
+              globalLogPath: '/tmp/floyd-code-agent-app-v2-test/logs/floyd-code.log',
               globalMaxBytes: 6 * 1024 * 1024,
               globalFiles: 1,
               sessionMaxBytes: 5 * 1024 * 1024,
@@ -1688,7 +1688,7 @@ export class AgentTestContext {
     provider: TestProviderConfig,
     modelCapabilities?: ModelCapability | undefined,
   ): void {
-    this.kimiConfig = configWithProvider(this.kimiConfig, provider, modelCapabilities);
+    this.floydConfig = configWithProvider(this.floydConfig, provider, modelCapabilities);
     (this.get(IModelCatalog) as ModelCatalog).notifyConfigChanged();
     const profile = this.get(IAgentProfileService);
     profile.update({ modelAlias: provider.model });
@@ -1992,7 +1992,7 @@ export class AgentTestContext {
   async expectResumeMatches(): Promise<void> {
     await this.waitForSessionMetadata();
     await this.drainWirePersistence();
-    const configSnapshot = structuredClone(this.get(IConfigService).getAll() as KimiConfig);
+    const configSnapshot = structuredClone(this.get(IConfigService).getAll() as FloydConfig);
     let wireHistory = await this.wireHistory();
     let resumedThroughRecord = wireHistory.length;
     const resumed = createTestAgent(
@@ -2522,11 +2522,11 @@ function configStateSnapshot(ctx: AgentTestContext): ResumeStateSnapshot['config
   };
 }
 
-function emptyConfig(): KimiConfig {
+function emptyConfig(): FloydConfig {
   return configWithProvider({ providers: {} }, MOCK_PROVIDER, undefined);
 }
 
-function applyTestAgentOptionsToConfig(config: KimiConfig, options: TestAgentOptions): KimiConfig {
+function applyTestAgentOptionsToConfig(config: FloydConfig, options: TestAgentOptions): FloydConfig {
   const initialConfig = options.initialConfig ?? {};
   return {
     ...config,
@@ -2542,7 +2542,7 @@ function applyTestAgentOptionsToConfig(config: KimiConfig, options: TestAgentOpt
   };
 }
 
-function configService(readConfig: () => KimiConfig): IConfigService {
+function configService(readConfig: () => FloydConfig): IConfigService {
   const effectiveConfig = () => configWithEnvOverrides(readConfig());
   const memory = new Map<string, unknown>();
   const sectionEmitter = new Emitter<{
@@ -2598,14 +2598,14 @@ function configService(readConfig: () => KimiConfig): IConfigService {
   } as unknown as IConfigService;
 }
 
-function configWithEnvOverrides(config: KimiConfig): KimiConfig {
+function configWithEnvOverrides(config: FloydConfig): FloydConfig {
   const maxCompletionTokens =
-    parseEnvCompletionTokens(process.env['KIMI_MODEL_MAX_COMPLETION_TOKENS']) ??
-    parseEnvCompletionTokens(process.env['KIMI_MODEL_MAX_TOKENS']);
-  const temperature = parseEnvFloat(process.env['KIMI_MODEL_TEMPERATURE']);
-  const topP = parseEnvFloat(process.env['KIMI_MODEL_TOP_P']);
-  const forcedEffort = process.env['KIMI_MODEL_THINKING_EFFORT']?.trim();
-  const thinkingKeep = process.env['KIMI_MODEL_THINKING_KEEP']?.trim();
+    parseEnvCompletionTokens(process.env['FLOYD_MODEL_MAX_COMPLETION_TOKENS']) ??
+    parseEnvCompletionTokens(process.env['FLOYD_MODEL_MAX_TOKENS']);
+  const temperature = parseEnvFloat(process.env['FLOYD_MODEL_TEMPERATURE']);
+  const topP = parseEnvFloat(process.env['FLOYD_MODEL_TOP_P']);
+  const forcedEffort = process.env['FLOYD_MODEL_THINKING_EFFORT']?.trim();
+  const thinkingKeep = process.env['FLOYD_MODEL_THINKING_KEEP']?.trim();
   const cron = cronEnvOverrides(asMutableRecord(config['cron']));
   if (
     maxCompletionTokens === undefined &&
@@ -2648,18 +2648,18 @@ function cronEnvOverrides(base: Record<string, unknown>): Record<string, unknown
     next[key] = value;
     changed = true;
   };
-  setBoolean('debug', 'KIMI_CRON_DEBUG');
-  setBoolean('noJitter', 'KIMI_CRON_NO_JITTER');
-  setBoolean('noStale', 'KIMI_CRON_NO_STALE');
-  setBoolean('disabled', 'KIMI_DISABLE_CRON');
-  setBoolean('manualTick', 'KIMI_CRON_MANUAL_TICK');
-  const pollIntervalMs = parseEnvCronPollIntervalMs(process.env['KIMI_CRON_POLL_INTERVAL_MS']);
+  setBoolean('debug', 'FLOYD_CRON_DEBUG');
+  setBoolean('noJitter', 'FLOYD_CRON_NO_JITTER');
+  setBoolean('noStale', 'FLOYD_CRON_NO_STALE');
+  setBoolean('disabled', 'FLOYD_DISABLE_CRON');
+  setBoolean('manualTick', 'FLOYD_CRON_MANUAL_TICK');
+  const pollIntervalMs = parseEnvCronPollIntervalMs(process.env['FLOYD_CRON_POLL_INTERVAL_MS']);
   if (pollIntervalMs !== undefined) {
     next['pollIntervalMs'] = pollIntervalMs;
     changed = true;
   }
-  if (process.env['KIMI_CRON_CLOCK'] !== undefined) {
-    next['clock'] = process.env['KIMI_CRON_CLOCK'];
+  if (process.env['FLOYD_CRON_CLOCK'] !== undefined) {
+    next['clock'] = process.env['FLOYD_CRON_CLOCK'];
     changed = true;
   }
   return changed ? next : undefined;
@@ -2701,10 +2701,10 @@ function asMutableRecord(value: unknown): Record<string, unknown> {
 }
 
 function configWithProvider(
-  config: KimiConfig,
+  config: FloydConfig,
   provider: TestProviderConfig,
   modelCapabilities: ModelCapability | undefined,
-): KimiConfig {
+): FloydConfig {
   const providerName = 'test-provider';
   const maxContextSize = modelCapabilities?.max_context_tokens;
   return {
@@ -2728,7 +2728,7 @@ function configWithProvider(
   };
 }
 
-function providerConfigForAlias(provider: TestProviderConfig): KimiConfig['providers'][string] {
+function providerConfigForAlias(provider: TestProviderConfig): FloydConfig['providers'][string] {
   return {
     type: provider.type,
     apiKey: provider.apiKey,

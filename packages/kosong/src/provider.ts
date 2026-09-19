@@ -112,7 +112,7 @@ export interface StreamedMessage {
   readonly rawFinishReason: string | null;
   /**
    * Provider trace identifier read from the `x-trace-id` response header
-   * (Kimi/KFC only). Available as soon as the response headers arrive —
+   * (Floyd/KFC only). Available as soon as the response headers arrive —
    * before the stream body is drained — so hosts can attribute even an
    * interrupted stream to its server-side request. `null` when the provider
    * does not report one.
@@ -212,15 +212,15 @@ export interface VideoUploadInput {
 /**
  * Unified interface for an LLM chat provider.
  *
- * Each provider implementation (Kimi, OpenAI, Anthropic, Google GenAI, etc.)
+ * Each provider implementation (Floyd, OpenAI, Anthropic, Google GenAI, etc.)
  * converts the common {@link Message} / {@link Tool} types into the
  * provider-specific wire format, streams back a {@link StreamedMessage}, and
  * exposes configuration helpers such as {@link withThinking}.
  */
 export interface ChatProvider {
-  /** Short identifier for the provider backend (e.g. `"kimi"`, `"anthropic"`). */
+  /** Short identifier for the provider backend (e.g. `"floyd"`, `"anthropic"`). */
   readonly name: string;
-  /** Model name passed to the upstream API (e.g. `"moonshot-v1-auto"`). */
+  /** Model name passed to the upstream API (e.g. `"legacy-v1-auto"`). */
   readonly modelName: string;
   /** Current thinking effort, or `null` if thinking is not configured. */
   readonly thinkingEffort: ThinkingEffort | null;
@@ -263,7 +263,7 @@ export interface ChatProvider {
    *
    * Implementations MUST NOT mutate or replace internal HTTP clients on the
    * returned clone — the clone is expected to share transport state with the
-   * original. See `KimiChatProvider._clone()` for the rationale.
+   * original. See `FloydChatProvider._clone()` for the rationale.
    */
   withMaxCompletionTokens?(
     maxCompletionTokens: number,

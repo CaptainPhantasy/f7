@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchCompleteFeedbackUpload,
   fetchCreateFeedbackUploadUrl,
-  kimiCodeFeedbackUploadCompleteUrl,
-  kimiCodeFeedbackUploadUrl,
+  floydCodeFeedbackUploadCompleteUrl,
+  floydCodeFeedbackUploadUrl,
   type CreateFeedbackUploadUrlBody,
 } from '../src/managed-feedback-upload';
 
@@ -20,16 +20,16 @@ const SAMPLE_BODY: CreateFeedbackUploadUrlBody = {
   feedback_id: 3,
 };
 
-describe('kimiCodeFeedbackUploadUrl', () => {
+describe('floydCodeFeedbackUploadUrl', () => {
   it('uses the feedback upload_url path', () => {
-    expect(kimiCodeFeedbackUploadUrl()).toBe('https://api.kimi.com/coding/v1/feedback/upload_url');
+    expect(floydCodeFeedbackUploadUrl()).toBe('https://api.floyd.com/coding/v1/feedback/upload_url');
   });
 });
 
-describe('kimiCodeFeedbackUploadCompleteUrl', () => {
+describe('floydCodeFeedbackUploadCompleteUrl', () => {
   it('uses the feedback upload_complete path', () => {
-    expect(kimiCodeFeedbackUploadCompleteUrl()).toBe(
-      'https://api.kimi.com/coding/v1/feedback/upload_complete',
+    expect(floydCodeFeedbackUploadCompleteUrl()).toBe(
+      'https://api.floyd.com/coding/v1/feedback/upload_complete',
     );
   });
 });
@@ -65,7 +65,7 @@ describe('fetchCreateFeedbackUploadUrl', () => {
 
     const calls = fetchMock.mock.calls as unknown as [string, RequestInit?][];
     const [calledUrl, init] = calls[0]!;
-    expect(calledUrl).toBe('https://api.kimi.com/coding/v1/feedback/upload_url');
+    expect(calledUrl).toBe('https://api.floyd.com/coding/v1/feedback/upload_url');
     expect(init?.method).toBe('POST');
 
     const headers = new Headers((init?.headers ?? {}) as Record<string, string>);
@@ -142,7 +142,7 @@ describe('fetchCompleteFeedbackUpload', () => {
     expect(result).toEqual({ kind: 'ok' });
     const calls = fetchMock.mock.calls as unknown as [string, RequestInit?][];
     const [calledUrl, init] = calls[0]!;
-    expect(calledUrl).toBe('https://api.kimi.com/coding/v1/feedback/upload_complete');
+    expect(calledUrl).toBe('https://api.floyd.com/coding/v1/feedback/upload_complete');
     expect(JSON.parse(init?.body as string)).toEqual({
       upload_id: 28,
       parts: [

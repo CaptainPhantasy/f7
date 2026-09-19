@@ -1,28 +1,28 @@
 import { describe, expect, it } from 'vitest';
 
 import { ENV_MODEL_PROVIDER_KEY } from '#/app/kosongConfig/configSection';
-import { ENV_MODEL_ALIAS_KEY, kimiModelEnvOverlay } from '#/app/kosongConfig/envOverlay';
+import { ENV_MODEL_ALIAS_KEY, floydModelEnvOverlay } from '#/app/kosongConfig/envOverlay';
 
 type Env = Record<string, string>;
 
 function apply(effective: Record<string, unknown>, env: Env): readonly string[] {
-  return kimiModelEnvOverlay.apply(effective, (name) => env[name], (_domain, value) => value);
+  return floydModelEnvOverlay.apply(effective, (name) => env[name], (_domain, value) => value);
 }
 
-describe('kimiModelEnvOverlay.apply', () => {
-  it('does nothing with no KIMI_MODEL_* env', () => {
+describe('floydModelEnvOverlay.apply', () => {
+  it('does nothing with no FLOYD_MODEL_* env', () => {
     const effective: Record<string, unknown> = {};
     expect(apply(effective, {})).toEqual([]);
     expect(effective).toEqual({});
   });
 
-  it('applies only modelOverrides when KIMI_MODEL_NAME is unset', () => {
+  it('applies only modelOverrides when FLOYD_MODEL_NAME is unset', () => {
     const effective: Record<string, unknown> = {};
     const changed = apply(effective, {
-      KIMI_MODEL_TEMPERATURE: '0.7',
-      KIMI_MODEL_TOP_P: '0.95',
-      KIMI_MODEL_THINKING_KEEP: 'all',
-      KIMI_MODEL_MAX_COMPLETION_TOKENS: '8192',
+      FLOYD_MODEL_TEMPERATURE: '0.7',
+      FLOYD_MODEL_TOP_P: '0.95',
+      FLOYD_MODEL_THINKING_KEEP: 'all',
+      FLOYD_MODEL_MAX_COMPLETION_TOKENS: '8192',
     });
     expect(changed).toEqual(['modelOverrides']);
     expect(effective['modelOverrides']).toEqual({
@@ -35,19 +35,19 @@ describe('kimiModelEnvOverlay.apply', () => {
 
   it('synthesizes the env model, selects it, and defaults the provider through the registry', () => {
     const effective: Record<string, unknown> = {};
-    const changed = apply(effective, { KIMI_MODEL_NAME: 'kimi-k2-custom' });
+    const changed = apply(effective, { FLOYD_MODEL_NAME: 'floyd-k2-custom' });
     expect(changed).toEqual(
       expect.arrayContaining(['models', 'providers', 'defaultModel']),
     );
     expect((effective['models'] as Record<string, unknown>)[ENV_MODEL_ALIAS_KEY]).toEqual({
       provider: ENV_MODEL_PROVIDER_KEY,
-      model: 'kimi-k2-custom',
+      model: 'floyd-k2-custom',
       maxContextSize: 262144,
       capabilities: ['image_in', 'thinking'],
     });
     expect((effective['providers'] as Record<string, unknown>)[ENV_MODEL_PROVIDER_KEY]).toEqual({
-      type: 'kimi',
-      baseUrl: 'https://api.moonshot.ai/v1',
+      type: 'floyd',
+      baseUrl: 'https://api.legacy.ai/v1',
     });
     expect(effective['defaultModel']).toBe(ENV_MODEL_ALIAS_KEY);
   });
@@ -55,12 +55,12 @@ describe('kimiModelEnvOverlay.apply', () => {
   it('honors the vendor endpoint env chain for the default baseUrl', () => {
     const effective: Record<string, unknown> = {};
     apply(effective, {
-      KIMI_MODEL_NAME: 'kimi-k2-custom',
-      KIMI_BASE_URL: 'https://kimi-proxy.example.test/v1',
+      FLOYD_MODEL_NAME: 'floyd-k2-custom',
+      FLOYD_BASE_URL: 'https://floyd-proxy.example.test/v1',
     });
     expect((effective['providers'] as Record<string, unknown>)[ENV_MODEL_PROVIDER_KEY]).toEqual({
-      type: 'kimi',
-      baseUrl: 'https://kimi-proxy.example.test/v1',
+      type: 'floyd',
+      baseUrl: 'https://floyd-proxy.example.test/v1',
     });
   });
 
@@ -70,7 +70,7 @@ describe('kimiModelEnvOverlay.apply', () => {
         [ENV_MODEL_PROVIDER_KEY]: { type: 'openai', baseUrl: 'https://proxy.example.test/v1' },
       },
     };
-    const changed = apply(effective, { KIMI_MODEL_NAME: 'my-model' });
+    const changed = apply(effective, { FLOYD_MODEL_NAME: 'my-model' });
     expect(changed).not.toContain('providers');
     expect((effective['providers'] as Record<string, unknown>)[ENV_MODEL_PROVIDER_KEY]).toEqual({
       type: 'openai',
@@ -81,13 +81,13 @@ describe('kimiModelEnvOverlay.apply', () => {
   it('parses the optional model fields and validates their shapes', () => {
     const effective: Record<string, unknown> = {};
     apply(effective, {
-      KIMI_MODEL_NAME: 'my-model',
-      KIMI_MODEL_MAX_CONTEXT_SIZE: '131072',
-      KIMI_MODEL_MAX_OUTPUT_SIZE: '4096',
-      KIMI_MODEL_CAPABILITIES: 'image_in, tool_use',
-      KIMI_MODEL_DISPLAY_NAME: 'Mine',
-      KIMI_MODEL_REASONING_KEY: 'reasoning_content',
-      KIMI_MODEL_ADAPTIVE_THINKING: 'true',
+      FLOYD_MODEL_NAME: 'my-model',
+      FLOYD_MODEL_MAX_CONTEXT_SIZE: '131072',
+      FLOYD_MODEL_MAX_OUTPUT_SIZE: '4096',
+      FLOYD_MODEL_CAPABILITIES: 'image_in, tool_use',
+      FLOYD_MODEL_DISPLAY_NAME: 'Mine',
+      FLOYD_MODEL_REASONING_KEY: 'reasoning_content',
+      FLOYD_MODEL_ADAPTIVE_THINKING: 'true',
     });
     expect((effective['models'] as Record<string, unknown>)[ENV_MODEL_ALIAS_KEY]).toEqual({
       provider: ENV_MODEL_PROVIDER_KEY,
@@ -100,18 +100,18 @@ describe('kimiModelEnvOverlay.apply', () => {
       adaptiveThinking: true,
     });
 
-    expect(() => apply({}, { KIMI_MODEL_NAME: 'm', KIMI_MODEL_MAX_CONTEXT_SIZE: 'abc' })).toThrowError(
-      /KIMI_MODEL_MAX_CONTEXT_SIZE must be a positive integer/,
+    expect(() => apply({}, { FLOYD_MODEL_NAME: 'm', FLOYD_MODEL_MAX_CONTEXT_SIZE: 'abc' })).toThrowError(
+      /FLOYD_MODEL_MAX_CONTEXT_SIZE must be a positive integer/,
     );
-    expect(() => apply({}, { KIMI_MODEL_TEMPERATURE: 'hot' })).toThrowError(
-      /KIMI_MODEL_TEMPERATURE must be a number/,
+    expect(() => apply({}, { FLOYD_MODEL_TEMPERATURE: 'hot' })).toThrowError(
+      /FLOYD_MODEL_TEMPERATURE must be a number/,
     );
   });
 });
 
-describe('kimiModelEnvOverlay.strip', () => {
+describe('floydModelEnvOverlay.strip', () => {
   it('removes the synthesized values on the write path', () => {
-    const strip = kimiModelEnvOverlay.strip!;
+    const strip = floydModelEnvOverlay.strip!;
     expect(
       strip('models', { keep: { model: 'a' }, [ENV_MODEL_ALIAS_KEY]: { model: 'b' } }, {}),
     ).toEqual({ keep: { model: 'a' } });
@@ -120,6 +120,6 @@ describe('kimiModelEnvOverlay.strip', () => {
     );
     expect(strip('defaultModel', 'other-model', {})).toBe('other-model');
     expect(strip('modelOverrides', { temperature: 1 }, {})).toBeUndefined();
-    expect(strip('providers', { p: { type: 'kimi' } }, {})).toEqual({ p: { type: 'kimi' } });
+    expect(strip('providers', { p: { type: 'floyd' } }, {})).toEqual({ p: { type: 'floyd' } });
   });
 });

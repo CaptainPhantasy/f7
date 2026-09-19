@@ -4,7 +4,7 @@ import type {
   ContentPart,
   MCPServerConfig,
   SessionInfo,
-  KimiConfig,
+  FloydConfig,
   MCPTestResult,
   LoginResult,
   UpdateMCPServerRequest,
@@ -48,9 +48,9 @@ class Bridge {
     if (typeof acquireVsCodeApi === "function") {
       this.vscode = acquireVsCodeApi();
     } else {
-      console.warn("[Kimi Bridge] Running outside VS Code, using mock");
+      console.warn("[Floyd Bridge] Running outside VS Code, using mock");
       this.vscode = {
-        postMessage: (msg) => console.log("[Kimi Mock]", msg),
+        postMessage: (msg) => console.log("[Floyd Mock]", msg),
         getState: () => undefined,
         setState: () => {},
       };
@@ -151,7 +151,7 @@ class Bridge {
   }
 
   getModels() {
-    return this.call<KimiConfig>(Methods.GetModels);
+    return this.call<FloydConfig>(Methods.GetModels);
   }
 
   getMCPServers() {
@@ -207,12 +207,12 @@ class Bridge {
     return this.call<{ ok: boolean }>(Methods.RespondQuestion, { rpcRequestId, questionRequestId, answers });
   }
 
-  getKimiSessions() {
-    return this.call<SessionInfo[]>(Methods.GetKimiSessions);
+  getFloydSessions() {
+    return this.call<SessionInfo[]>(Methods.GetFloydSessions);
   }
 
-  getAllKimiSessions() {
-    return this.call<SessionInfo[]>(Methods.GetAllKimiSessions);
+  getAllFloydSessions() {
+    return this.call<SessionInfo[]>(Methods.GetAllFloydSessions);
   }
 
   getRegisteredWorkDirs() {
@@ -228,15 +228,15 @@ class Bridge {
   }
 
   loadSessionHistory(sessionId: string) {
-    return this.call<UIStreamEvent[]>(Methods.LoadKimiSessionHistory, { kimiSessionId: sessionId });
+    return this.call<UIStreamEvent[]>(Methods.LoadFloydSessionHistory, { floydSessionId: sessionId });
   }
 
   deleteSession(sessionId: string) {
-    return this.call<{ ok: boolean }>(Methods.DeleteKimiSession, { sessionId });
+    return this.call<{ ok: boolean }>(Methods.DeleteFloydSession, { sessionId });
   }
 
   forkSession(sessionId: string, turnIndex: number) {
-    return this.call<{ sessionId: string } | null>(Methods.ForkKimiSession, { sessionId, turnIndex });
+    return this.call<{ sessionId: string } | null>(Methods.ForkFloydSession, { sessionId, turnIndex });
   }
 
   pickMedia(maxCount: number, includeVideo = true) {

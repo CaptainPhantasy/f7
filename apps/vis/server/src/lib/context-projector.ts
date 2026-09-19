@@ -1,13 +1,13 @@
 import {
   buildContextCompactionShape,
-} from '@moonshot-ai/agent-core-v2/agent/contextMemory/compactionHandoff';
+} from '@legacy-ai/agent-core-v2/agent/contextMemory/compactionHandoff';
 import {
   computeUndoCut,
   isFullyUndoable,
   readContextCompactionShapeInput,
-} from '@moonshot-ai/agent-core-v2/agent/contextMemory/contextOps';
-import { createLoopEventFold } from '@moonshot-ai/agent-core-v2/agent/contextMemory/loopEventFold';
-import { renderToolResultForModel } from '@moonshot-ai/agent-core-v2/agent/contextMemory/toolResultRender';
+} from '@legacy-ai/agent-core-v2/agent/contextMemory/contextOps';
+import { createLoopEventFold } from '@legacy-ai/agent-core-v2/agent/contextMemory/loopEventFold';
+import { renderToolResultForModel } from '@legacy-ai/agent-core-v2/agent/contextMemory/toolResultRender';
 import type {
   ContentPart,
   ContextMessage,

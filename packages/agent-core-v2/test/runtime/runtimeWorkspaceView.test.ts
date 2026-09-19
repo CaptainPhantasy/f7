@@ -84,7 +84,7 @@ describe('RuntimeWorkspaceView', () => {
         environment: {
           osKind: 'Windows',
           shellName: 'bash',
-          shellPath: 'C:\\kimi-test-nonexistent\\Git\\bin\\bash.exe',
+          shellPath: 'C:\\floyd-test-nonexistent\\Git\\bin\\bash.exe',
         },
       },
     );

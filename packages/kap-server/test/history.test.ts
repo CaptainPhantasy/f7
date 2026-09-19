@@ -9,8 +9,8 @@ import {
   getLiveSessionById,
   IModelCatalog,
   type ScopeSeed,
-} from '@moonshot-ai/agent-core-v2';
-import { TurnStarted, TurnStepStarted } from '@moonshot-ai/agent-core-v2/agent/loop/turnEvents';
+} from '@legacy-ai/agent-core-v2';
+import { TurnStarted, TurnStepStarted } from '@legacy-ai/agent-core-v2/agent/loop/turnEvents';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { type RunningServer, startServer } from '../src/start';
@@ -113,7 +113,7 @@ describe('server /api/v1/sessions/{sid}/history', () => {
   let seeds: ScopeSeed | undefined;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-history-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-history-'));
     const modelCatalog: IModelCatalog = {
       _serviceBrand: undefined,
       get: () => {

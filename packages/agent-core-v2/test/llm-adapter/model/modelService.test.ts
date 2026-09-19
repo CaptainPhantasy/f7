@@ -8,8 +8,8 @@ describe('models TOML transforms', () => {
   it('converts snake_case entries to camelCase and back', () => {
     const from = modelsFromToml({
       k1: {
-        provider: 'moonshot',
-        model: 'kimi-k2',
+        provider: 'legacy',
+        model: 'floyd-k2',
         max_context_size: 262144,
         max_output_size: 8192,
         display_name: 'K2',
@@ -22,8 +22,8 @@ describe('models TOML transforms', () => {
       },
     }) as Record<string, Record<string, unknown>>;
     expect(from['k1']).toEqual({
-      provider: 'moonshot',
-      model: 'kimi-k2',
+      provider: 'legacy',
+      model: 'floyd-k2',
       maxContextSize: 262144,
       maxOutputSize: 8192,
       displayName: 'K2',
@@ -37,8 +37,8 @@ describe('models TOML transforms', () => {
 
     const back = modelsToToml(from, undefined) as Record<string, Record<string, unknown>>;
     expect(back['k1']).toEqual({
-      provider: 'moonshot',
-      model: 'kimi-k2',
+      provider: 'legacy',
+      model: 'floyd-k2',
       max_context_size: 262144,
       max_output_size: 8192,
       display_name: 'K2',
@@ -68,7 +68,7 @@ describe('ModelService', () => {
     await Promise.resolve();
     expect(ready).toBe(false);
 
-    service.loadAll({ k1: { model: 'kimi-k2', maxContextSize: 262144 } }, 'k1');
+    service.loadAll({ k1: { model: 'floyd-k2', maxContextSize: 262144 } }, 'k1');
     await service.ready;
     expect(ready).toBe(true);
     expect(service.getDefaultModel()).toBe('k1');
@@ -85,7 +85,7 @@ describe('ModelService', () => {
       events.push({ added: e.added, removed: e.removed, changed: e.changed }),
     );
 
-    const k1: ModelRecord = { provider: 'moonshot', model: 'kimi-k2', maxContextSize: 262144 };
+    const k1: ModelRecord = { provider: 'legacy', model: 'floyd-k2', maxContextSize: 262144 };
     await service.set('k1', k1);
     expect(service.get('k1')).toEqual(k1);
     expect(service.list()).toEqual({ k1 });
@@ -113,7 +113,7 @@ describe('ModelService', () => {
   });
 
   it('fires the pointer event only on real pointer changes', async () => {
-    const service = createService({ k1: { model: 'kimi-k2' } });
+    const service = createService({ k1: { model: 'floyd-k2' } });
     const pointerEvents: Array<string | undefined> = [];
     service.onDidChangeDefaultModel((e) => pointerEvents.push(e.id));
 

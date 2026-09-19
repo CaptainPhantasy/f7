@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 
-import type { TokenUsage } from '@moonshot-ai/agent-core-v2';
+import type { TokenUsage } from '@legacy-ai/agent-core-v2';
 
 import type { StepTiming, StepUsage } from '../../protocol/messages';
 import {

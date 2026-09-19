@@ -54,8 +54,8 @@ describe('McpRegistryService', () => {
   let registry: IMcpRegistryService;
 
   beforeEach(() => {
-    home = mkdtempSync(join(tmpdir(), 'kimi-mcp-registry-home-'));
-    vi.stubEnv('KIMI_CODE_HOME', home);
+    home = mkdtempSync(join(tmpdir(), 'floyd-mcp-registry-home-'));
+    vi.stubEnv('FLOYD_CODE_HOME', home);
     disposables = new DisposableStore();
     tempDirs = [home];
     pluginEntries = [];
@@ -96,7 +96,7 @@ describe('McpRegistryService', () => {
   });
 
   async function makeProject(): Promise<{ project: string; sub: string }> {
-    const project = mkdtempSync(join(tmpdir(), 'kimi-mcp-registry-proj-'));
+    const project = mkdtempSync(join(tmpdir(), 'floyd-mcp-registry-proj-'));
     tempDirs.push(project);
     await mkdir(join(project, '.git'), { recursive: true });
     const sub = join(project, 'pkg');
@@ -147,7 +147,7 @@ describe('McpRegistryService', () => {
           repoOnly: { command: 'repo-only' },
         },
       });
-      await writeJson(join(sub, '.kimi-code', 'mcp.json'), {
+      await writeJson(join(sub, '.floyd-code', 'mcp.json'), {
         mcpServers: { localOnly: { command: 'local-only' } },
       });
 
@@ -180,7 +180,7 @@ describe('McpRegistryService', () => {
       });
       expect(byName.get('localOnly')).toMatchObject({
         mutable: false,
-        origin: join(sub, '.kimi-code', 'mcp.json'),
+        origin: join(sub, '.floyd-code', 'mcp.json'),
       });
     });
 
@@ -190,7 +190,7 @@ describe('McpRegistryService', () => {
       await writeJson(join(project, '.mcp.json'), {
         mcpServers: { repoOnly: { command: 'repo-only' } },
       });
-      await writeJson(join(sub, '.kimi-code', 'mcp.json'), {
+      await writeJson(join(sub, '.floyd-code', 'mcp.json'), {
         mcpServers: { localOnly: { command: 'local-only' } },
       });
       pluginEntries = [
@@ -223,7 +223,7 @@ describe('McpRegistryService', () => {
       await writeJson(join(project, '.mcp.json'), {
         mcpServers: { projectOnly: { command: 'project-only' } },
       });
-      await writeJson(join(sub, '.kimi-code', 'mcp.json'), {
+      await writeJson(join(sub, '.floyd-code', 'mcp.json'), {
         mcpServers: { localOnly: { command: 'local-only' } },
       });
       trustedKey = sub;
@@ -236,7 +236,7 @@ describe('McpRegistryService', () => {
     });
 
     it('resolves a relative non-git cwd before checking workspace trust', async () => {
-      const project = mkdtempSync(join(tmpdir(), 'kimi-mcp-registry-non-git-'));
+      const project = mkdtempSync(join(tmpdir(), 'floyd-mcp-registry-non-git-'));
       tempDirs.push(project);
       await writeJson(join(project, '.mcp.json'), {
         mcpServers: { relativeOnly: { command: 'relative-only' } },

@@ -1,10 +1,10 @@
 {
-  "name": "@moonshot-ai/acp-server",
+  "name": "@legacy-ai/acp-server",
   "version": "0.0.1",
   "private": true,
   "description": "Agent Client Protocol (ACP) host backed directly by the DI × Scope agent engine (agent-core-v2)",
   "license": "MIT",
-  "author": "Moonshot AI",
+  "author": "Legacy AI",
   "type": "module",
   "exports": {
     ".": {
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "^1.3.0",
-    "@moonshot-ai/agent-core-v2": "workspace:^",
-    "@moonshot-ai/klient": "workspace:^"
+    "@legacy-ai/agent-core-v2": "workspace:^",
+    "@legacy-ai/klient": "workspace:^"
   }
 }

@@ -1066,7 +1066,7 @@ describe('GoogleGenAIChatProvider', () => {
         model: 'gemini-2.5-flash',
         apiKey: 'test-key',
         baseUrl: 'https://genai-gateway.example/v1beta',
-        defaultHeaders: { 'User-Agent': 'kimi-code-cli/test' },
+        defaultHeaders: { 'User-Agent': 'floyd-code-cli/test' },
       });
       const client = (
         provider as unknown as {
@@ -1080,7 +1080,7 @@ describe('GoogleGenAIChatProvider', () => {
       )._client;
       expect(client.apiClient.getCustomBaseUrl()).toBe('https://genai-gateway.example/v1beta');
       expect(client.apiClient.getHeaders()).toMatchObject({
-        'User-Agent': 'kimi-code-cli/test',
+        'User-Agent': 'floyd-code-cli/test',
       });
     });
 

@@ -50,7 +50,7 @@ describe('DefaultToolApprovePermissionPolicyService', () => {
     ['TaskList', {}],
     ['TaskOutput', { task_id: 'task_1' }],
     ['CronList', {}],
-    ['WebSearch', { query: 'kimi code' }],
+    ['WebSearch', { query: 'floyd code' }],
     ['FetchURL', { url: 'https://example.com' }],
     ['Agent', { prompt: 'review this' }],
     [

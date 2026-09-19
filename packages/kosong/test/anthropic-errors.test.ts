@@ -9,7 +9,7 @@ import {
   isRetryableGenerateError,
 } from '#/errors';
 import { convertAnthropicError, AnthropicChatProvider } from '#/providers/anthropic';
-import { classifyKimiQuotaError } from '#/providers/kimi-errors';
+import { classifyFloydQuotaError } from '#/providers/floyd-errors';
 import {
   APIConnectionError as AnthropicConnectionError,
   APIConnectionTimeoutError as AnthropicTimeoutError,
@@ -488,8 +488,8 @@ describe('convertAnthropicError: quota-exhausted 429 via the convertError hook',
     expect(isRetryableGenerateError(result)).toBe(true);
   });
 
-  it('classifies the Kimi quota body as quota-exhausted through the hook', () => {
-    const result = convertAnthropicError(quota429(), classifyKimiQuotaError);
+  it('classifies the Floyd quota body as quota-exhausted through the hook', () => {
+    const result = convertAnthropicError(quota429(), classifyFloydQuotaError);
     expect(result).toBeInstanceOf(APIProviderQuotaExhaustedError);
     expect(isRetryableGenerateError(result)).toBe(false);
   });
@@ -511,7 +511,7 @@ describe('convertAnthropicError: quota-exhausted 429 via the convertError hook',
       apiKey: 'test-key',
       defaultMaxTokens: 1024,
       stream: false,
-      convertError: classifyKimiQuotaError,
+      convertError: classifyFloydQuotaError,
     });
     (provider as any)._client.messages.create = vi.fn().mockRejectedValue(quota429());
 

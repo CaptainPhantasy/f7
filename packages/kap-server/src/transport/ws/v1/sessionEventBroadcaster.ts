@@ -11,7 +11,7 @@ import type {
   Scope,
   SessionActivityState,
   Workspace,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import {
   IAgentLifecycleService,
   IAgentLoopService,
@@ -26,7 +26,7 @@ import {
   getLiveSessionById,
   interactions,
   toDisposable,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import type {
   ConfigWarningItem,
   DiUnitChangedEvent,
@@ -56,7 +56,7 @@ import {
   type TranscriptOpsEvent,
   type TranscriptResetEvent,
   type TranscriptStore,
-} from '@moonshot-ai/transcript';
+} from '@legacy-ai/transcript';
 
 import { toWireApproval } from '../../../routes/approvals';
 import { toWireQuestion } from '../../../protocol/question-wire';

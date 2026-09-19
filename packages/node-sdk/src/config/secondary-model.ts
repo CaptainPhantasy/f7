@@ -1,13 +1,13 @@
 import type {
-  KimiConfig,
+  FloydConfig,
   ModelAlias,
   ModelAliasOverrides,
   SecondaryModelConfig,
 } from './schema';
 
 export const SECONDARY_DERIVED_MODEL_ALIAS = '__secondary__';
-export const SECONDARY_MODEL_ENV = 'KIMI_SECONDARY_MODEL';
-export const SECONDARY_MODEL_EFFORT_ENV = 'KIMI_SECONDARY_EFFORT';
+export const SECONDARY_MODEL_ENV = 'FLOYD_SECONDARY_MODEL';
+export const SECONDARY_MODEL_EFFORT_ENV = 'FLOYD_SECONDARY_EFFORT';
 
 type Env = Readonly<Record<string, string | undefined>>;
 
@@ -33,7 +33,7 @@ export function secondaryModelPatch(
   return Object.keys(patch).length > 0 ? patch : undefined;
 }
 
-export function applySecondaryModelConfig(config: KimiConfig, env: Env = process.env): KimiConfig {
+export function applySecondaryModelConfig(config: FloydConfig, env: Env = process.env): FloydConfig {
   let secondary = config.secondaryModel;
   const envModel = trimmed(env[SECONDARY_MODEL_ENV]);
   const envEffort = trimmed(env[SECONDARY_MODEL_EFFORT_ENV]);
@@ -67,9 +67,9 @@ export function applySecondaryModelConfig(config: KimiConfig, env: Env = process
 }
 
 export function stripSecondaryModelConfig(
-  config: KimiConfig,
+  config: FloydConfig,
   env: Env = process.env,
-): KimiConfig {
+): FloydConfig {
   let next = config;
 
   if (next.models !== undefined && SECONDARY_DERIVED_MODEL_ALIAS in next.models) {

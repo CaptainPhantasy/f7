@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { IDisposable, Workspace } from '@moonshot-ai/agent-core-v2';
+import type { IDisposable, Workspace } from '@legacy-ai/agent-core-v2';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { WebSocket, type RawData } from 'ws';
 
@@ -737,7 +737,7 @@ describe('WsV3 endpoint over a real server', () => {
   const sockets: WebSocket[] = [];
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v3-ws-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v3-ws-'));
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',

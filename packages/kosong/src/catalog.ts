@@ -97,7 +97,7 @@ export interface CatalogModel {
 const KNOWN_WIRE_TYPES = [
   'anthropic',
   'openai',
-  'kimi',
+  'floyd',
   'google-genai',
   'openai_responses',
   'vertexai',
@@ -416,7 +416,7 @@ export function catalogProviderModels(entry: CatalogProviderEntry): CatalogModel
       // The always-thinking inference ("effort levels, no toggle, no 'none'
       // — reasoning cannot be turned off") must not fire where the wire has
       // a true protocol-level disable the effort list can never show:
-      // Anthropic and Kimi both encode off as `thinking: {type: 'disabled'}`,
+      // Anthropic and Floyd both encode off as `thinking: {type: 'disabled'}`,
       // so marking those models always-on would hide a working off. On every
       // other wire the same catalog shape is exactly the evidence the marker
       // exists for — gpt-5-class models reject `reasoning_effort: 'none'`,
@@ -426,7 +426,7 @@ export function catalogProviderModels(entry: CatalogProviderEntry): CatalogModel
       const protocol = model.protocol ?? providerWire;
       if (
         model.alwaysThinking === true &&
-        (protocol === 'anthropic' || protocol === 'kimi')
+        (protocol === 'anthropic' || protocol === 'floyd')
       ) {
         const { alwaysThinking: _dropped, ...rest } = model;
         return rest as CatalogModel;

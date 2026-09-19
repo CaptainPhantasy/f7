@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 
-import type { SwarmModeTrigger } from '@moonshot-ai/agent-core-v2/features/swarm/agent/swarm';
-import type { Kaos } from '@moonshot-ai/kaos';
+import type { SwarmModeTrigger } from '@legacy-ai/agent-core-v2/features/swarm/agent/swarm';
+import type { Kaos } from '@legacy-ai/kaos';
 
 import type { AgentContextData } from '#/context';
 import { ErrorCodes, makeErrorPayload } from '#/errors';
@@ -46,8 +46,8 @@ import type {
   GoalSnapshot,
   GoalToolResult,
   JsonObject,
-  KimiConfig,
-  KimiConfigPatch,
+  FloydConfig,
+  FloydConfigPatch,
   ListSessionsOptions,
   McpServerInfo,
   McpStartupMetrics,
@@ -229,15 +229,15 @@ export abstract class SDKRpcClientBase {
 
   abstract exportSession(input: ExportSessionInput): Promise<ExportSessionResult>;
 
-  abstract getConfig(input?: GetConfigOptions): Promise<KimiConfig>;
+  abstract getConfig(input?: GetConfigOptions): Promise<FloydConfig>;
 
   abstract getConfigDiagnostics(): Promise<ConfigDiagnostics>;
 
   abstract getExperimentalFeatures(): Promise<readonly ExperimentalFeatureState[]>;
 
-  abstract setConfig(input: KimiConfigPatch): Promise<KimiConfig>;
+  abstract setConfig(input: FloydConfigPatch): Promise<FloydConfig>;
 
-  abstract removeProvider(providerId: string): Promise<KimiConfig>;
+  abstract removeProvider(providerId: string): Promise<FloydConfig>;
 
   abstract supportsAtomicSectionReplace(): boolean;
 

@@ -1,6 +1,6 @@
 import { homedir } from 'node:os';
 
-import { KIMI_CODE_PROVIDER_NAME, resolveKimiRegion } from '@moonshot-ai/kimi-code-oauth';
+import { FLOYD_CODE_PROVIDER_NAME, resolveFloydRegion } from '@legacy-ai/floyd-code-oauth';
 
 import { LifecycleScope } from '#/app/scopes';
 import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
@@ -15,8 +15,8 @@ import { IHostProcessService } from '#/os/interface/hostProcess';
 
 import { ICapabilityService } from './capability';
 import { CapabilityErrors } from './errors';
-import { createKimiCuEntry } from './entries/kimiCu';
-import { createKimiWebbridgeEntry } from './entries/kimiWebbridge';
+import { createFloydCuEntry } from './entries/floydCu';
+import { createFloydWebbridgeEntry } from './entries/floydWebbridge';
 import type {
   CapabilityEntry,
   CapabilityId,
@@ -62,25 +62,25 @@ export class CapabilityService extends Disposable implements ICapabilityService 
       const ctx = {
         platform: process.platform,
         arch: process.arch,
-        kimiHomeDir: bootstrap.homeDir,
+        floydHomeDir: bootstrap.homeDir,
         userHomeDir: homedir(),
         plugins,
         hostProcess,
         resolveRegion: () => {
-          const oauth = providers.get(KIMI_CODE_PROVIDER_NAME)?.oauth;
-          return resolveKimiRegion({
+          const oauth = providers.get(FLOYD_CODE_PROVIDER_NAME)?.oauth;
+          return resolveFloydRegion({
             configuredOAuthHost: oauth?.oauthHost,
             configuredOAuthKey: oauth?.key,
             readMarker:
-              (bootstrap.getEnv('KIMI_CODE_REGION_MARKER') ??
-                process.env['KIMI_CODE_REGION_MARKER']) !== 'off',
+              (bootstrap.getEnv('FLOYD_CODE_REGION_MARKER') ??
+                process.env['FLOYD_CODE_REGION_MARKER']) !== 'off',
             homeDir: bootstrap.homeDir,
           });
         },
       };
       this.entries = new Map<CapabilityId, CapabilityEntry>([
-        ['kimi-cu', createKimiCuEntry(ctx)],
-        ['kimi-webbridge', createKimiWebbridgeEntry(ctx)],
+        ['floyd-cu', createFloydCuEntry(ctx)],
+        ['floyd-webbridge', createFloydWebbridgeEntry(ctx)],
       ]);
     }
   }

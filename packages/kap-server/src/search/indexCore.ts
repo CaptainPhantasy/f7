@@ -9,7 +9,7 @@ import {
   TextIndexBuildingError,
   wipeStoreDir,
   type BatchInputOp,
-} from '@moonshot-ai/minidb';
+} from '@legacy-ai/minidb';
 
 import { GlobalSearchError, type GlobalSearchIncomplete } from './contract.ts';
 import {

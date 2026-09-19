@@ -59,14 +59,14 @@ const CATALOG = {
       source: 'https://github.com/example/gh/releases/tag/v2.0.0',
     },
     {
-      id: 'kimi-webbridge',
-      displayName: 'Kimi Browser Extension',
-      source: 'https://cdn.example.test/kimi-webbridge.zip',
+      id: 'floyd-webbridge',
+      displayName: 'Floyd Browser Extension',
+      source: 'https://cdn.example.test/floyd-webbridge.zip',
     },
     {
-      id: 'kimi-cu',
-      displayName: 'Kimi Computer Use',
-      source: 'https://cdn.example.test/kimi-cu.zip',
+      id: 'floyd-cu',
+      displayName: 'Floyd Computer Use',
+      source: 'https://cdn.example.test/floyd-cu.zip',
     },
     {
       id: '  meta-alias-plugin  ',
@@ -87,7 +87,7 @@ describe('server-v2 /api/v1 plugins', () => {
   const createdDirs: string[] = [];
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-plugins-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-plugins-'));
     await bootDefault();
   });
 
@@ -164,10 +164,10 @@ describe('server-v2 /api/v1 plugins', () => {
   }
 
   async function makePluginDir(id: string, version: string): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), `kimi-test-plugin-${id}-`));
+    const dir = await mkdtemp(join(tmpdir(), `floyd-test-plugin-${id}-`));
     createdDirs.push(dir);
     await writeFile(
-      join(dir, 'kimi.plugin.json'),
+      join(dir, 'floyd.plugin.json'),
       JSON.stringify({ name: id, version, description: 'test plugin' }),
     );
     return dir;
@@ -219,7 +219,7 @@ describe('server-v2 /api/v1 plugins', () => {
 
   it('fans out event.plugin.changed over WS on install and remove', async () => {
     const ws = new WebSocket(`${base.replace('http', 'ws')}/api/v1/ws`, [
-      `kimi-code.bearer.${bearerToken(server!)}`,
+      `floyd-code.bearer.${bearerToken(server!)}`,
     ]);
     const types: string[] = [];
     try {
@@ -256,7 +256,7 @@ describe('server-v2 /api/v1 plugins', () => {
       source: join(home!, 'no-such-plugin-dir'),
     });
     expect(missing.body.code).toBe(40409);
-    const noManifest = await mkdtemp(join(tmpdir(), 'kimi-no-manifest-'));
+    const noManifest = await mkdtemp(join(tmpdir(), 'floyd-no-manifest-'));
     createdDirs.push(noManifest);
     const unloadable = await call('POST', '/api/v1/plugins', { source: noManifest });
     expect(unloadable.body.code).toBe(40001);
@@ -285,8 +285,8 @@ describe('server-v2 /api/v1 plugins', () => {
       ['alias-plugin', 'third-party'],
       ['blank-tier-plugin', 'third-party'],
       ['gh-plugin', 'third-party'],
-      ['kimi-webbridge', 'third-party'],
-      ['kimi-cu', 'third-party'],
+      ['floyd-webbridge', 'third-party'],
+      ['floyd-cu', 'third-party'],
       ['meta-alias-plugin', 'third-party'],
     ]);
     expect(before.body.data.entries[0]?.installed).toBeUndefined();
@@ -299,7 +299,7 @@ describe('server-v2 /api/v1 plugins', () => {
       '3.1.0',
     );
     expect(
-      before.body.data.entries.find((e) => e.id === 'kimi-webbridge')?.capabilityId,
+      before.body.data.entries.find((e) => e.id === 'floyd-webbridge')?.capabilityId,
     ).toBeUndefined();
     expect(before.body.data.entries.some((e) => e.source.startsWith('capability:'))).toBe(false);
     const meta = before.body.data.entries.find((e) => e.id === 'meta-alias-plugin');
@@ -372,8 +372,8 @@ describe('server-v2 /api/v1 plugins', () => {
 
   it('treats the dev marketplace server as the default catalog', async () => {
     await server?.close();
-    vi.stubEnv('KIMI_CODE_PLUGIN_MARKETPLACE_URL', CATALOG_URL);
-    vi.stubEnv('KIMI_CODE_PLUGIN_MARKETPLACE_FROM_DEV_SERVER', '1');
+    vi.stubEnv('FLOYD_CODE_PLUGIN_MARKETPLACE_URL', CATALOG_URL);
+    vi.stubEnv('FLOYD_CODE_PLUGIN_MARKETPLACE_FROM_DEV_SERVER', '1');
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',
@@ -389,8 +389,8 @@ describe('server-v2 /api/v1 plugins', () => {
       '/api/v1/plugins/marketplace',
     );
     expect(body.code).toBe(0);
-    expect(body.data.entries.find((e) => e.id === 'kimi-webbridge')?.capabilityId).toBe(
-      'kimi-webbridge',
+    expect(body.data.entries.find((e) => e.id === 'floyd-webbridge')?.capabilityId).toBe(
+      'floyd-webbridge',
     );
 
     const cuSupported = process.platform === 'darwin' || (process.platform === 'win32' && process.arch === 'x64');
@@ -398,30 +398,30 @@ describe('server-v2 /api/v1 plugins', () => {
       entries: { id: string; capabilityId?: string; installed?: { version?: string } }[];
     }>('GET', '/api/v1/plugins/marketplace');
     if (!cuSupported) {
-      expect(after0.body.data.entries.find((e) => e.id === 'kimi-cu')).toBeUndefined();
+      expect(after0.body.data.entries.find((e) => e.id === 'floyd-cu')).toBeUndefined();
       return;
     }
 
-    const winSource = await makePluginDir('kimi-cu-win', '0.5.4');
+    const winSource = await makePluginDir('floyd-cu-win', '0.5.4');
     await call('POST', '/api/v1/plugins', { source: winSource });
     const after = await call<{
       entries: { id: string; capabilityId?: string; installed?: { version?: string } }[];
     }>('GET', '/api/v1/plugins/marketplace');
-    const cu = after.body.data.entries.find((e) => e.id === 'kimi-cu');
-    expect(cu?.capabilityId).toBe('kimi-cu');
+    const cu = after.body.data.entries.find((e) => e.id === 'floyd-cu');
+    expect(cu?.capabilityId).toBe('floyd-cu');
     expect(cu?.installed?.version).toBe('0.5.4');
 
-    const staleSource = await makePluginDir('kimi-cu', '0.1.0');
+    const staleSource = await makePluginDir('floyd-cu', '0.1.0');
     await call('POST', '/api/v1/plugins', { source: staleSource });
     const both = await call<{
       entries: { id: string; installed?: { version?: string } }[];
     }>('GET', '/api/v1/plugins/marketplace');
     const expected = process.platform === 'win32' && process.arch === 'x64' ? '0.5.4' : '0.1.0';
-    expect(both.body.data.entries.find((e) => e.id === 'kimi-cu')?.installed?.version).toBe(
+    expect(both.body.data.entries.find((e) => e.id === 'floyd-cu')?.installed?.version).toBe(
       expected,
     );
-    await call('POST', '/api/v1/plugins/kimi-cu-win:remove');
-    await call('POST', '/api/v1/plugins/kimi-cu:remove');
+    await call('POST', '/api/v1/plugins/floyd-cu-win:remove');
+    await call('POST', '/api/v1/plugins/floyd-cu:remove');
   });
 
   it('maps an unreachable marketplace to 50001', async () => {
@@ -442,7 +442,7 @@ describe('server-v2 /api/v1 plugins', () => {
 
   it('reads a local marketplace catalog from disk (plain path or file://)', async () => {
     await server?.close();
-    const catalogDir = await mkdtemp(join(tmpdir(), 'kimi-local-catalog-'));
+    const catalogDir = await mkdtemp(join(tmpdir(), 'floyd-local-catalog-'));
     createdDirs.push(catalogDir);
     const fileUrlPluginPath = join(catalogDir, 'plugins', 'file.zip');
     await writeFile(
@@ -495,13 +495,13 @@ describe('server-v2 /api/v1 plugins', () => {
         if (typeof url === 'string' && url.includes('/releases/latest')) {
           return new Response(null, { status: 404 });
         }
-        if (url === 'https://code.kimi.com/kimi-code/plugins/marketplace.json') {
+        if (url === 'https://code.floyd.com/floyd-code/plugins/marketplace.json') {
           throw new Error('offline');
         }
         return realFetch(url as never, init);
       }),
     );
-    vi.stubEnv('KIMI_CODE_PLUGIN_MARKETPLACE_URL', undefined as unknown as string);
+    vi.stubEnv('FLOYD_CODE_PLUGIN_MARKETPLACE_URL', undefined as unknown as string);
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',
@@ -522,28 +522,28 @@ describe('server-v2 /api/v1 plugins', () => {
       }[];
     }>('GET', '/api/v1/plugins/marketplace');
     expect(body.code).toBe(0);
-    const datasource = body.data.entries.find((e) => e.id === 'kimi-datasource');
+    const datasource = body.data.entries.find((e) => e.id === 'floyd-datasource');
     expect(datasource?.source.startsWith('http')).toBe(false);
-    expect(datasource?.source.endsWith(join('plugins', 'official', 'kimi-datasource'))).toBe(true);
-    const webbridge = body.data.entries.find((e) => e.id === 'kimi-webbridge');
-    expect(webbridge?.capabilityId).toBe('kimi-webbridge');
+    expect(datasource?.source.endsWith(join('plugins', 'official', 'floyd-datasource'))).toBe(true);
+    const webbridge = body.data.entries.find((e) => e.id === 'floyd-webbridge');
+    expect(webbridge?.capabilityId).toBe('floyd-webbridge');
     const cuSupported = process.platform === 'darwin' || (process.platform === 'win32' && process.arch === 'x64');
-    const cu = body.data.entries.find((e) => e.id === 'kimi-cu');
+    const cu = body.data.entries.find((e) => e.id === 'floyd-cu');
     if (!cuSupported) {
       expect(cu).toBeUndefined();
       return;
     }
     expect(cu?.tier).toBe('official');
-    expect(cu?.capabilityId).toBe('kimi-cu');
-    expect(cu?.source).toBe('capability:kimi-cu');
-    expect(cu?.displayName).toBe('Kimi Computer Use');
+    expect(cu?.capabilityId).toBe('floyd-cu');
+    expect(cu?.source).toBe('capability:floyd-cu');
+    expect(cu?.displayName).toBe('Floyd Computer Use');
 
-    const cuSource = await makePluginDir('kimi-cu', '0.5.8');
+    const cuSource = await makePluginDir('floyd-cu', '0.5.8');
     await call('POST', '/api/v1/plugins', { source: cuSource });
     const after = await call<{
       entries: { id: string; installed?: { version?: string; enabled: boolean } }[];
     }>('GET', '/api/v1/plugins/marketplace');
-    expect(after.body.data.entries.find((e) => e.id === 'kimi-cu')?.installed).toEqual({
+    expect(after.body.data.entries.find((e) => e.id === 'floyd-cu')?.installed).toEqual({
       version: '0.5.8',
       enabled: true,
     });
@@ -551,7 +551,7 @@ describe('server-v2 /api/v1 plugins', () => {
 
   it('expands ~ in local catalog paths like the CLI loader', async () => {
     await server?.close();
-    const fakeHome = await mkdtemp(join(tmpdir(), 'kimi-tilde-home-'));
+    const fakeHome = await mkdtemp(join(tmpdir(), 'floyd-tilde-home-'));
     createdDirs.push(fakeHome);
     await writeFile(
       join(fakeHome, 'marketplace.json'),

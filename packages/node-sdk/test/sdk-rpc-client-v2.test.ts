@@ -1,11 +1,11 @@
 /**
  * Scenario: v2 wiring — the harness talks to the in-process agent-core-v2
- * engine (klient memory transport) instead of the v1 KimiCore RPC pair.
+ * engine (klient memory transport) instead of the v1 FloydCore RPC pair.
  * Responsibilities: v2-client behaviors the v1↔v2 parity gate does not
  * compare (engine telemetry forwarding, host request headers, the Windows
  * Git Bash probe, workspace trust, the config write cascade, deleteSession,
  * foldAgentWireReplay).
- * Wiring: real v2 engine bootstrapped on a temp KIMI_CODE_HOME; remote provider calls are stubbed.
+ * Wiring: real v2 engine bootstrapped on a temp FLOYD_CODE_HOME; remote provider calls are stubbed.
  * Run: pnpm exec vitest run test/sdk-rpc-client-v2.test.ts
  */
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -14,24 +14,24 @@ import { join } from 'node:path';
 
 import {
   FileTokenStorage,
-  resolveKimiCodeOAuthRef,
-  resolveKimiTokenStorageName,
-} from '@moonshot-ai/kimi-code-oauth';
+  resolveFloydCodeOAuthRef,
+  resolveFloydTokenStorageName,
+} from '@legacy-ai/floyd-code-oauth';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildDaemonFileUrl,
-  createKimiHarness,
+  createFloydHarness,
   ErrorCodes,
   isDaemonFileUrl,
-  isKimiError,
-  KimiHarness,
+  isFloydError,
+  FloydHarness,
   limitAgentReplayByTurns,
   removeProviderFromConfig,
   SDKRpcClientV2,
-  toKimiErrorPayload,
+  toFloydErrorPayload,
   type Event,
-  type KimiConfig,
+  type FloydConfig,
 } from '#/index';
 import { foldAgentWireReplay } from '#/v2/resume-replay';
 import {
@@ -56,22 +56,22 @@ import {
   ISessionManager,
   MAIN_AGENT_ID,
   OsProcessErrors,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 
-import { McpOAuthService as McpOAuthServiceV2 } from '@moonshot-ai/agent-core-v2/mcpCore/oauth/service';
+import { McpOAuthService as McpOAuthServiceV2 } from '@legacy-ai/agent-core-v2/mcpCore/oauth/service';
 
 import { TEST_IDENTITY } from './test-identity';
 import {
   resetModelsDevUpstreamForTest,
   setModelsDevUpstreamForTest,
-} from '@moonshot-ai/agent-core-v2/app/kosongConfig/modelsDevUpstream';
+} from '@legacy-ai/agent-core-v2/app/kosongConfig/modelsDevUpstream';
 import { recordingTelemetry, type TelemetryRecord } from './telemetry';
 
 const hostEnvProbe = vi.hoisted(() => ({ failWithMissingShell: false }));
 
-vi.mock('@moonshot-ai/agent-core-v2/_base/execEnv/environmentProbe', async (importOriginal) => {
+vi.mock('@legacy-ai/agent-core-v2/_base/execEnv/environmentProbe', async (importOriginal) => {
   const actual = await importOriginal<
-    typeof import('@moonshot-ai/agent-core-v2/_base/execEnv/environmentProbe')
+    typeof import('@legacy-ai/agent-core-v2/_base/execEnv/environmentProbe')
   >();
   return {
     ...actual,
@@ -109,10 +109,10 @@ function stubProcessPlatform(platform: NodeJS.Platform): () => void {
   };
 }
 
-async function makeHarness(): Promise<{ harness: KimiHarness; homeDir: string }> {
-  const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+async function makeHarness(): Promise<{ harness: FloydHarness; homeDir: string }> {
+  const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
   tempDirs.push(homeDir);
-  return { harness: createKimiHarness({ homeDir, identity: TEST_IDENTITY }), homeDir };
+  return { harness: createFloydHarness({ homeDir, identity: TEST_IDENTITY }), homeDir };
 }
 
 /** Whether the persisted session directory exists under `<home>/sessions/<bucket>/<id>`. */
@@ -151,7 +151,7 @@ async function findSessionDir(homeDir: string, sessionId: string): Promise<strin
 describe('SDKRpcClientV2 (agent-core-v2 wiring)', () => {
   it('exposes the validated runtime binding through Session', async () => {
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     const session = await harness.createSession({ id: 'ses_runtime', workDir });
     try {
@@ -166,7 +166,7 @@ describe('SDKRpcClientV2 (agent-core-v2 wiring)', () => {
   });
 
   it('reports global MCP authorization without probing when verify is false', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
     const implicitOAuthUrl = 'https://implicit-oauth.example.test/mcp';
     const authorizedUrl = 'https://authorized.example.test/mcp';
@@ -242,8 +242,8 @@ describe('SDKRpcClientV2 (agent-core-v2 wiring)', () => {
     }
   }, 15_000);
 
-  it('restates engine MCP management Error2s as KimiError, undeclared codes as internal', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+  it('restates engine MCP management Error2s as FloydError, undeclared codes as internal', async () => {
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
     const client = new SDKRpcClientV2({ homeDir, identity: TEST_IDENTITY });
     try {
@@ -267,28 +267,28 @@ describe('SDKRpcClientV2 (agent-core-v2 wiring)', () => {
           }),
         );
         const oauthError = await captureRejection(client.listGlobalMcpServers());
-        expect(isKimiError(oauthError)).toBe(true);
+        expect(isFloydError(oauthError)).toBe(true);
         expect(oauthError).toMatchObject({
           code: 'mcp.oauth_failed',
           message: 'OAuth flow timed out',
           details: { flowId: 'flow-1' },
         });
-        expect(toKimiErrorPayload(oauthError)).toMatchObject({
+        expect(toFloydErrorPayload(oauthError)).toMatchObject({
           code: 'mcp.oauth_failed',
           message: 'OAuth flow timed out',
         });
 
         // A code this build's registry does not declare (a newer engine than
         // the pinned SDK) restates as `internal` instead of minting an
-        // undeclared KimiError code the serializer would reject.
+        // undeclared FloydError code the serializer would reject.
         listSpy.mockRejectedValueOnce(new Error2('mcp.future_code' as never, 'from a newer engine'));
         const unknownError = await captureRejection(client.listGlobalMcpServers());
-        expect(isKimiError(unknownError)).toBe(true);
+        expect(isFloydError(unknownError)).toBe(true);
         expect(unknownError).toMatchObject({
           code: ErrorCodes.INTERNAL,
           message: 'from a newer engine',
         });
-        expect(toKimiErrorPayload(unknownError)).toMatchObject({
+        expect(toFloydErrorPayload(unknownError)).toMatchObject({
           code: ErrorCodes.INTERNAL,
           message: 'from a newer engine',
         });
@@ -301,7 +301,7 @@ describe('SDKRpcClientV2 (agent-core-v2 wiring)', () => {
   });
 
   it('close() awaits the MCP OAuth service shutdown', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
     const client = new SDKRpcClientV2({ homeDir, identity: TEST_IDENTITY });
     // Activate the OnDemand OAuth service, then gate its shutdown behind a
@@ -339,7 +339,7 @@ describe('SDKRpcClientV2 (agent-core-v2 wiring)', () => {
   });
 
   it('close() resolves promptly when the MCP OAuth service was never used', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
     const client = new SDKRpcClientV2({ homeDir, identity: TEST_IDENTITY });
     // Nothing touched IMcpOAuthService: close() force-activates the OnDemand
@@ -350,15 +350,15 @@ describe('SDKRpcClientV2 (agent-core-v2 wiring)', () => {
   });
 
   it('seeds the host request headers (User-Agent + X-Msh-*) into the engine', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
     const client = new SDKRpcClientV2({ homeDir, identity: TEST_IDENTITY });
     try {
       // Without this seed the managed vendors go out with the SDK's default
       // User-Agent and no X-Msh-* — the interactive-v2 path's identity bug.
       const headers = client.engineAccessor.get(IHostRequestHeaders).headers;
-      expect(headers['User-Agent']).toBe(`kimi-code-cli/${TEST_IDENTITY.version}`);
-      expect(headers['X-Msh-Platform']).toBe('kimi_code_cli');
+      expect(headers['User-Agent']).toBe(`floyd-code-cli/${TEST_IDENTITY.version}`);
+      expect(headers['X-Msh-Platform']).toBe('floyd_code_cli');
       expect(headers['X-Msh-Version']).toBe(TEST_IDENTITY.version);
       expect(headers['X-Msh-Device-Id']).toBeTruthy();
     } finally {
@@ -370,9 +370,9 @@ describe('SDKRpcClientV2 (agent-core-v2 wiring)', () => {
     hostEnvProbe.failWithMissingShell = true;
     const restorePlatform = stubProcessPlatform('win32');
     try {
-      const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+      const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
       tempDirs.push(homeDir);
-      const harness = createKimiHarness({ homeDir, identity: TEST_IDENTITY });
+      const harness = createFloydHarness({ homeDir, identity: TEST_IDENTITY });
       try {
         await expect(harness.ensureConfigFile()).rejects.toBeInstanceOf(HostProcessError);
         await expect(harness.ensureConfigFile()).rejects.toMatchObject({
@@ -391,9 +391,9 @@ describe('SDKRpcClientV2 (agent-core-v2 wiring)', () => {
     hostEnvProbe.failWithMissingShell = true;
     const restorePlatform = stubProcessPlatform('darwin');
     try {
-      const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+      const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
       tempDirs.push(homeDir);
-      const harness = createKimiHarness({ homeDir, identity: TEST_IDENTITY });
+      const harness = createFloydHarness({ homeDir, identity: TEST_IDENTITY });
       try {
         await expect(harness.ensureConfigFile()).resolves.toBeUndefined();
       } finally {
@@ -450,16 +450,16 @@ describe('SDKRpcClientV2 (agent-core-v2 wiring)', () => {
   });
 
   it('emits one complete metadata event when a generated title is applied', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     const titleBaseUrl = 'https://api.example.test/coding/v1';
-    const titleOAuthRef = resolveKimiCodeOAuthRef({ baseUrl: titleBaseUrl });
+    const titleOAuthRef = resolveFloydCodeOAuthRef({ baseUrl: titleBaseUrl });
     // Storage names strip the `oauth/` prefix (FileTokenStorage rejects
     // namespaced keys); the engine resolves the same name when reading.
     await new FileTokenStorage(join(homeDir, 'credentials')).save(
-      resolveKimiTokenStorageName({ oauthKey: titleOAuthRef.key }),
+      resolveFloydTokenStorageName({ oauthKey: titleOAuthRef.key }),
       {
         accessToken: 'test-access-token',
         refreshToken: 'test-refresh-token',
@@ -484,11 +484,11 @@ provider = "stub"
 model = "stub"
 max_context_size = 1000
 
-[providers."managed:kimi-code"]
-type = "kimi"
+[providers."managed:floyd-code"]
+type = "floyd"
 base_url = "${titleBaseUrl}"
 
-[providers."managed:kimi-code".oauth]
+[providers."managed:floyd-code".oauth]
 storage = "file"
 key = "${titleOAuthRef.key}"
 `,
@@ -504,7 +504,7 @@ key = "${titleOAuthRef.key}"
       }
       throw new Error(`Unexpected fetch: ${url}`);
     });
-    const harness = createKimiHarness({ homeDir, identity: TEST_IDENTITY });
+    const harness = createFloydHarness({ homeDir, identity: TEST_IDENTITY });
 
     try {
       const session = await harness.createSession({ id: 'ses_generated_title_event', workDir });
@@ -513,7 +513,7 @@ key = "${titleOAuthRef.key}"
         "session 'source-session'",
       );
       await expect(
-        harness.auth.getCachedAccessToken('managed:kimi-code', {
+        harness.auth.getCachedAccessToken('managed:floyd-code', {
           storage: titleOAuthRef.storage,
           key: titleOAuthRef.key,
         }),
@@ -554,14 +554,14 @@ key = "${titleOAuthRef.key}"
   });
 
   it('serializes a temporary title-generation close against a public resume', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     const titleBaseUrl = 'https://api.example.test/coding/v1';
-    const titleOAuthRef = resolveKimiCodeOAuthRef({ baseUrl: titleBaseUrl });
+    const titleOAuthRef = resolveFloydCodeOAuthRef({ baseUrl: titleBaseUrl });
     await new FileTokenStorage(join(homeDir, 'credentials')).save(
-      resolveKimiTokenStorageName({ oauthKey: titleOAuthRef.key }),
+      resolveFloydTokenStorageName({ oauthKey: titleOAuthRef.key }),
       {
         accessToken: 'test-access-token',
         refreshToken: 'test-refresh-token',
@@ -586,11 +586,11 @@ provider = "stub"
 model = "stub"
 max_context_size = 1000
 
-[providers."managed:kimi-code"]
-type = "kimi"
+[providers."managed:floyd-code"]
+type = "floyd"
 base_url = "${titleBaseUrl}"
 
-[providers."managed:kimi-code".oauth]
+[providers."managed:floyd-code".oauth]
 storage = "file"
 key = "${titleOAuthRef.key}"
 `,
@@ -688,7 +688,7 @@ key = "${titleOAuthRef.key}"
 
   it('re-resumes a fresh session facade while the public close is in flight', async () => {
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
 
     try {
@@ -713,7 +713,7 @@ key = "${titleOAuthRef.key}"
 
   it('rejects one of two concurrent creates with the same explicit session id', async () => {
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
 
     try {
@@ -738,7 +738,7 @@ key = "${titleOAuthRef.key}"
 
   it('coalesces concurrent public resumes onto one session facade', async () => {
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
 
     try {
@@ -761,7 +761,7 @@ key = "${titleOAuthRef.key}"
 
   it('does not coalesce resumes with different options onto one facade', async () => {
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
 
     try {
@@ -783,7 +783,7 @@ key = "${titleOAuthRef.key}"
 
   it('reports the title state in the resumed summary', async () => {
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
 
     try {
@@ -802,8 +802,8 @@ key = "${titleOAuthRef.key}"
   });
 
   it('folds the resumed main agent replay from the persisted wire on cold and live resumes', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-resume-fold-'));
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-resume-fold-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(homeDir, workDir);
     const client = new SDKRpcClientV2({ homeDir, identity: TEST_IDENTITY });
 
@@ -850,8 +850,8 @@ key = "${titleOAuthRef.key}"
   });
 
   it('rejects a resume whose engine restore fails without an unhandled rejection from the overlapped fold', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-resume-fail-'));
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-resume-fail-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(homeDir, workDir);
     const client = new SDKRpcClientV2({ homeDir, identity: TEST_IDENTITY });
     const unhandled: unknown[] = [];
@@ -891,10 +891,10 @@ key = "${titleOAuthRef.key}"
 
   it('serves listWorkspaceSkills through the engineAccessor escape hatch', async () => {
     const { harness, homeDir } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     await writeSkill(join(homeDir, 'skills', 'demo-user-skill'), 'demo-user-skill');
-    await writeSkill(join(workDir, '.kimi-code', 'skills', 'demo-project-skill'), 'demo-project-skill');
+    await writeSkill(join(workDir, '.floyd-code', 'skills', 'demo-project-skill'), 'demo-project-skill');
     try {
       const skills = await harness.listWorkspaceSkills(workDir);
       const byName = new Map(skills.map((skill) => [skill.name, skill]));
@@ -913,7 +913,7 @@ key = "${titleOAuthRef.key}"
 
   it('serves suggestFiles through the workspace handler fs service', async () => {
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     await mkdir(join(workDir, 'src'), { recursive: true });
     await writeFile(join(workDir, 'src', 'app.ts'), 'app');
@@ -937,7 +937,7 @@ key = "${titleOAuthRef.key}"
 
   it('rejects an out-of-range suggestFiles limit before touching the engine', async () => {
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     try {
       for (const limit of [0, -1, 201, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
@@ -951,17 +951,17 @@ key = "${titleOAuthRef.key}"
   });
 
   it('honors skillDirs (explicit dirs) over default user / project discovery', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
-    const explicitBase = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-explicit-'));
+    const explicitBase = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-explicit-'));
     tempDirs.push(explicitBase);
     const explicitDir = join(explicitBase, 'skills');
     await writeSkill(join(homeDir, 'skills', 'demo-user-skill'), 'demo-user-skill');
-    await writeSkill(join(workDir, '.kimi-code', 'skills', 'demo-project-skill'), 'demo-project-skill');
+    await writeSkill(join(workDir, '.floyd-code', 'skills', 'demo-project-skill'), 'demo-project-skill');
     await writeSkill(join(explicitDir, 'demo-explicit-skill'), 'demo-explicit-skill');
-    const harness = createKimiHarness({
+    const harness = createFloydHarness({
       homeDir,
       identity: TEST_IDENTITY,
       skillDirs: [explicitDir],
@@ -990,7 +990,7 @@ key = "${titleOAuthRef.key}"
   });
 
   it('serves the plugin catalog from the v2 engine on an empty home', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
     const rpc = new SDKRpcClientV2({ homeDir, identity: TEST_IDENTITY });
     try {
@@ -1159,7 +1159,7 @@ key = "${titleOAuthRef.key}"
 
   it('deleteSession removes a session and rejects a missing id with session_not_found', async () => {
     const { harness, homeDir } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     try {
       const session = await harness.createSession({ workDir });
@@ -1183,10 +1183,10 @@ key = "${titleOAuthRef.key}"
   ])(
     'gates NotifyUser for all profiles and preserves fork prompts: %j',
     async ({ enabled, panel }) => {
-      vi.stubEnv('KIMI_CODE_EXPERIMENTAL_FLAG', '0');
-      vi.stubEnv('KIMI_CODE_EXPERIMENTAL_NOTIFY_USER', '');
-      const homeDir = await mkdtemp(join(tmpdir(), 'kimi-notify-home-'));
-      const workDir = await mkdtemp(join(tmpdir(), 'kimi-notify-work-'));
+      vi.stubEnv('FLOYD_CODE_EXPERIMENTAL_FLAG', '0');
+      vi.stubEnv('FLOYD_CODE_EXPERIMENTAL_NOTIFY_USER', '');
+      const homeDir = await mkdtemp(join(tmpdir(), 'floyd-notify-home-'));
+      const workDir = await mkdtemp(join(tmpdir(), 'floyd-notify-work-'));
       tempDirs.push(homeDir, workDir);
       const client = new SDKRpcClientV2({
         homeDir,
@@ -1339,9 +1339,9 @@ key = "${titleOAuthRef.key}"
   );
 
   it('serves getTodos from the live session todo state', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     const client = new SDKRpcClientV2({ homeDir, identity: TEST_IDENTITY });
     try {
@@ -1376,10 +1376,10 @@ key = "${titleOAuthRef.key}"
   });
 
   it('serves setTowerMode and getStatus towerMode through the agent scope tower service', async () => {
-    vi.stubEnv('KIMI_CODE_EXPERIMENTAL_TOWER', '1');
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    vi.stubEnv('FLOYD_CODE_EXPERIMENTAL_TOWER', '1');
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     const client = new SDKRpcClientV2({ homeDir, identity: TEST_IDENTITY });
     try {
@@ -1415,11 +1415,11 @@ key = "${titleOAuthRef.key}"
   });
 
   it('rejects setTowerMode when the tower feature is unavailable', async () => {
-    vi.stubEnv('KIMI_CODE_EXPERIMENTAL_TOWER', '0');
-    vi.stubEnv('KIMI_CODE_EXPERIMENTAL_FLAG', '0');
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-'));
+    vi.stubEnv('FLOYD_CODE_EXPERIMENTAL_TOWER', '0');
+    vi.stubEnv('FLOYD_CODE_EXPERIMENTAL_FLAG', '0');
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-'));
     tempDirs.push(homeDir);
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     const client = new SDKRpcClientV2({ homeDir, identity: TEST_IDENTITY });
     try {
@@ -1441,9 +1441,9 @@ key = "${titleOAuthRef.key}"
   });
 
   it('exposes Session.setTowerMode and getStatus().towerMode on the v2 harness', async () => {
-    vi.stubEnv('KIMI_CODE_EXPERIMENTAL_TOWER', '1');
+    vi.stubEnv('FLOYD_CODE_EXPERIMENTAL_TOWER', '1');
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     try {
       const session = await harness.createSession({ workDir });
@@ -1468,7 +1468,7 @@ key = "${titleOAuthRef.key}"
 describe('SDKRpcClientV2 workspace trust', () => {
   it('reports an untrusted workspace with the project MCP servers it gates', async () => {
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     await writeFile(
       join(workDir, '.mcp.json'),
@@ -1490,9 +1490,9 @@ describe('SDKRpcClientV2 workspace trust', () => {
       }),
       'utf-8',
     );
-    await mkdir(join(workDir, '.kimi-code'), { recursive: true });
+    await mkdir(join(workDir, '.floyd-code'), { recursive: true });
     await writeFile(
-      join(workDir, '.kimi-code', 'mcp.json'),
+      join(workDir, '.floyd-code', 'mcp.json'),
       JSON.stringify({ mcpServers: { 'nested-server': { command: 'nested-cmd' } } }),
       'utf-8',
     );
@@ -1515,7 +1515,7 @@ describe('SDKRpcClientV2 workspace trust', () => {
 
   it('reports project servers that override same-named user entries', async () => {
     const { harness, homeDir } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     await writeFile(
       join(homeDir, 'mcp.json'),
@@ -1556,7 +1556,7 @@ describe('SDKRpcClientV2 workspace trust', () => {
 
   it('degrades the gated-server list to empty on an invalid project mcp.json', async () => {
     const { harness } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     await writeFile(join(workDir, '.mcp.json'), '{not json', 'utf-8');
     try {
@@ -1567,9 +1567,9 @@ describe('SDKRpcClientV2 workspace trust', () => {
     }
   });
 
-  it('trustWorkspace flips the state and persists the marker in the kimi home', async () => {
+  it('trustWorkspace flips the state and persists the marker in the floyd home', async () => {
     const { harness, homeDir } = await makeHarness();
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-work-'));
     tempDirs.push(workDir);
     try {
       await harness.trustWorkspace(workDir);
@@ -1577,7 +1577,7 @@ describe('SDKRpcClientV2 workspace trust', () => {
         trusted: true,
         gatedMcpServers: [],
       });
-      // The trust marker lives in the kimi home, never in the checkout.
+      // The trust marker lives in the floyd home, never in the checkout.
       const markers = await readdir(join(homeDir, 'workspace-trust'));
       expect(markers.length).toBe(1);
       expect(await readdir(workDir)).not.toContain('workspace-trust');
@@ -1589,7 +1589,7 @@ describe('SDKRpcClientV2 workspace trust', () => {
 
 describe('foldAgentWireReplay', () => {
   it('folds a journal into v1 replay records and the tool store', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-fold-'));
+    const dir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-fold-'));
     tempDirs.push(dir);
     const wirePath = join(dir, 'wire.jsonl');
     const records = [
@@ -1630,7 +1630,7 @@ describe('foldAgentWireReplay', () => {
   });
 
   it('degrades to an empty fold on a missing or corrupt journal', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-fold-'));
+    const dir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-fold-'));
     tempDirs.push(dir);
     const empty = { replay: [], toolStore: {} };
     await expect(foldAgentWireReplay(join(dir, 'missing.jsonl'))).resolves.toEqual(empty);
@@ -1733,7 +1733,7 @@ describe('foldAgentWireReplay turn limiting', () => {
   }
 
   async function writeWire(records: readonly Record<string, unknown>[]): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-fold-limit-'));
+    const dir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-fold-limit-'));
     tempDirs.push(dir);
     const wirePath = join(dir, 'wire.jsonl');
     await writeFile(
@@ -1989,12 +1989,12 @@ describe('foldAgentWireReplay turn limiting', () => {
 
 describe('SDKRpcClientV2 engine telemetry', () => {
   it('forwards engine-side events to the host-supplied telemetry client', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-tel-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-tel-'));
     tempDirs.push(homeDir);
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-tel-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-tel-work-'));
     tempDirs.push(workDir);
     const records: TelemetryRecord[] = [];
-    const harness = createKimiHarness({
+    const harness = createFloydHarness({
       homeDir,
       identity: TEST_IDENTITY,
       telemetry: recordingTelemetry(records),
@@ -2010,13 +2010,13 @@ describe('SDKRpcClientV2 engine telemetry', () => {
   });
 
   it('honors telemetry = false for engine-side events', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-tel-off-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-tel-off-'));
     tempDirs.push(homeDir);
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-tel-off-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-tel-off-work-'));
     tempDirs.push(workDir);
     await writeFile(join(homeDir, 'config.toml'), 'telemetry = false\n', 'utf-8');
     const records: TelemetryRecord[] = [];
-    const harness = createKimiHarness({
+    const harness = createFloydHarness({
       homeDir,
       identity: TEST_IDENTITY,
       telemetry: recordingTelemetry(records),
@@ -2032,13 +2032,13 @@ describe('SDKRpcClientV2 engine telemetry', () => {
   });
 
   it('emits session_started once per open, with the harness schema and enabled experimental flags', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-tel-flags-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-tel-flags-'));
     tempDirs.push(homeDir);
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-tel-flags-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-tel-flags-work-'));
     tempDirs.push(workDir);
     await writeFile(join(homeDir, 'config.toml'), '[experimental]\nsubagent_fork = true\n', 'utf-8');
     const records: TelemetryRecord[] = [];
-    const harness = createKimiHarness({
+    const harness = createFloydHarness({
       homeDir,
       identity: TEST_IDENTITY,
       telemetry: recordingTelemetry(records),
@@ -2053,7 +2053,7 @@ describe('SDKRpcClientV2 engine telemetry', () => {
         sessionId: session.id,
         properties: {
           client_id: '',
-          client_name: 'kimi-code-cli',
+          client_name: 'floyd-code-cli',
           client_version: '0.0.0-test',
           ui_mode: 'shell',
           resumed: false,
@@ -2080,9 +2080,9 @@ describe('SDKRpcClientV2 engine telemetry', () => {
   });
 
   it('keeps forwarding the engine session_started to a direct SDKRpcClientV2 consumer', async () => {
-    const homeDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-tel-direct-'));
+    const homeDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-tel-direct-'));
     tempDirs.push(homeDir);
-    const workDir = await mkdtemp(join(tmpdir(), 'kimi-sdk-v2-tel-direct-work-'));
+    const workDir = await mkdtemp(join(tmpdir(), 'floyd-sdk-v2-tel-direct-work-'));
     tempDirs.push(workDir);
     const records: TelemetryRecord[] = [];
     const client = new SDKRpcClientV2({
@@ -2122,7 +2122,7 @@ describe('removeProviderFromConfig', () => {
       },
       defaultModel: 'my-b',
       defaultProvider: 'b',
-    } as unknown as KimiConfig;
+    } as unknown as FloydConfig;
 
     const next = removeProviderFromConfig(config, 'b');
 
@@ -2148,7 +2148,7 @@ describe('removeProviderFromConfig', () => {
       },
       defaultModel: 'a/m1',
       defaultProvider: 'a',
-    } as unknown as KimiConfig;
+    } as unknown as FloydConfig;
 
     const next = removeProviderFromConfig(config, 'b');
 
@@ -2169,7 +2169,7 @@ describe('removeProviderFromConfig', () => {
         defaultModel: 'a/m1',
         models: { 'a/m1': 'fast', 'b/m1': 'smart' },
       },
-    } as unknown as KimiConfig;
+    } as unknown as FloydConfig;
 
     const next = removeProviderFromConfig(config, 'b');
 
@@ -2190,7 +2190,7 @@ describe('removeProviderFromConfig', () => {
         defaultModel: 'b/m1',
         models: { 'a/m1': 'fast', 'b/m1': 'smart' },
       },
-    } as unknown as KimiConfig;
+    } as unknown as FloydConfig;
 
     expect(removeProviderFromConfig(config, 'b').secondaryModel).toEqual({
       defaultModel: 'b/m1',
@@ -2201,7 +2201,7 @@ describe('removeProviderFromConfig', () => {
     const legacy = {
       ...config,
       secondaryModel: { model: 'b/m1', default_effort: 'low' },
-    } as unknown as KimiConfig;
+    } as unknown as FloydConfig;
     expect(removeProviderFromConfig(legacy, 'b').secondaryModel).toEqual({
       model: 'b/m1',
       default_effort: 'low',
@@ -2216,7 +2216,7 @@ describe('removeProviderFromConfig', () => {
         'b/m1': { provider: 'b', model: 'm1', maxContextSize: 100 },
       },
       secondaryModel: { defaultModel: 'a/m1' },
-    } as unknown as KimiConfig;
+    } as unknown as FloydConfig;
 
     const next = removeProviderFromConfig(config, 'b');
 

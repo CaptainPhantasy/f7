@@ -49,7 +49,7 @@ describe('findExistingRg', () => {
   let fakeShare: string;
   let savedPath: string | undefined;
   beforeEach(() => {
-    fakeShare = join(tmpdir(), `kimi-rg-${String(Date.now())}-${String(Math.random()).slice(2)}`);
+    fakeShare = join(tmpdir(), `floyd-rg-${String(Date.now())}-${String(Math.random()).slice(2)}`);
     mkdirSync(join(fakeShare, 'bin'), { recursive: true });
     savedPath = process.env['PATH'];
     process.env['PATH'] = '';
@@ -157,7 +157,7 @@ describe('rgUnavailableMessage', () => {
 describe('verifyArchiveChecksum', () => {
   let fakeDir: string;
   beforeEach(() => {
-    fakeDir = join(tmpdir(), `kimi-rg-sha-${String(Date.now())}-${String(Math.random()).slice(2)}`);
+    fakeDir = join(tmpdir(), `floyd-rg-sha-${String(Date.now())}-${String(Math.random()).slice(2)}`);
     mkdirSync(fakeDir, { recursive: true });
   });
   afterEach(() => {
@@ -192,7 +192,7 @@ describe('ensureRgPath download branch', () => {
   beforeEach(() => {
     fakeShare = join(
       tmpdir(),
-      `kimi-rg-dl-${String(Date.now())}-${String(Math.random()).slice(2)}`,
+      `floyd-rg-dl-${String(Date.now())}-${String(Math.random()).slice(2)}`,
     );
     mkdirSync(join(fakeShare, 'bin'), { recursive: true });
     savedFetch = globalThis.fetch;
@@ -317,8 +317,8 @@ describe('ensureRgPath download branch', () => {
   });
 
   it('downloads from the global CDN when the env pins the global region', async () => {
-    const savedHost = process.env['KIMI_CODE_OAUTH_HOST'];
-    process.env['KIMI_CODE_OAUTH_HOST'] = 'https://auth.kimi.ai';
+    const savedHost = process.env['FLOYD_CODE_OAUTH_HOST'];
+    process.env['FLOYD_CODE_OAUTH_HOST'] = 'https://auth.floyd.ai';
     try {
       const body = bodyFromBuffer(Buffer.from('not a real archive', 'utf8'));
       const fetchMock = vi.fn().mockResolvedValue({
@@ -334,20 +334,20 @@ describe('ensureRgPath download branch', () => {
       ).rejects.toThrow();
 
       const [url] = fetchMock.mock.calls[0] as [string];
-      expect(url).toMatch(/^https:\/\/code\.kimi\.ai\/kimi-code\/rg\/ripgrep-/);
+      expect(url).toMatch(/^https:\/\/code\.floyd\.ai\/floyd-code\/rg\/ripgrep-/);
     } finally {
-      if (savedHost === undefined) delete process.env['KIMI_CODE_OAUTH_HOST'];
-      else process.env['KIMI_CODE_OAUTH_HOST'] = savedHost;
+      if (savedHost === undefined) delete process.env['FLOYD_CODE_OAUTH_HOST'];
+      else process.env['FLOYD_CODE_OAUTH_HOST'] = savedHost;
     }
   });
 
   it('downloads from the cn CDN by default (no env override, no install marker)', async () => {
-    const savedHost = process.env['KIMI_CODE_OAUTH_HOST'];
-    const savedLegacyHost = process.env['KIMI_OAUTH_HOST'];
-    const savedHome = process.env['KIMI_CODE_HOME'];
-    delete process.env['KIMI_CODE_OAUTH_HOST'];
-    delete process.env['KIMI_OAUTH_HOST'];
-    process.env['KIMI_CODE_HOME'] = fakeShare;
+    const savedHost = process.env['FLOYD_CODE_OAUTH_HOST'];
+    const savedLegacyHost = process.env['FLOYD_OAUTH_HOST'];
+    const savedHome = process.env['FLOYD_CODE_HOME'];
+    delete process.env['FLOYD_CODE_OAUTH_HOST'];
+    delete process.env['FLOYD_OAUTH_HOST'];
+    process.env['FLOYD_CODE_HOME'] = fakeShare;
     try {
       const body = bodyFromBuffer(Buffer.from('not a real archive', 'utf8'));
       const fetchMock = vi.fn().mockResolvedValue({
@@ -363,14 +363,14 @@ describe('ensureRgPath download branch', () => {
       ).rejects.toThrow();
 
       const [url] = fetchMock.mock.calls[0] as [string];
-      expect(url).toMatch(/^https:\/\/code\.kimi\.com\/kimi-code\/rg\/ripgrep-/);
+      expect(url).toMatch(/^https:\/\/code\.floyd\.com\/floyd-code\/rg\/ripgrep-/);
     } finally {
-      if (savedHost === undefined) delete process.env['KIMI_CODE_OAUTH_HOST'];
-      else process.env['KIMI_CODE_OAUTH_HOST'] = savedHost;
-      if (savedLegacyHost === undefined) delete process.env['KIMI_OAUTH_HOST'];
-      else process.env['KIMI_OAUTH_HOST'] = savedLegacyHost;
-      if (savedHome === undefined) delete process.env['KIMI_CODE_HOME'];
-      else process.env['KIMI_CODE_HOME'] = savedHome;
+      if (savedHost === undefined) delete process.env['FLOYD_CODE_OAUTH_HOST'];
+      else process.env['FLOYD_CODE_OAUTH_HOST'] = savedHost;
+      if (savedLegacyHost === undefined) delete process.env['FLOYD_OAUTH_HOST'];
+      else process.env['FLOYD_OAUTH_HOST'] = savedLegacyHost;
+      if (savedHome === undefined) delete process.env['FLOYD_CODE_HOME'];
+      else process.env['FLOYD_CODE_HOME'] = savedHome;
     }
   });
 
@@ -432,7 +432,7 @@ describe('ensureRgPath Windows download branch', () => {
   beforeEach(() => {
     fakeShare = join(
       tmpdir(),
-      `kimi-rg-win-${String(Date.now())}-${String(Math.random()).slice(2)}`,
+      `floyd-rg-win-${String(Date.now())}-${String(Math.random()).slice(2)}`,
     );
     mkdirSync(join(fakeShare, 'bin'), { recursive: true });
     savedFetch = globalThis.fetch;

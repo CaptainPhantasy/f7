@@ -65,26 +65,26 @@ describe('CloudAppender', () => {
   let homeDir: string;
   let savedOauthHost: string | undefined;
   let savedLegacyOauthHost: string | undefined;
-  let savedKimiHome: string | undefined;
+  let savedFloydHome: string | undefined;
 
   beforeEach(() => {
     homeDir = mkdtempSync(join(tmpdir(), 'cloud-appender-'));
-    savedOauthHost = process.env['KIMI_CODE_OAUTH_HOST'];
-    savedLegacyOauthHost = process.env['KIMI_OAUTH_HOST'];
-    savedKimiHome = process.env['KIMI_CODE_HOME'];
-    delete process.env['KIMI_CODE_OAUTH_HOST'];
-    delete process.env['KIMI_OAUTH_HOST'];
-    process.env['KIMI_CODE_HOME'] = homeDir;
+    savedOauthHost = process.env['FLOYD_CODE_OAUTH_HOST'];
+    savedLegacyOauthHost = process.env['FLOYD_OAUTH_HOST'];
+    savedFloydHome = process.env['FLOYD_CODE_HOME'];
+    delete process.env['FLOYD_CODE_OAUTH_HOST'];
+    delete process.env['FLOYD_OAUTH_HOST'];
+    process.env['FLOYD_CODE_HOME'] = homeDir;
   });
 
   afterEach(() => {
     rmSync(homeDir, { recursive: true, force: true });
-    if (savedOauthHost === undefined) delete process.env['KIMI_CODE_OAUTH_HOST'];
-    else process.env['KIMI_CODE_OAUTH_HOST'] = savedOauthHost;
-    if (savedLegacyOauthHost === undefined) delete process.env['KIMI_OAUTH_HOST'];
-    else process.env['KIMI_OAUTH_HOST'] = savedLegacyOauthHost;
-    if (savedKimiHome === undefined) delete process.env['KIMI_CODE_HOME'];
-    else process.env['KIMI_CODE_HOME'] = savedKimiHome;
+    if (savedOauthHost === undefined) delete process.env['FLOYD_CODE_OAUTH_HOST'];
+    else process.env['FLOYD_CODE_OAUTH_HOST'] = savedOauthHost;
+    if (savedLegacyOauthHost === undefined) delete process.env['FLOYD_OAUTH_HOST'];
+    else process.env['FLOYD_OAUTH_HOST'] = savedLegacyOauthHost;
+    if (savedFloydHome === undefined) delete process.env['FLOYD_CODE_HOME'];
+    else process.env['FLOYD_CODE_HOME'] = savedFloydHome;
   });
 
   it('sends a flattened, prefixed payload with user_id and context', async () => {
@@ -105,7 +105,7 @@ describe('CloudAppender', () => {
     await appender.flush();
 
     expect(requests).toHaveLength(1);
-    expect(requests[0]?.url).toBe('https://telemetry-logs.kimi.com/v1/event');
+    expect(requests[0]?.url).toBe('https://telemetry-logs.floyd.com/v1/event');
     expect(requests[0]?.body.user_id).toBe('kfc_device_id_dev123');
     const event = requests[0]?.body.events[0];
     expect(event?.['event']).toBe('kfc_tool.call');
@@ -122,7 +122,7 @@ describe('CloudAppender', () => {
   });
 
   it('derives the global endpoint when the env pins the global region', async () => {
-    process.env['KIMI_CODE_OAUTH_HOST'] = 'https://auth.kimi.ai';
+    process.env['FLOYD_CODE_OAUTH_HOST'] = 'https://auth.floyd.ai';
     const requests: CapturedRequest[] = [];
     const appender = new CloudAppender(
       baseOptions({
@@ -138,7 +138,7 @@ describe('CloudAppender', () => {
     await appender.flush();
 
     expect(requests).toHaveLength(1);
-    expect(requests[0]?.url).toBe('https://telemetry-logs.kimi.ai/v1/event');
+    expect(requests[0]?.url).toBe('https://telemetry-logs.floyd.ai/v1/event');
   });
 
   it('reads the install marker from the bootstrapped home for the default endpoint', async () => {
@@ -158,7 +158,7 @@ describe('CloudAppender', () => {
     await appender.flush();
 
     expect(requests).toHaveLength(1);
-    expect(requests[0]?.url).toBe('https://telemetry-logs.kimi.ai/v1/event');
+    expect(requests[0]?.url).toBe('https://telemetry-logs.floyd.ai/v1/event');
   });
 
   it('honors the marker opt-out from the bootstrap env bag (no process.env needed)', async () => {
@@ -167,7 +167,7 @@ describe('CloudAppender', () => {
     const appender = new CloudAppender(
       baseOptions({
         homeDir,
-        bootstrapEnv: { KIMI_CODE_REGION_MARKER: 'off' },
+        bootstrapEnv: { FLOYD_CODE_REGION_MARKER: 'off' },
         fetchImpl: makeFetch((req) => {
           requests.push(req);
           return okResponse();
@@ -179,13 +179,13 @@ describe('CloudAppender', () => {
     await appender.flush();
 
     expect(requests).toHaveLength(1);
-    expect(requests[0]?.url).toBe('https://telemetry-logs.kimi.com/v1/event');
+    expect(requests[0]?.url).toBe('https://telemetry-logs.floyd.com/v1/event');
   });
 
-  it('honors KIMI_CODE_REGION_MARKER=off so embedded servers ignore the install marker', async () => {
+  it('honors FLOYD_CODE_REGION_MARKER=off so embedded servers ignore the install marker', async () => {
     writeFileSync(join(homeDir, 'region'), 'global\n');
-    const savedMarkerFlag = process.env['KIMI_CODE_REGION_MARKER'];
-    process.env['KIMI_CODE_REGION_MARKER'] = 'off';
+    const savedMarkerFlag = process.env['FLOYD_CODE_REGION_MARKER'];
+    process.env['FLOYD_CODE_REGION_MARKER'] = 'off';
     try {
       const requests: CapturedRequest[] = [];
       const appender = new CloudAppender(
@@ -202,10 +202,10 @@ describe('CloudAppender', () => {
       await appender.flush();
 
       expect(requests).toHaveLength(1);
-      expect(requests[0]?.url).toBe('https://telemetry-logs.kimi.com/v1/event');
+      expect(requests[0]?.url).toBe('https://telemetry-logs.floyd.com/v1/event');
     } finally {
-      if (savedMarkerFlag === undefined) delete process.env['KIMI_CODE_REGION_MARKER'];
-      else process.env['KIMI_CODE_REGION_MARKER'] = savedMarkerFlag;
+      if (savedMarkerFlag === undefined) delete process.env['FLOYD_CODE_REGION_MARKER'];
+      else process.env['FLOYD_CODE_REGION_MARKER'] = savedMarkerFlag;
     }
   });
 

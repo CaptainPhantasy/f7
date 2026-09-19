@@ -1,19 +1,19 @@
-import type { KimiHostIdentity } from '@moonshot-ai/kimi-code-oauth';
-import { type KimiHarness, type Session, type Event } from '@moonshot-ai/kimi-code-sdk';
+import type { FloydHostIdentity } from '@legacy-ai/floyd-code-oauth';
+import { type FloydHarness, type Session, type Event } from '@legacy-ai/floyd-code-sdk';
 
-export function smokeIdentityFromEnv(): KimiHostIdentity {
-  const version = process.env['KIMI_CODE_SMOKE_VERSION'];
+export function smokeIdentityFromEnv(): FloydHostIdentity {
+  const version = process.env['FLOYD_CODE_SMOKE_VERSION'];
   if (version === undefined || version.trim().length === 0) {
-    throw new Error('KIMI_CODE_SMOKE_VERSION is required for Kimi SDK smoke examples.');
+    throw new Error('FLOYD_CODE_SMOKE_VERSION is required for Floyd SDK smoke examples.');
   }
   return {
-    productName: 'kimi-code-cli',
+    productName: 'floyd-code-cli',
     version,
-    platform: 'kimi_code_cli',
+    platform: 'floyd_code_cli',
   };
 }
 
-export async function createConfiguredSession(harness: KimiHarness): Promise<Session> {
+export async function createConfiguredSession(harness: FloydHarness): Promise<Session> {
   const config = await harness.getConfig();
   const model = config.defaultModel;
   if (model === undefined) {

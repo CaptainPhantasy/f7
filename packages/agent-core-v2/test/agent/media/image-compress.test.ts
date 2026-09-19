@@ -725,11 +725,11 @@ describe('gateImageFormatParts', () => {
     }
   });
 
-  it('passes daemon file references (kimi-file://) through untouched', () => {
+  it('passes daemon file references (floyd-file://) through untouched', () => {
     const fileId = 'f_9b2f7c1e4a2d4f3a8c1e0b6d5a493827';
     for (const url of [
       buildDaemonFileUrl(fileId),
-      `kimi-file://${fileId}?path=${encodeURIComponent('/tmp/upload/photo.heic')}`,
+      `floyd-file://${fileId}?path=${encodeURIComponent('/tmp/upload/photo.heic')}`,
     ]) {
       const part = { type: 'image_url' as const, imageUrl: { url } };
       expect(gateImageFormatParts([part])).toEqual([part]);
@@ -791,11 +791,11 @@ describe('unsupportedImageMimeFromUrl', () => {
     expect(unsupportedImageMimeFromUrl('https://example.com/readme.json')).toBeNull();
   });
 
-  it('treats HEIC, HEIF, and BMP extensions as accepted for the kimi provider only', () => {
-    expect(unsupportedImageMimeFromUrl('https://example.com/photo.heic', 'kimi')).toBeNull();
-    expect(unsupportedImageMimeFromUrl('https://example.com/photo.heif', 'kimi')).toBeNull();
-    expect(unsupportedImageMimeFromUrl('https://example.com/scan.bmp', 'kimi')).toBeNull();
-    expect(unsupportedImageMimeFromUrl('https://example.com/pic.avif', 'kimi')).toBe('image/avif');
+  it('treats HEIC, HEIF, and BMP extensions as accepted for the floyd provider only', () => {
+    expect(unsupportedImageMimeFromUrl('https://example.com/photo.heic', 'floyd')).toBeNull();
+    expect(unsupportedImageMimeFromUrl('https://example.com/photo.heif', 'floyd')).toBeNull();
+    expect(unsupportedImageMimeFromUrl('https://example.com/scan.bmp', 'floyd')).toBeNull();
+    expect(unsupportedImageMimeFromUrl('https://example.com/pic.avif', 'floyd')).toBe('image/avif');
     expect(unsupportedImageMimeFromUrl('https://example.com/photo.heic', 'anthropic')).toBe(
       'image/heic',
     );
@@ -803,40 +803,40 @@ describe('unsupportedImageMimeFromUrl', () => {
 });
 
 describe('provider-aware image format policy', () => {
-  it('accepts HEIC, HEIF, and BMP only when the provider is kimi', () => {
+  it('accepts HEIC, HEIF, and BMP only when the provider is floyd', () => {
     for (const mime of ['image/heic', 'image/heif', 'image/bmp']) {
-      expect(isModelAcceptedImageMime(mime, 'kimi')).toBe(true);
+      expect(isModelAcceptedImageMime(mime, 'floyd')).toBe(true);
       expect(isModelAcceptedImageMime(mime)).toBe(false);
       expect(isModelAcceptedImageMime(mime, 'anthropic')).toBe(false);
       expect(isModelAcceptedImageMime(mime, 'openai')).toBe(false);
     }
     for (const mime of ['image/avif', 'image/tiff', 'image/x-icon', 'image/svg+xml']) {
-      expect(isModelAcceptedImageMime(mime, 'kimi')).toBe(false);
+      expect(isModelAcceptedImageMime(mime, 'floyd')).toBe(false);
     }
   });
 
   it('keeps the baseline formats accepted for every provider', () => {
     for (const mime of ['image/png', 'image/jpeg', 'image/gif', 'image/webp']) {
       expect(isModelAcceptedImageMime(mime)).toBe(true);
-      expect(isModelAcceptedImageMime(mime, 'kimi')).toBe(true);
+      expect(isModelAcceptedImageMime(mime, 'floyd')).toBe(true);
       expect(isModelAcceptedImageMime(mime, 'anthropic')).toBe(true);
     }
   });
 
-  it('lets the format gate pass a HEIC data URL through for the kimi provider', () => {
+  it('lets the format gate pass a HEIC data URL through for the floyd provider', () => {
     const base64 = Buffer.from([
       0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63,
     ]).toString('base64');
     const url = `data:image/heic;base64,${base64}`;
     const part = { type: 'image_url' as const, imageUrl: { url } };
-    expect(gateImageFormatParts([part], 'kimi')).toEqual([part]);
+    expect(gateImageFormatParts([part], 'floyd')).toEqual([part]);
     const rejected = gateImageFormatParts([part]);
     expect(rejected.some((p) => p.type === 'image_url')).toBe(false);
     expect((rejected[0] as { text: string }).text).toContain('image/heic');
   });
 
   it('names the accepted formats of the current provider in the refusal notice', () => {
-    expect(buildUnsupportedImageNotice('image/avif', undefined, 'kimi')).toContain('HEIC');
+    expect(buildUnsupportedImageNotice('image/avif', undefined, 'floyd')).toContain('HEIC');
     expect(buildUnsupportedImageNotice('image/heic')).not.toContain('HEIC,');
     expect(buildUnsupportedImageNotice('image/heic')).toContain('PNG, JPEG, GIF, and WebP');
   });

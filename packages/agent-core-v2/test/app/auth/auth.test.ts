@@ -4,10 +4,10 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import {
-  clearManagedKimiCodeConfig,
-  resolveKimiCodeOAuthKey,
-  resolveKimiCodeRuntimeAuth,
-} from '@moonshot-ai/kimi-code-oauth';
+  clearManagedFloydCodeConfig,
+  resolveFloydCodeOAuthKey,
+  resolveFloydCodeRuntimeAuth,
+} from '@legacy-ai/floyd-code-oauth';
 
 import { DisposableStore } from '#/_base/di/lifecycle';
 import { createServices, type TestInstantiationService } from '#/_base/di/test';
@@ -42,7 +42,7 @@ import { registerBootstrapServices } from '../bootstrap/stubs';
 import { registerTelemetryServices } from '../telemetry/stubs';
 import { stubAgentIdentity } from '../../app/agentIdentity/stubs';
 
-const OAUTH_PROVIDER = 'managed:kimi-code';
+const OAUTH_PROVIDER = 'managed:floyd-code';
 const NON_OAUTH_PROVIDER = 'openai-main';
 
 const deviceAuth = {
@@ -58,13 +58,13 @@ const flush = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 
 
 const EXAMPLE_COM_SCOPED_REF = {
   storage: 'file',
-  key: resolveKimiCodeOAuthKey({ baseUrl: 'https://api.example.com' }),
-  oauthHost: 'https://auth.kimi.com',
+  key: resolveFloydCodeOAuthKey({ baseUrl: 'https://api.example.com' }),
+  oauthHost: 'https://auth.floyd.com',
 } as const;
 
 const ENV_SCOPED_REF = {
   storage: 'file',
-  key: resolveKimiCodeOAuthKey({
+  key: resolveFloydCodeOAuthKey({
     oauthHost: 'https://env-auth.example.com',
     baseUrl: 'https://env-api.example.com/coding/v1',
   }),
@@ -73,11 +73,11 @@ const ENV_SCOPED_REF = {
 
 const OVERSEAS_SCOPED_REF = {
   storage: 'file',
-  key: resolveKimiCodeOAuthKey({
-    oauthHost: 'https://auth.kimi.ai',
-    baseUrl: 'https://api.kimi.ai/coding/v1',
+  key: resolveFloydCodeOAuthKey({
+    oauthHost: 'https://auth.floyd.ai',
+    baseUrl: 'https://api.floyd.ai/coding/v1',
   }),
-  oauthHost: 'https://auth.kimi.ai',
+  oauthHost: 'https://auth.floyd.ai',
 } as const;
 
 interface FakeToolkit {
@@ -109,9 +109,9 @@ describe('OAuthService', () => {
     providerChangedEmitter = new Emitter<ProvidersChangedEvent>();
     providers = {
       [OAUTH_PROVIDER]: {
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://api.example.com',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
       [NON_OAUTH_PROVIDER]: { type: 'openai', apiKey: 'sk-test' },
     };
@@ -224,10 +224,10 @@ describe('OAuthService', () => {
       json: async () => ({
         data: [
           {
-            id: 'kimi-k2',
+            id: 'floyd-k2',
             context_length: 131072,
             supports_reasoning: true,
-            display_name: 'Kimi K2',
+            display_name: 'Floyd K2',
           },
         ],
       }),
@@ -238,18 +238,18 @@ describe('OAuthService', () => {
 
   const managedK2Alias: ModelRecord = {
     provider: OAUTH_PROVIDER,
-    model: 'kimi-k2',
+    model: 'floyd-k2',
     maxContextSize: 131072,
     capabilities: ['thinking', 'tool_use'],
-    displayName: 'Kimi K2',
+    displayName: 'Floyd K2',
   };
 
   const managedK25Alias: ModelRecord = {
     provider: OAUTH_PROVIDER,
-    model: 'kimi-k2.5',
+    model: 'floyd-k2.5',
     maxContextSize: 262144,
     capabilities: ['thinking', 'tool_use'],
-    displayName: 'Kimi K2.5',
+    displayName: 'Floyd K2.5',
   };
 
   function stubGatedManagedModelsFetch(): {
@@ -267,22 +267,22 @@ describe('OAuthService', () => {
         json: async () => ({
           data: [
             {
-              id: 'kimi-k2',
+              id: 'floyd-k2',
               context_length: 131072,
               supports_reasoning: true,
-              display_name: 'Kimi K2',
+              display_name: 'Floyd K2',
             },
             {
-              id: 'kimi-k2.5',
+              id: 'floyd-k2.5',
               context_length: 262144,
               supports_reasoning: true,
-              display_name: 'Kimi K2.5',
+              display_name: 'Floyd K2.5',
             },
             {
-              id: 'kimi-k3',
+              id: 'floyd-k3',
               context_length: 1048576,
               supports_reasoning: true,
-              display_name: 'Kimi K3',
+              display_name: 'Floyd K3',
             },
           ],
         }),
@@ -334,7 +334,7 @@ describe('OAuthService', () => {
     expect(providerSet).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://api.example.com',
         apiKey: '',
         oauth: EXAMPLE_COM_SCOPED_REF,
@@ -343,7 +343,7 @@ describe('OAuthService', () => {
   });
 
   it('startLogin resolves an env-scoped oauth ref for the managed provider without oauth config', async () => {
-    providers[OAUTH_PROVIDER] = { type: 'kimi', baseUrl: 'https://api.example.com' };
+    providers[OAUTH_PROVIDER] = { type: 'floyd', baseUrl: 'https://api.example.com' };
     stubManagedModelsFetch();
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
@@ -363,7 +363,7 @@ describe('OAuthService', () => {
     expect(providerSet).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://api.example.com',
         oauth: EXAMPLE_COM_SCOPED_REF,
       }),
@@ -372,9 +372,9 @@ describe('OAuthService', () => {
 
   it('startLogin reuses the configured oauth ref when it matches the login environment', async () => {
     providers[OAUTH_PROVIDER] = {
-      type: 'kimi',
-      baseUrl: 'https://api.kimi.com/coding/v1',
-      oauth: { storage: 'file', key: 'oauth/kimi-code' },
+      type: 'floyd',
+      baseUrl: 'https://api.floyd.com/coding/v1',
+      oauth: { storage: 'file', key: 'oauth/floyd-code' },
     };
     stubManagedModelsFetch();
     toolkit.login.mockImplementation((_provider, options) => {
@@ -387,15 +387,15 @@ describe('OAuthService', () => {
     expect(toolkit.login).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        oauthRef: { storage: 'file', key: 'oauth/kimi-code' },
-        baseUrl: 'https://api.kimi.com/coding/v1',
+        oauthRef: { storage: 'file', key: 'oauth/floyd-code' },
+        baseUrl: 'https://api.floyd.com/coding/v1',
       }),
     );
   });
 
-  it('startLogin honors KIMI_CODE_BASE_URL / KIMI_CODE_OAUTH_HOST for the login environment', async () => {
-    vi.stubEnv('KIMI_CODE_BASE_URL', 'https://env-api.example.com/coding/v1');
-    vi.stubEnv('KIMI_CODE_OAUTH_HOST', 'https://env-auth.example.com');
+  it('startLogin honors FLOYD_CODE_BASE_URL / FLOYD_CODE_OAUTH_HOST for the login environment', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', 'https://env-api.example.com/coding/v1');
+    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', 'https://env-auth.example.com');
     stubManagedModelsFetch();
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
@@ -416,7 +416,7 @@ describe('OAuthService', () => {
     expect(providerSet).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://env-api.example.com/coding/v1',
         oauth: ENV_SCOPED_REF,
       }),
@@ -436,23 +436,23 @@ describe('OAuthService', () => {
       OAUTH_PROVIDER,
       expect.objectContaining({
         oauthRef: OVERSEAS_SCOPED_REF,
-        baseUrl: 'https://api.kimi.ai/coding/v1',
-        oauthHost: 'https://auth.kimi.ai',
+        baseUrl: 'https://api.floyd.ai/coding/v1',
+        oauthHost: 'https://auth.floyd.ai',
       }),
     );
     await flush();
     expect(providerSet).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        type: 'kimi',
-        baseUrl: 'https://api.kimi.ai/coding/v1',
+        type: 'floyd',
+        baseUrl: 'https://api.floyd.ai/coding/v1',
         oauth: OVERSEAS_SCOPED_REF,
       }),
     );
   });
 
   it('startLogin with a region still honors env endpoint overrides', async () => {
-    vi.stubEnv('KIMI_CODE_OAUTH_HOST', 'https://env-auth.example.com');
+    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', 'https://env-auth.example.com');
     stubManagedModelsFetch();
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
@@ -471,42 +471,42 @@ describe('OAuthService', () => {
   });
 
   it('getRegion resolves cn by default and global from the persisted login host', () => {
-    vi.stubEnv('KIMI_CODE_REGION_MARKER', 'off');
+    vi.stubEnv('FLOYD_CODE_REGION_MARKER', 'off');
     const svc = createService();
     expect(svc.getRegion()).toBe('mainland-cn');
 
     providers[OAUTH_PROVIDER] = {
-      type: 'kimi',
-      oauth: { storage: 'file', key: OVERSEAS_SCOPED_REF.key, oauthHost: 'https://auth.kimi.ai' },
+      type: 'floyd',
+      oauth: { storage: 'file', key: OVERSEAS_SCOPED_REF.key, oauthHost: 'https://auth.floyd.ai' },
     };
     expect(svc.getRegion()).toBe('global');
   });
 
-  it('getRegion reads the install marker from the bootstrapped home unless KIMI_CODE_REGION_MARKER=off', async () => {
+  it('getRegion reads the install marker from the bootstrapped home unless FLOYD_CODE_REGION_MARKER=off', async () => {
     const home = ix.get(IBootstrapService).homeDir;
     try {
       await mkdir(home, { recursive: true });
       await writeFile(join(home, 'region'), 'global\n', 'utf-8');
-      vi.stubEnv('KIMI_CODE_OAUTH_HOST', '');
-      providers[OAUTH_PROVIDER] = { type: 'kimi' };
+      vi.stubEnv('FLOYD_CODE_OAUTH_HOST', '');
+      providers[OAUTH_PROVIDER] = { type: 'floyd' };
       expect(createService().getRegion()).toBe('global');
 
-      vi.stubEnv('KIMI_CODE_REGION_MARKER', 'off');
+      vi.stubEnv('FLOYD_CODE_REGION_MARKER', 'off');
       expect(createService().getRegion()).toBe('mainland-cn');
     } finally {
       await rm(home, { recursive: true, force: true });
     }
   });
 
-  it('getRegion reads the marker from the bootstrapped home, not KIMI_CODE_HOME', async () => {
+  it('getRegion reads the marker from the bootstrapped home, not FLOYD_CODE_HOME', async () => {
     const bootstrapHome = ix.get(IBootstrapService).homeDir;
-    const envHome = await mkdtemp(join(tmpdir(), 'kimi-v2-auth-envhome-'));
+    const envHome = await mkdtemp(join(tmpdir(), 'floyd-v2-auth-envhome-'));
     try {
       await mkdir(bootstrapHome, { recursive: true });
       await writeFile(join(bootstrapHome, 'region'), 'global\n', 'utf-8');
-      vi.stubEnv('KIMI_CODE_HOME', envHome);
-      vi.stubEnv('KIMI_CODE_OAUTH_HOST', '');
-      providers[OAUTH_PROVIDER] = { type: 'kimi' };
+      vi.stubEnv('FLOYD_CODE_HOME', envHome);
+      vi.stubEnv('FLOYD_CODE_OAUTH_HOST', '');
+      providers[OAUTH_PROVIDER] = { type: 'floyd' };
       expect(createService().getRegion()).toBe('global');
     } finally {
       await rm(bootstrapHome, { recursive: true, force: true });
@@ -519,10 +519,10 @@ describe('OAuthService', () => {
     try {
       await mkdir(home, { recursive: true });
       await writeFile(join(home, 'region'), 'global\n', 'utf-8');
-      vi.stubEnv('KIMI_CODE_OAUTH_HOST', '');
+      vi.stubEnv('FLOYD_CODE_OAUTH_HOST', '');
       providers[OAUTH_PROVIDER] = {
-        type: 'kimi',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        type: 'floyd',
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       };
       expect(createService().getRegion()).toBe('mainland-cn');
     } finally {
@@ -531,8 +531,8 @@ describe('OAuthService', () => {
   });
 
   it('resolves the runtime credential slot to the env environment after an env-scoped login', async () => {
-    vi.stubEnv('KIMI_CODE_BASE_URL', 'https://env-api.example.com/coding/v1');
-    vi.stubEnv('KIMI_CODE_OAUTH_HOST', 'https://env-auth.example.com');
+    vi.stubEnv('FLOYD_CODE_BASE_URL', 'https://env-api.example.com/coding/v1');
+    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', 'https://env-auth.example.com');
     stubManagedModelsFetch();
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
@@ -546,7 +546,7 @@ describe('OAuthService', () => {
     expect(toolkit.getCachedAccessToken).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        key: resolveKimiCodeOAuthKey({
+        key: resolveFloydCodeOAuthKey({
           oauthHost: 'https://env-auth.example.com',
           baseUrl: 'https://env-api.example.com/coding/v1',
         }),
@@ -576,13 +576,13 @@ describe('OAuthService', () => {
     expect(providerSet).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://api.example.com',
         oauth: EXAMPLE_COM_SCOPED_REF,
       }),
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'kimi-code/kimi-k2');
+    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'floyd-code/floyd-k2');
   });
 
   it('startLogin returns authenticated when model refresh fails on the already-authenticated fast path', async () => {
@@ -600,7 +600,7 @@ describe('OAuthService', () => {
     expect(providerSet).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://api.example.com',
         oauth: EXAMPLE_COM_SCOPED_REF,
       }),
@@ -641,17 +641,17 @@ describe('OAuthService', () => {
     expect(providerSet).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        type: 'kimi',
+        type: 'floyd',
         oauth: EXAMPLE_COM_SCOPED_REF,
       }),
     );
     expect(configReplace).toHaveBeenCalledWith(
       'models',
       expect.objectContaining({
-        'kimi-code/kimi-k2': expect.objectContaining({ model: 'kimi-k2' }),
+        'floyd-code/floyd-k2': expect.objectContaining({ model: 'floyd-k2' }),
       }),
     );
-    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'kimi-code/kimi-k2');
+    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'floyd-code/floyd-k2');
   });
 
   it('keeps an in-flight OAuth flow alive when unrelated providers change', async () => {
@@ -796,9 +796,9 @@ describe('OAuthService', () => {
 
   it('logout removes managed provider models and dangling defaults', async () => {
     models = {
-      'kimi-code/kimi-k2': {
+      'floyd-code/floyd-k2': {
         provider: OAUTH_PROVIDER,
-        model: 'kimi-k2',
+        model: 'floyd-k2',
         maxContextSize: 131072,
       },
       'custom-default': {
@@ -807,7 +807,7 @@ describe('OAuthService', () => {
         maxContextSize: 8192,
       },
     };
-    defaultModel = 'kimi-code/kimi-k2';
+    defaultModel = 'floyd-code/floyd-k2';
     thinking = { enabled: true };
     const svc = createService();
 
@@ -830,15 +830,15 @@ describe('OAuthService', () => {
 
   it('logout removes managed web services while preserving unrelated services', async () => {
     services = ServicesConfigSchema.parse({
-      moonshotSearch: {
+      legacySearch: {
         baseUrl: 'https://api.example.com/search',
         apiKey: '',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
-      moonshotFetch: {
+      legacyFetch: {
         baseUrl: 'https://api.example.com/fetch',
         apiKey: '',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
       customService: {
         baseUrl: 'https://service.example.com',
@@ -891,7 +891,7 @@ describe('OAuthService', () => {
   it('resolveTokenProvider re-derives the managed provider oauth ref from the current base url', () => {
     const svc = createService();
     svc.resolveTokenProvider(OAUTH_PROVIDER, { storage: 'file', key: 'stale-key' });
-    const expectedRef = resolveKimiCodeRuntimeAuth({
+    const expectedRef = resolveFloydCodeRuntimeAuth({
       configuredBaseUrl: 'https://api.example.com',
       configuredOAuthRef: { storage: 'file', key: 'stale-key' },
     }).oauthRef;
@@ -937,7 +937,7 @@ describe('OAuthService', () => {
     });
   });
 
-  it('refreshOAuthProviderModels returns an empty result when no Kimi Code provider is configured', async () => {
+  it('refreshOAuthProviderModels returns an empty result when no Floyd Code provider is configured', async () => {
     providers = { [NON_OAUTH_PROVIDER]: { type: 'openai', apiKey: 'sk-test' } };
     const svc = createService();
 
@@ -956,10 +956,10 @@ describe('OAuthService', () => {
       json: async () => ({
         data: [
           {
-            id: 'kimi-k2',
+            id: 'floyd-k2',
             context_length: 131072,
             supports_reasoning: true,
-            display_name: 'Kimi K2',
+            display_name: 'Floyd K2',
           },
         ],
       }),
@@ -973,22 +973,22 @@ describe('OAuthService', () => {
     expect(result.changed).toEqual([
       {
         provider_id: OAUTH_PROVIDER,
-        provider_name: 'Kimi Code',
+        provider_name: 'Floyd Code',
         added: 1,
         removed: 0,
       },
     ]);
     expect(configReplace).toHaveBeenCalledWith(
       'providers',
-      expect.objectContaining({ [OAUTH_PROVIDER]: expect.objectContaining({ type: 'kimi' }) }),
+      expect.objectContaining({ [OAUTH_PROVIDER]: expect.objectContaining({ type: 'floyd' }) }),
     );
     expect(configReplace).toHaveBeenCalledWith(
       'models',
       expect.objectContaining({
-        'kimi-code/kimi-k2': expect.objectContaining({ model: 'kimi-k2' }),
+        'floyd-code/floyd-k2': expect.objectContaining({ model: 'floyd-k2' }),
       }),
     );
-    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'kimi-code/kimi-k2');
+    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'floyd-code/floyd-k2');
     expect(configReplace).toHaveBeenCalledWith('thinking', { enabled: true });
     expect(events).toEqual([
       expect.objectContaining({
@@ -1011,10 +1011,10 @@ describe('OAuthService', () => {
         json: async () => ({
           data: [
             {
-              id: 'kimi-k2',
+              id: 'floyd-k2',
               context_length: 131072,
               supports_reasoning: true,
-              display_name: 'Kimi K2',
+              display_name: 'Floyd K2',
             },
           ],
         }),
@@ -1046,10 +1046,10 @@ describe('OAuthService', () => {
       json: async () => ({
         data: [
           {
-            id: 'kimi-k2',
+            id: 'floyd-k2',
             context_length: 131072,
             supports_reasoning: true,
-            display_name: 'Kimi K2',
+            display_name: 'Floyd K2',
           },
         ],
       }),
@@ -1066,7 +1066,7 @@ describe('OAuthService', () => {
 
     const first = await svc.refreshOAuthProviderModels();
     expect(first.changed).toHaveLength(1);
-    expect(defaultModel).toBe('kimi-code/kimi-k2');
+    expect(defaultModel).toBe('floyd-code/floyd-k2');
 
     configReplace.mockClear();
     events.length = 0;
@@ -1079,13 +1079,13 @@ describe('OAuthService', () => {
     expect(second.changed).toEqual([
       {
         provider_id: OAUTH_PROVIDER,
-        provider_name: 'Kimi Code',
+        provider_name: 'Floyd Code',
         added: 0,
         removed: 0,
       },
     ]);
-    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'kimi-code/kimi-k2');
-    expect(defaultModel).toBe('kimi-code/kimi-k2');
+    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'floyd-code/floyd-k2');
+    expect(defaultModel).toBe('floyd-code/floyd-k2');
     expect(events).toEqual([
       expect.objectContaining({
         type: 'event.model_catalog.changed',
@@ -1099,7 +1099,7 @@ describe('OAuthService', () => {
     const svc = createService();
 
     await svc.refreshOAuthProviderModels();
-    expect(defaultModel).toBe('kimi-code/kimi-k2');
+    expect(defaultModel).toBe('floyd-code/floyd-k2');
 
     configReplace.mockClear();
     events.length = 0;
@@ -1114,15 +1114,15 @@ describe('OAuthService', () => {
   it('keeps the default model the user selects while a refresh is in flight', async () => {
     const { fetchMock, releaseFetch } = stubGatedManagedModelsFetch();
     models = {
-      'kimi-code/kimi-k2': managedK2Alias,
-      'kimi-code/kimi-k2.5': managedK25Alias,
+      'floyd-code/floyd-k2': managedK2Alias,
+      'floyd-code/floyd-k2.5': managedK25Alias,
     };
-    defaultModel = 'kimi-code/kimi-k2';
+    defaultModel = 'floyd-code/floyd-k2';
     const svc = createService();
 
     const refresh = svc.refreshOAuthProviderModels();
     await vi.waitFor(() => { expect(fetchMock).toHaveBeenCalled(); });
-    await configReplace('defaultModel', 'kimi-code/kimi-k2.5');
+    await configReplace('defaultModel', 'floyd-code/floyd-k2.5');
     releaseFetch();
     const result = await refresh;
 
@@ -1130,22 +1130,22 @@ describe('OAuthService', () => {
     expect(result.changed).toEqual([
       {
         provider_id: OAUTH_PROVIDER,
-        provider_name: 'Kimi Code',
+        provider_name: 'Floyd Code',
         added: 1,
         removed: 0,
       },
     ]);
-    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'kimi-code/kimi-k2.5');
-    expect(defaultModel).toBe('kimi-code/kimi-k2.5');
+    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'floyd-code/floyd-k2.5');
+    expect(defaultModel).toBe('floyd-code/floyd-k2.5');
   });
 
   it('writes back the refreshed catalog and default when the user does not intervene mid-flight', async () => {
     const { fetchMock, releaseFetch } = stubGatedManagedModelsFetch();
     models = {
-      'kimi-code/kimi-k2': managedK2Alias,
-      'kimi-code/kimi-k2.5': managedK25Alias,
+      'floyd-code/floyd-k2': managedK2Alias,
+      'floyd-code/floyd-k2.5': managedK25Alias,
     };
-    defaultModel = 'kimi-code/kimi-k2';
+    defaultModel = 'floyd-code/floyd-k2';
     const svc = createService();
 
     const refresh = svc.refreshOAuthProviderModels();
@@ -1157,7 +1157,7 @@ describe('OAuthService', () => {
     expect(result.changed).toEqual([
       {
         provider_id: OAUTH_PROVIDER,
-        provider_name: 'Kimi Code',
+        provider_name: 'Floyd Code',
         added: 1,
         removed: 0,
       },
@@ -1165,20 +1165,20 @@ describe('OAuthService', () => {
     expect(configReplace).toHaveBeenCalledWith(
       'models',
       expect.objectContaining({
-        'kimi-code/kimi-k3': expect.objectContaining({ model: 'kimi-k3' }),
+        'floyd-code/floyd-k3': expect.objectContaining({ model: 'floyd-k3' }),
       }),
     );
-    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'kimi-code/kimi-k2');
-    expect(defaultModel).toBe('kimi-code/kimi-k2');
+    expect(configReplace).toHaveBeenCalledWith('defaultModel', 'floyd-code/floyd-k2');
+    expect(defaultModel).toBe('floyd-code/floyd-k2');
   });
 
   it('keeps the thinking selection the user makes while a refresh is in flight', async () => {
     const { fetchMock, releaseFetch } = stubGatedManagedModelsFetch();
     models = {
-      'kimi-code/kimi-k2': managedK2Alias,
-      'kimi-code/kimi-k2.5': managedK25Alias,
+      'floyd-code/floyd-k2': managedK2Alias,
+      'floyd-code/floyd-k2.5': managedK25Alias,
     };
-    defaultModel = 'kimi-code/kimi-k2';
+    defaultModel = 'floyd-code/floyd-k2';
     thinking = { enabled: true };
     const svc = createService();
 
@@ -1219,7 +1219,7 @@ describe('WebSearchProviderService', () => {
             resolveTokenProvider as unknown as IOAuthService['resolveTokenProvider'],
         });
         const hostHeaders = {
-          'User-Agent': 'kimi-code-cli/test',
+          'User-Agent': 'floyd-code-cli/test',
           'X-Msh-Device-Id': 'device-test',
         };
         reg.defineInstance(
@@ -1252,8 +1252,8 @@ describe('WebSearchProviderService', () => {
     expect(resolveTokenProvider).not.toHaveBeenCalled();
   });
 
-  it('returns undefined when the managed provider is not an OAuth kimi provider', () => {
-    providers = { [OAUTH_PROVIDER]: { type: 'kimi', apiKey: 'sk-test' } };
+  it('returns undefined when the managed provider is not an OAuth floyd provider', () => {
+    providers = { [OAUTH_PROVIDER]: { type: 'floyd', apiKey: 'sk-test' } };
     expect(createService().getWebSearchProvider()).toBeUndefined();
     expect(resolveTokenProvider).not.toHaveBeenCalled();
   });
@@ -1261,9 +1261,9 @@ describe('WebSearchProviderService', () => {
   it('returns undefined when the oauth service yields no token provider', () => {
     providers = {
       [OAUTH_PROVIDER]: {
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://api.example.com',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
     };
     resolveTokenProvider.mockReturnValue(undefined);
@@ -1273,24 +1273,24 @@ describe('WebSearchProviderService', () => {
   it('builds a search provider from the managed provider oauth ref', () => {
     providers = {
       [OAUTH_PROVIDER]: {
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://api.example.com/v1',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
     };
     expect(createService().getWebSearchProvider()).not.toBeUndefined();
     expect(resolveTokenProvider).toHaveBeenCalledWith(OAUTH_PROVIDER, {
       storage: 'file',
-      key: 'oauth/kimi-code',
+      key: 'oauth/floyd-code',
     });
   });
 
   it('searches against /search with the OAuth access token, host identity headers, and custom headers', async () => {
     providers = {
       [OAUTH_PROVIDER]: {
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://api.example.com/v1/',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
         customHeaders: { 'X-Custom': 'yes' },
       },
     };
@@ -1314,15 +1314,15 @@ describe('WebSearchProviderService', () => {
     expect(url).toBe('https://api.example.com/v1/search');
     const headers = init.headers as Record<string, string>;
     expect(headers['Authorization']).toBe('Bearer access-token');
-    expect(headers['User-Agent']).toBe('kimi-code-cli/test');
+    expect(headers['User-Agent']).toBe('floyd-code-cli/test');
     expect(headers['X-Msh-Device-Id']).toBe('device-test');
     expect(headers['X-Custom']).toBe('yes');
     expect(JSON.parse(init.body as string)).toEqual({ text_query: 'hello' });
   });
 
-  it('builds a search provider from the services.moonshot_search api_key config', async () => {
+  it('builds a search provider from the services.legacy_search api_key config', async () => {
     servicesConfig = {
-      moonshotSearch: {
+      legacySearch: {
         baseUrl: 'https://search.example.com/search',
         apiKey: 'search-key',
         customHeaders: { 'X-Custom': 'yes' },
@@ -1348,20 +1348,20 @@ describe('WebSearchProviderService', () => {
     expect(url).toBe('https://search.example.com/search');
     const headers = init.headers as Record<string, string>;
     expect(headers['Authorization']).toBe('Bearer search-key');
-    expect(headers['User-Agent']).toBe('kimi-code-cli/test');
+    expect(headers['User-Agent']).toBe('floyd-code-cli/test');
     expect(headers['X-Msh-Device-Id']).toBe('device-test');
     expect(headers['X-Custom']).toBe('yes');
   });
 
-  it('prefers the services.moonshot_search config over the managed oauth provider', async () => {
+  it('prefers the services.legacy_search config over the managed oauth provider', async () => {
     servicesConfig = {
-      moonshotSearch: { baseUrl: 'https://config.example.com/search', apiKey: 'config-key' },
+      legacySearch: { baseUrl: 'https://config.example.com/search', apiKey: 'config-key' },
     };
     providers = {
       [OAUTH_PROVIDER]: {
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://managed.example.com/v1',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
     };
     const fetchMock = vi.fn().mockResolvedValue({
@@ -1381,11 +1381,11 @@ describe('WebSearchProviderService', () => {
     expect(resolveTokenProvider).not.toHaveBeenCalled();
   });
 
-  it('builds a search provider from the services.moonshot_search oauth ref', async () => {
+  it('builds a search provider from the services.legacy_search oauth ref', async () => {
     servicesConfig = {
-      moonshotSearch: {
+      legacySearch: {
         baseUrl: 'https://search.example.com/search',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
     };
     const fetchMock = vi.fn().mockResolvedValue({
@@ -1398,7 +1398,7 @@ describe('WebSearchProviderService', () => {
     expect(provider).not.toBeUndefined();
     expect(resolveTokenProvider).toHaveBeenCalledWith(OAUTH_PROVIDER, {
       storage: 'file',
-      key: 'oauth/kimi-code',
+      key: 'oauth/floyd-code',
     });
     await provider!.search('hello');
 
@@ -1406,8 +1406,8 @@ describe('WebSearchProviderService', () => {
     expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer access-token');
   });
 
-  it('returns undefined when services.moonshot_search has no baseUrl and no managed oauth', () => {
-    servicesConfig = { moonshotSearch: { apiKey: 'search-key' } };
+  it('returns undefined when services.legacy_search has no baseUrl and no managed oauth', () => {
+    servicesConfig = { legacySearch: { apiKey: 'search-key' } };
     expect(createService().getWebSearchProvider()).toBeUndefined();
     expect(resolveTokenProvider).not.toHaveBeenCalled();
   });
@@ -1421,7 +1421,7 @@ describe('WebSearchProviderService', () => {
       },
     };
     servicesConfig = {
-      moonshotSearch: { baseUrl: 'https://search.example.com/search', apiKey: 'k' },
+      legacySearch: { baseUrl: 'https://search.example.com/search', apiKey: 'k' },
     };
     const svc = new WebSearchProviderService(
       { get: ((name: string) => providers[name]) as IProviderService['get'] } as IProviderService,
@@ -1446,9 +1446,9 @@ describe('WebSearchProviderService', () => {
 
     providers = {
       [OAUTH_PROVIDER]: {
-        type: 'kimi',
+        type: 'floyd',
         baseUrl: 'https://api.example.com/v1',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
     };
     expect(svc.hasWebSearchProvider()).toBe(true);
@@ -1462,39 +1462,39 @@ describe('services config section', () => {
     expect(registry.getSection(SERVICES_SECTION)).toBeDefined();
     expect(
       registry.validate(SERVICES_SECTION, {
-        moonshotSearch: { baseUrl: 'https://api.example.com/search', apiKey: 'search-key' },
-        moonshotFetch: { baseUrl: 'https://api.example.com/fetch' },
+        legacySearch: { baseUrl: 'https://api.example.com/search', apiKey: 'search-key' },
+        legacyFetch: { baseUrl: 'https://api.example.com/fetch' },
         customService: { baseUrl: 'https://service.example.com', retries: 3 },
       }),
     ).toEqual({
-      moonshotSearch: { baseUrl: 'https://api.example.com/search', apiKey: 'search-key' },
-      moonshotFetch: { baseUrl: 'https://api.example.com/fetch' },
+      legacySearch: { baseUrl: 'https://api.example.com/search', apiKey: 'search-key' },
+      legacyFetch: { baseUrl: 'https://api.example.com/fetch' },
       customService: { baseUrl: 'https://service.example.com', retries: 3 },
     });
     expect(() =>
-      registry.validate(SERVICES_SECTION, { moonshotSearch: { baseUrl: 42 } }),
+      registry.validate(SERVICES_SECTION, { legacySearch: { baseUrl: 42 } }),
     ).toThrow();
   });
 
   it('maps services from TOML snake_case to camelCase', () => {
     expect(
       servicesFromToml({
-        moonshot_search: {
+        legacy_search: {
           base_url: 'https://api.example.com/search',
           api_key: 'search-key',
           custom_headers: { 'X-Search': '1' },
-          oauth: { storage: 'file', key: 'oauth/kimi-code', oauth_host: 'https://auth.example.com' },
+          oauth: { storage: 'file', key: 'oauth/floyd-code', oauth_host: 'https://auth.example.com' },
         },
-        moonshot_fetch: { base_url: 'https://api.example.com/fetch', api_key: 'fetch-key' },
+        legacy_fetch: { base_url: 'https://api.example.com/fetch', api_key: 'fetch-key' },
       }),
     ).toEqual({
-      moonshotSearch: {
+      legacySearch: {
         baseUrl: 'https://api.example.com/search',
         apiKey: 'search-key',
         customHeaders: { 'X-Search': '1' },
-        oauth: { storage: 'file', key: 'oauth/kimi-code', oauthHost: 'https://auth.example.com' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code', oauthHost: 'https://auth.example.com' },
       },
-      moonshotFetch: { baseUrl: 'https://api.example.com/fetch', apiKey: 'fetch-key' },
+      legacyFetch: { baseUrl: 'https://api.example.com/fetch', apiKey: 'fetch-key' },
     });
   });
 
@@ -1502,13 +1502,13 @@ describe('services config section', () => {
     expect(
       servicesToToml(
         {
-          moonshotSearch: {
+          legacySearch: {
             baseUrl: 'https://api.example.com/search',
             apiKey: 'search-key',
             customHeaders: { 'X-Search': '1' },
             oauth: {
               storage: 'file',
-              key: 'oauth/kimi-code',
+              key: 'oauth/floyd-code',
               oauthHost: 'https://auth.example.com',
             },
           },
@@ -1516,11 +1516,11 @@ describe('services config section', () => {
         { custom_service: { base_url: 'https://service.example.com' } },
       ),
     ).toEqual({
-      moonshot_search: {
+      legacy_search: {
         base_url: 'https://api.example.com/search',
         api_key: 'search-key',
         custom_headers: { 'X-Search': '1' },
-        oauth: { storage: 'file', key: 'oauth/kimi-code', oauth_host: 'https://auth.example.com' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code', oauth_host: 'https://auth.example.com' },
       },
       custom_service: { base_url: 'https://service.example.com' },
     });
@@ -1528,13 +1528,13 @@ describe('services config section', () => {
 
   it('preserves unknown services when managed services are removed', () => {
     const rawServices = {
-      moonshot_search: {
+      legacy_search: {
         base_url: 'https://api.example.com/search',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
-      moonshot_fetch: {
+      legacy_fetch: {
         base_url: 'https://api.example.com/fetch',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
       custom_service: {
         base_url: 'https://service.example.com',
@@ -1544,7 +1544,7 @@ describe('services config section', () => {
     const services = ServicesConfigSchema.parse(servicesFromToml(rawServices));
     const config = { providers: {}, services };
 
-    clearManagedKimiCodeConfig(config);
+    clearManagedFloydCodeConfig(config);
 
     expect(servicesToToml(config.services, rawServices)).toEqual({
       custom_service: {
@@ -1571,15 +1571,15 @@ describe('AuthSummaryService', () => {
     defaultProvider = undefined;
     providers = {
       [OAUTH_PROVIDER]: {
-        type: 'kimi',
-        oauth: { storage: 'file', key: 'oauth/kimi-code' },
+        type: 'floyd',
+        oauth: { storage: 'file', key: 'oauth/floyd-code' },
       },
       [NON_OAUTH_PROVIDER]: { type: 'openai', apiKey: 'sk-test' },
     };
     models = {
-      kimi: {
+      floyd: {
         provider: OAUTH_PROVIDER,
-        model: 'kimi-k2',
+        model: 'floyd-k2',
         protocol: 'openai',
         maxContextSize: 128000,
       },
@@ -1590,7 +1590,7 @@ describe('AuthSummaryService', () => {
         maxContextSize: 128000,
       },
     };
-    defaultModel = 'kimi';
+    defaultModel = 'floyd';
     oauthStatus = vi.fn();
     getCachedAccessToken = vi.fn().mockResolvedValue(undefined);
     reload = vi.fn().mockResolvedValue(undefined);
@@ -1646,10 +1646,10 @@ describe('AuthSummaryService', () => {
   });
 
   it('summarize skips providers whose status throws', async () => {
-    const OTHER_OAUTH = 'kimi-code-anthropic';
+    const OTHER_OAUTH = 'floyd-code-anthropic';
     providers[OTHER_OAUTH] = {
-      type: 'kimi',
-      oauth: { storage: 'file', key: 'oauth/kimi-code' },
+      type: 'floyd',
+      oauth: { storage: 'file', key: 'oauth/floyd-code' },
     };
     oauthStatus.mockImplementation((name: string) => {
       if (name === OTHER_OAUTH) throw new Error('No OAuth manager configured');
@@ -1686,7 +1686,7 @@ describe('AuthSummaryService', () => {
 
     await expect(createSummary().ensureReady()).rejects.toMatchObject({
       code: 'auth.model_not_resolved',
-      details: { model_id: 'kimi', provider_id: OAUTH_PROVIDER },
+      details: { model_id: 'floyd', provider_id: OAUTH_PROVIDER },
     });
     expect(getCachedAccessToken).not.toHaveBeenCalled();
   });
@@ -1698,7 +1698,7 @@ describe('AuthSummaryService', () => {
     });
     expect(getCachedAccessToken).toHaveBeenCalledWith(OAUTH_PROVIDER, {
       storage: 'file',
-      key: 'oauth/kimi-code',
+      key: 'oauth/floyd-code',
     });
   });
 
@@ -1708,7 +1708,7 @@ describe('AuthSummaryService', () => {
     await expect(createSummary().ensureReady()).rejects.toThrow('token store unreadable');
     expect(getCachedAccessToken).toHaveBeenCalledWith(OAUTH_PROVIDER, {
       storage: 'file',
-      key: 'oauth/kimi-code',
+      key: 'oauth/floyd-code',
     });
   });
 
@@ -1741,10 +1741,10 @@ describe('AuthSummaryService', () => {
 
   it('ensureReady accepts cached oauth tokens', async () => {
     getCachedAccessToken.mockResolvedValue('access-token');
-    await expect(createSummary().ensureReady('kimi')).resolves.toBeUndefined();
+    await expect(createSummary().ensureReady('floyd')).resolves.toBeUndefined();
     expect(getCachedAccessToken).toHaveBeenCalledWith(OAUTH_PROVIDER, {
       storage: 'file',
-      key: 'oauth/kimi-code',
+      key: 'oauth/floyd-code',
     });
   });
 });
@@ -1802,7 +1802,7 @@ describe('AuthLegacyService', () => {
 
   it('counts every configured provider, not only oauth ones', async () => {
     providers = {
-      [OAUTH_PROVIDER]: { type: 'kimi', oauth: { storage: 'file', key: 'oauth/kimi-code' } },
+      [OAUTH_PROVIDER]: { type: 'floyd', oauth: { storage: 'file', key: 'oauth/floyd-code' } },
       [NON_OAUTH_PROVIDER]: { type: 'openai', apiKey: 'sk-test' },
     };
     oauthStatus.mockResolvedValue({ loggedIn: false });
@@ -1811,8 +1811,8 @@ describe('AuthLegacyService', () => {
   });
 
   it('reports models_ready when the default model resolves to a configured provider', async () => {
-    providers = { [NON_OAUTH_PROVIDER]: { type: 'kimi', apiKey: 'sk-test' } };
-    models = { k2: { provider: NON_OAUTH_PROVIDER, model: 'kimi-k2', maxContextSize: 128000 } };
+    providers = { [NON_OAUTH_PROVIDER]: { type: 'floyd', apiKey: 'sk-test' } };
+    models = { k2: { provider: NON_OAUTH_PROVIDER, model: 'floyd-k2', maxContextSize: 128000 } };
     defaultModel = 'k2';
     const summary = await createService().get();
     expect(summary.models_ready).toBe(true);
@@ -1820,8 +1820,8 @@ describe('AuthLegacyService', () => {
   });
 
   it('is not models_ready when a provider exists but no default model is set', async () => {
-    providers = { [NON_OAUTH_PROVIDER]: { type: 'kimi', apiKey: 'sk-test' } };
-    models = { k2: { provider: NON_OAUTH_PROVIDER, model: 'kimi-k2' } };
+    providers = { [NON_OAUTH_PROVIDER]: { type: 'floyd', apiKey: 'sk-test' } };
+    models = { k2: { provider: NON_OAUTH_PROVIDER, model: 'floyd-k2' } };
     const summary = await createService().get();
     expect(summary.providers_count).toBe(1);
     expect(summary.models_ready).toBe(false);
@@ -1829,16 +1829,16 @@ describe('AuthLegacyService', () => {
   });
 
   it('is not models_ready when the default model dangles', async () => {
-    providers = { [NON_OAUTH_PROVIDER]: { type: 'kimi', apiKey: 'sk-test' } };
-    models = { k2: { provider: NON_OAUTH_PROVIDER, model: 'kimi-k2' } };
+    providers = { [NON_OAUTH_PROVIDER]: { type: 'floyd', apiKey: 'sk-test' } };
+    models = { k2: { provider: NON_OAUTH_PROVIDER, model: 'floyd-k2' } };
     defaultModel = 'gone';
     const summary = await createService().get();
     expect(summary.models_ready).toBe(false);
   });
 
   it('is not models_ready when the default model points at a missing provider', async () => {
-    providers = { [NON_OAUTH_PROVIDER]: { type: 'kimi', apiKey: 'sk-test' } };
-    models = { k2: { provider: 'ghost', model: 'kimi-k2' } };
+    providers = { [NON_OAUTH_PROVIDER]: { type: 'floyd', apiKey: 'sk-test' } };
+    models = { k2: { provider: 'ghost', model: 'floyd-k2' } };
     defaultModel = 'k2';
     const summary = await createService().get();
     expect(summary.models_ready).toBe(false);
@@ -1861,7 +1861,7 @@ describe('AuthLegacyService', () => {
 
   it('surfaces managed_provider.unauthenticated when configured without a cached token', async () => {
     providers = {
-      [OAUTH_PROVIDER]: { type: 'kimi', oauth: { storage: 'file', key: 'oauth/kimi-code' } },
+      [OAUTH_PROVIDER]: { type: 'floyd', oauth: { storage: 'file', key: 'oauth/floyd-code' } },
     };
     oauthStatus.mockResolvedValue({ loggedIn: false });
     const summary = await createService().get();
@@ -1874,9 +1874,9 @@ describe('AuthLegacyService', () => {
 
   it('surfaces managed_provider.authenticated when a cached token exists', async () => {
     providers = {
-      [OAUTH_PROVIDER]: { type: 'kimi', oauth: { storage: 'file', key: 'oauth/kimi-code' } },
+      [OAUTH_PROVIDER]: { type: 'floyd', oauth: { storage: 'file', key: 'oauth/floyd-code' } },
     };
-    models = { k2: { provider: OAUTH_PROVIDER, model: 'kimi-k2', maxContextSize: 128000 } };
+    models = { k2: { provider: OAUTH_PROVIDER, model: 'floyd-k2', maxContextSize: 128000 } };
     defaultModel = 'k2';
     oauthStatus.mockResolvedValue({ loggedIn: true, provider: OAUTH_PROVIDER });
     const summary = await createService().get();
@@ -1889,7 +1889,7 @@ describe('AuthLegacyService', () => {
 
   it('treats a throwing oauth status as unauthenticated', async () => {
     providers = {
-      [OAUTH_PROVIDER]: { type: 'kimi', oauth: { storage: 'file', key: 'oauth/kimi-code' } },
+      [OAUTH_PROVIDER]: { type: 'floyd', oauth: { storage: 'file', key: 'oauth/floyd-code' } },
     };
     oauthStatus.mockRejectedValue(new Error('token storage unavailable'));
     await expect(createService().get()).resolves.toMatchObject({
@@ -1917,7 +1917,7 @@ describe('AuthLegacyService', () => {
     await flush();
     expect(settled).toBe(false);
     providers = { [NON_OAUTH_PROVIDER]: { type: 'openai', apiKey: 'sk-test' } };
-    models = { k2: { provider: NON_OAUTH_PROVIDER, model: 'kimi-k2', maxContextSize: 128000 } };
+    models = { k2: { provider: NON_OAUTH_PROVIDER, model: 'floyd-k2', maxContextSize: 128000 } };
     defaultModel = 'k2';
     release();
     await expect(pending).resolves.toMatchObject({ models_ready: true });
@@ -1927,7 +1927,7 @@ describe('AuthLegacyService', () => {
     providers = { [NON_OAUTH_PROVIDER]: { type: 'openai', apiKey: 'sk-test' } };
     const svc = createService();
     await expect(svc.get()).resolves.toMatchObject({ models_ready: false });
-    models = { k2: { provider: NON_OAUTH_PROVIDER, model: 'kimi-k2', maxContextSize: 128000 } };
+    models = { k2: { provider: NON_OAUTH_PROVIDER, model: 'floyd-k2', maxContextSize: 128000 } };
     defaultModel = 'k2';
     await expect(svc.get()).resolves.toMatchObject({ models_ready: true });
     expect(configReload).not.toHaveBeenCalled();

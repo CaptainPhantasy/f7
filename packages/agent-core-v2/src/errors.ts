@@ -1,5 +1,5 @@
 import { CoreErrors } from '#/_base/errors/codes';
-import type { KimiErrorPayload } from '#/_base/errors/serialize';
+import type { FloydErrorPayload } from '#/_base/errors/serialize';
 import { AgentLifecycleErrors } from '#/session/agentLifecycle/errors';
 import { AuthErrors } from '#/app/auth/errors';
 import { TaskErrors } from '#/agent/task/errors';
@@ -109,7 +109,7 @@ export const ErrorCodes = {
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
 
-export type KimiErrorCode =
+export type FloydErrorCode =
   | 'config.invalid'
   | 'config.persist_blocked'
   | 'session.not_found'
@@ -242,12 +242,12 @@ export type KimiErrorCode =
 
 export interface ErrorEvent {
   readonly type: 'error';
-  readonly code: KimiErrorCode;
+  readonly code: FloydErrorCode;
   readonly message: string;
   readonly name?: string;
   readonly details?: Record<string, unknown>;
   readonly retryable: boolean;
-  readonly cause?: KimiErrorPayload;
+  readonly cause?: FloydErrorPayload;
 }
 
 export interface WarningEvent {

@@ -37,7 +37,7 @@ describe('task-store', () => {
       taskId: 'agent-bbbbbbbb', kind: 'agent', description: 'explore repo',
       agentId: 'agent-1', subagentType: 'Explore', status: 'running',
       detached: true, startedAt: 3000, endedAt: null,
-      parentToolCallId: 'tool-agent', model: 'kimi-for-coding',
+      parentToolCallId: 'tool-agent', model: 'floyd-for-coding',
       thinkingEffort: 'high', stopCode: 'end_turn',
     });
     await writeTask(sessionDir, 'question-cccccccc.json', {
@@ -68,7 +68,7 @@ describe('task-store', () => {
       agentId: 'agent-1',
       subagentType: 'Explore',
       parentToolCallId: 'tool-agent',
-      model: 'kimi-for-coding',
+      model: 'floyd-for-coding',
       thinkingEffort: 'high',
       stopCode: 'end_turn',
     });

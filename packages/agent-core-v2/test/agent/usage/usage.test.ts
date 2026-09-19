@@ -325,7 +325,7 @@ describe('AgentCacheProbeService', () => {
       _serviceBrand: undefined,
       get: (alias: string) => {
         if (alias !== 'model-a') throw new Error(`unknown model "${alias}"`);
-        return { id: alias, protocol: 'anthropic', providerType: 'kimi' } as unknown as Model;
+        return { id: alias, protocol: 'anthropic', providerType: 'floyd' } as unknown as Model;
       },
     } as unknown as IModelCatalog);
     ix.stub(
@@ -345,7 +345,7 @@ describe('AgentCacheProbeService', () => {
     expect(track2).toHaveBeenCalledWith('prompt_cache_probe', {
       source: 'fork',
       turn_id: 1,
-      provider_type: 'kimi',
+      provider_type: 'floyd',
       protocol: 'anthropic',
       input_tokens: 8,
       input_cache_read: 3,

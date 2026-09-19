@@ -41,7 +41,7 @@ export interface GenerateResult {
   readonly rawFinishReason: string | null;
   /**
    * Provider trace identifier from the `x-trace-id` response header
-   * (Kimi/KFC only), or `null` when the provider does not report one.
+   * (Floyd/KFC only), or `null` when the provider does not report one.
    */
   readonly traceId?: string | null;
 }

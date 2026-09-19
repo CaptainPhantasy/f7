@@ -4,24 +4,24 @@ import { dirname } from 'node:path';
 
 import { parse as parseToml, stringify as stringifyToml, TomlError } from 'smol-toml';
 
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, FloydError } from '#/errors';
 import { atomicWrite } from '#/utils/fs';
 
 import { applyEnvModelConfig, stripEnvModelConfig } from './env-model';
 import { applySecondaryModelConfig, stripSecondaryModelConfig } from './secondary-model';
 import {
-  KimiConfigSchema,
+  FloydConfigSchema,
   formatConfigValidationError,
   getDefaultConfig,
   type BackgroundConfig,
   type ExperimentalConfig,
   type HookDefConfig,
   type ImageConfig,
-  type KimiConfig,
+  type FloydConfig,
   type LoopControl,
   type McpConfig,
   type ModelAlias,
-  type MoonshotServiceConfig,
+  type LegacyServiceConfig,
   type OAuthRef,
   type PermissionConfig,
   type ProviderConfig,
@@ -40,10 +40,10 @@ function camelToSnake(str: string): string {
   return str.replaceAll(/[A-Z]/g, (ch: string) => `_${ch.toLowerCase()}`);
 }
 
-const DEFAULT_CONFIG_FILE_TEXT = `# ~/.kimi-code/config.toml
-# Runtime settings for Kimi Code.
+const DEFAULT_CONFIG_FILE_TEXT = `# ~/.floyd-code/config.toml
+# Runtime settings for Floyd Code.
 # This file starts empty so built-in defaults can apply.
-# Login will populate managed Kimi provider and model entries.
+# Login will populate managed Floyd provider and model entries.
 `;
 
 export async function ensureConfigFile(filePath: string): Promise<void> {
@@ -60,7 +60,7 @@ export async function ensureConfigFile(filePath: string): Promise<void> {
   }
 }
 
-export function readConfigFile(filePath: string): KimiConfig {
+export function readConfigFile(filePath: string): FloydConfig {
   if (!existsSync(filePath)) {
     return getDefaultConfig();
   }
@@ -68,14 +68,14 @@ export function readConfigFile(filePath: string): KimiConfig {
   return parseConfigString(text, filePath);
 }
 
-export function readConfigFileForUpdate(filePath: string): KimiConfig {
+export function readConfigFileForUpdate(filePath: string): FloydConfig {
   try {
     return readConfigFile(filePath);
   } catch (error) {
-    if (error instanceof KimiError && error.code === ErrorCodes.CONFIG_INVALID) {
-      throw new KimiError(
+    if (error instanceof FloydError && error.code === ErrorCodes.CONFIG_INVALID) {
+      throw new FloydError(
         ErrorCodes.CONFIG_INVALID,
-        `Cannot change settings while ${filePath} is invalid — fix it first (run \`kimi doctor\` for details).`,
+        `Cannot change settings while ${filePath} is invalid — fix it first (run \`floyd doctor\` for details).`,
         { cause: error },
       );
     }
@@ -86,15 +86,15 @@ export function readConfigFileForUpdate(filePath: string): KimiConfig {
 export function loadRuntimeConfig(
   filePath: string,
   env: Readonly<Record<string, string | undefined>> = process.env,
-): KimiConfig {
+): FloydConfig {
   return applySecondaryModelConfig(applyEnvModelConfig(readConfigFile(filePath), env), env);
 }
 
 export interface RuntimeConfigLoadResult {
-  readonly config: KimiConfig;
+  readonly config: FloydConfig;
   readonly fileWarnings: readonly string[];
   readonly envWarnings: readonly string[];
-  readonly fileError?: KimiError;
+  readonly fileError?: FloydError;
 }
 
 export interface ConfigDiagnostics {
@@ -106,14 +106,14 @@ export function loadRuntimeConfigSafe(
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): RuntimeConfigLoadResult {
   const fileWarnings: string[] = [];
-  let fileError: KimiError | undefined;
+  let fileError: FloydError | undefined;
   let config = getDefaultConfig();
 
   let text: string | undefined;
   try {
     text = existsSync(filePath) ? readFileSync(filePath, 'utf-8') : undefined;
   } catch (error) {
-    fileError = new KimiError(
+    fileError = new FloydError(
       ErrorCodes.CONFIG_INVALID,
       `Failed to read ${filePath}: ${describeUnknownError(error)}`,
       { cause: error },
@@ -126,7 +126,7 @@ export function loadRuntimeConfigSafe(
     try {
       data = parseToml(text) as Record<string, unknown>;
     } catch (error) {
-      fileError = new KimiError(
+      fileError = new FloydError(
         ErrorCodes.CONFIG_INVALID,
         `Invalid TOML in ${filePath}: ${describeUnknownError(error)}`,
         { cause: error },
@@ -139,7 +139,7 @@ export function loadRuntimeConfigSafe(
       transformed['raw'] = raw;
       const salvaged = salvageConfigData(transformed);
       if (salvaged.config === undefined) {
-        fileError = new KimiError(
+        fileError = new FloydError(
           ErrorCodes.CONFIG_INVALID,
           `Invalid configuration in ${filePath}: ${formatConfigValidationError(salvaged.error)}`,
           { cause: salvaged.error },
@@ -151,7 +151,7 @@ export function loadRuntimeConfigSafe(
         config = salvaged.config;
         if (salvaged.dropped.length > 0) {
           fileWarnings.push(
-            `Ignored invalid config in ${filePath}: ${salvaged.dropped.join(', ')}. Run \`kimi doctor\` for details.`,
+            `Ignored invalid config in ${filePath}: ${salvaged.dropped.join(', ')}. Run \`floyd doctor\` for details.`,
           );
         }
       }
@@ -163,7 +163,7 @@ export function loadRuntimeConfigSafe(
     config = applyEnvModelConfig(config, env);
   } catch (error) {
     envWarnings.push(
-      `Ignoring KIMI_MODEL_* environment overrides: ${describeUnknownError(error)}`,
+      `Ignoring FLOYD_MODEL_* environment overrides: ${describeUnknownError(error)}`,
     );
   }
   config = applySecondaryModelConfig(config, env);
@@ -174,7 +174,7 @@ export function loadRuntimeConfigSafe(
 const ENTRY_KEYED_SECTIONS = new Set(['providers', 'models']);
 
 interface SalvageResult {
-  readonly config: KimiConfig | undefined;
+  readonly config: FloydConfig | undefined;
   readonly dropped: readonly string[];
   readonly error?: unknown;
 }
@@ -182,7 +182,7 @@ interface SalvageResult {
 function salvageConfigData(transformed: Record<string, unknown>): SalvageResult {
   const dropped: string[] = [];
   for (;;) {
-    const result = KimiConfigSchema.safeParse(transformed);
+    const result = FloydConfigSchema.safeParse(transformed);
     if (result.success) {
       return { config: result.data, dropped };
     }
@@ -225,7 +225,7 @@ function describeTomlSyntaxError(error: unknown): string {
   return firstLine;
 }
 
-export function parseConfigString(tomlText: string, filePath = 'config.toml'): KimiConfig {
+export function parseConfigString(tomlText: string, filePath = 'config.toml'): FloydConfig {
   if (tomlText.trim().length === 0) {
     return getDefaultConfig();
   }
@@ -234,7 +234,7 @@ export function parseConfigString(tomlText: string, filePath = 'config.toml'): K
   try {
     data = parseToml(tomlText) as Record<string, unknown>;
   } catch (error) {
-    throw new KimiError(ErrorCodes.CONFIG_INVALID, `Invalid TOML in ${filePath}: ${error instanceof Error ? error.message : String(error)}`, {
+    throw new FloydError(ErrorCodes.CONFIG_INVALID, `Invalid TOML in ${filePath}: ${error instanceof Error ? error.message : String(error)}`, {
       cause: error,
     });
   }
@@ -242,15 +242,15 @@ export function parseConfigString(tomlText: string, filePath = 'config.toml'): K
   return parseConfigData(data, filePath);
 }
 
-function parseConfigData(data: Record<string, unknown>, filePath: string): KimiConfig {
+function parseConfigData(data: Record<string, unknown>, filePath: string): FloydConfig {
   const raw = cloneRecord(data);
   const transformed = transformTomlData(data);
   transformed['raw'] = raw;
 
   try {
-    return KimiConfigSchema.parse(transformed);
+    return FloydConfigSchema.parse(transformed);
   } catch (error) {
-    throw new KimiError(ErrorCodes.CONFIG_INVALID, `Invalid configuration in ${filePath}: ${formatConfigValidationError(error)}`, {
+    throw new FloydError(ErrorCodes.CONFIG_INVALID, `Invalid configuration in ${filePath}: ${formatConfigValidationError(error)}`, {
       cause: error,
     });
   }
@@ -415,13 +415,13 @@ function transformLoopControlData(data: Record<string, unknown>): Record<string,
   return out;
 }
 
-export async function writeConfigFile(filePath: string, config: KimiConfig): Promise<void> {
+export async function writeConfigFile(filePath: string, config: FloydConfig): Promise<void> {
   const validated = validateConfig(stripSecondaryModelConfig(stripEnvModelConfig(config)));
   await mkdir(dirname(filePath), { recursive: true, mode: 0o700 });
   await atomicWrite(filePath, `${stringifyToml(configToTomlData(validated))}\n`);
 }
 
-export function configToTomlData(config: KimiConfig): Record<string, unknown> {
+export function configToTomlData(config: FloydConfig): Record<string, unknown> {
   const out = cloneRecord(config.raw);
 
   delete out['default_yolo'];
@@ -430,7 +430,7 @@ export function configToTomlData(config: KimiConfig): Record<string, unknown> {
   delete out['default_thinking'];
   delete out['defaultThinking'];
 
-  const scalarFields: (keyof KimiConfig)[] = [
+  const scalarFields: (keyof FloydConfig)[] = [
     'defaultProvider',
     'defaultModel',
     'planMode',
@@ -593,20 +593,20 @@ function permissionRuleToToml(
 
 function servicesToToml(services: ServicesConfig, rawServices: unknown): Record<string, unknown> {
   const out = cloneRecord(rawServices);
-  if (services.moonshotSearch !== undefined) {
-    out['moonshot_search'] = serviceToToml(services.moonshotSearch);
+  if (services.legacySearch !== undefined) {
+    out['legacy_search'] = serviceToToml(services.legacySearch);
   } else {
-    delete out['moonshot_search'];
+    delete out['legacy_search'];
   }
-  if (services.moonshotFetch !== undefined) {
-    out['moonshot_fetch'] = serviceToToml(services.moonshotFetch);
+  if (services.legacyFetch !== undefined) {
+    out['legacy_fetch'] = serviceToToml(services.legacyFetch);
   } else {
-    delete out['moonshot_fetch'];
+    delete out['legacy_fetch'];
   }
   return out;
 }
 
-function serviceToToml(service: MoonshotServiceConfig): Record<string, unknown> {
+function serviceToToml(service: LegacyServiceConfig): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(service)) {
     if (key === 'oauth' && value !== undefined) {

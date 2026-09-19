@@ -1,10 +1,10 @@
 {
-  description = "Kimi Code CLI";
+  description = "Floyd Code CLI";
 
   inputs = {
     # Pinned to the 25.11 release channel because nixpkgs-unstable currently
     # ships nodejs_24 = 24.14.1, which trips the >= 24.15.0 floor that the
-    # native SEA build enforces (see apps/kimi-code/scripts/native/build.mjs).
+    # native SEA build enforces (see apps/floyd-code/scripts/native/build.mjs).
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
   };
 
@@ -42,7 +42,7 @@
           node
         else
           throw ''
-            Kimi Code requires Node.js >= ${minNodeVersion},
+            Floyd Code requires Node.js >= ${minNodeVersion},
             but nixpkgs only offers ${node.version}.
             Pin a newer nixpkgs revision or update minNodeVersion in flake.nix.
           '';
@@ -77,9 +77,9 @@
         ./packages/telemetry
         ./packages/transcript
         ./packages/tree-sitter-bash
-        ./apps/kimi-code
+        ./apps/floyd-code
         ./apps/vscode
-        ./apps/kimi-inspect
+        ./apps/floyd-inspect
         ./apps/vis
         ./apps/vis/server
         ./apps/vis/web
@@ -87,28 +87,28 @@
       ];
 
       workspaceNames = [
-        "@moonshot-ai/acp-server"
-        "@moonshot-ai/agent-core-v2"
-        "@moonshot-ai/kap-server"
-        "@moonshot-ai/kaos"
-        "@moonshot-ai/kosong"
-        "@moonshot-ai/migration-legacy"
-        "@moonshot-ai/minidb"
-        "@moonshot-ai/kimi-code-sdk"
-        "@moonshot-ai/kimi-code-oauth"
-        "@moonshot-ai/klient"
-        "@moonshot-ai/pi-tui"
-        "@moonshot-ai/remote-control"
-        "@moonshot-ai/kimi-telemetry"
-        "@moonshot-ai/transcript"
-        "@moonshot-ai/tree-sitter-bash"
-        "@moonshot-ai/kimi-code"
-        "kimi-code"
-        "@moonshot-ai/kimi-inspect"
-        "@moonshot-ai/vis"
-        "@moonshot-ai/vis-server"
-        "@moonshot-ai/vis-web"
-        "kimi-code-docs"
+        "@legacy-ai/acp-server"
+        "@legacy-ai/agent-core-v2"
+        "@legacy-ai/kap-server"
+        "@legacy-ai/kaos"
+        "@legacy-ai/kosong"
+        "@legacy-ai/migration-legacy"
+        "@legacy-ai/minidb"
+        "@legacy-ai/floyd-code-sdk"
+        "@legacy-ai/floyd-code-oauth"
+        "@legacy-ai/klient"
+        "@legacy-ai/pi-tui"
+        "@legacy-ai/remote-control"
+        "@legacy-ai/floyd-telemetry"
+        "@legacy-ai/transcript"
+        "@legacy-ai/tree-sitter-bash"
+        "@legacy-ai/floyd-code"
+        "floyd-code"
+        "@legacy-ai/floyd-inspect"
+        "@legacy-ai/vis"
+        "@legacy-ai/vis-server"
+        "@legacy-ai/vis-web"
+        "floyd-code-docs"
       ];
     in
     {
@@ -117,7 +117,7 @@
         let
           nodejs = nodejsFor pkgs;
           pnpm = pnpmFor pkgs;
-          appPackageJson = builtins.fromJSON (builtins.readFile ./apps/kimi-code/package.json);
+          appPackageJson = builtins.fromJSON (builtins.readFile ./apps/floyd-code/package.json);
           nativeTarget =
             if pkgs.stdenv.hostPlatform.isLinux && pkgs.stdenv.hostPlatform.isAarch64 then
               "linux-arm64"
@@ -128,10 +128,10 @@
             else if pkgs.stdenv.hostPlatform.isDarwin then
               "darwin-x64"
             else
-              throw "Unsupported Kimi Code native target for ${pkgs.stdenv.hostPlatform.system}";
+              throw "Unsupported Floyd Code native target for ${pkgs.stdenv.hostPlatform.system}";
 
-          kimi-code = pkgs.stdenv.mkDerivation (finalAttrs: {
-            pname = "kimi-code";
+          floyd-code = pkgs.stdenv.mkDerivation (finalAttrs: {
+            pname = "floyd-code";
             version = appPackageJson.version;
 
             src = lib.fileset.toSource {
@@ -184,24 +184,24 @@
 
             buildPhase = ''
               runHook preBuild
-              export KIMI_CODE_BUILD_TARGET=${nativeTarget}
+              export FLOYD_CODE_BUILD_TARGET=${nativeTarget}
               ${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
                 # pkgs.darwin.sigtool's codesign supports `--sign -` (ad-hoc)
                 # but not the inspection mode (`-dv`) that 05-verify.mjs runs
                 # afterwards. Disable the verify step for the Nix build; the
                 # release CI keeps it via the unmodified script.
-                substituteInPlace apps/kimi-code/scripts/native/build.mjs \
+                substituteInPlace apps/floyd-code/scripts/native/build.mjs \
                   --replace-fail \
                     "await runVerifyStep({ requireGatekeeper: false });" \
                     "// runVerifyStep skipped in nix sandbox (sigtool lacks -dv)"
               ''}
               # The SEA blob step (scripts/native/02-sea-blob.mjs) embeds the
-              # Kimi web assets from apps/kimi-code/dist-web and fails if that
+              # Floyd web assets from apps/floyd-code/dist-web and fails if that
               # directory is missing. The bundle is committed (synced from the
               # code-app repo) — verify it is in place before producing the
               # native executable.
-              node apps/kimi-code/scripts/check-web-assets.mjs
-              pnpm --filter=@moonshot-ai/kimi-code run build:native:sea
+              node apps/floyd-code/scripts/check-web-assets.mjs
+              pnpm --filter=@legacy-ai/floyd-code run build:native:sea
               runHook postBuild
             '';
 
@@ -209,37 +209,37 @@
               runHook preInstall
 
               install -Dm755 \
-                "apps/kimi-code/dist-native/bin/${nativeTarget}/kimi" \
-                "$out/bin/kimi"
+                "apps/floyd-code/dist-native/bin/${nativeTarget}/floyd" \
+                "$out/bin/floyd"
 
               runHook postInstall
             '';
 
             postInstall = ''
-              wrapProgram $out/bin/kimi --prefix PATH : ${lib.makeBinPath [ pkgs.ripgrep pkgs.fd ]}
+              wrapProgram $out/bin/floyd --prefix PATH : ${lib.makeBinPath [ pkgs.ripgrep pkgs.fd ]}
             '';
 
             meta = {
-              description = "Kimi Code CLI";
-              homepage = "https://github.com/MoonshotAI/kimi-code";
+              description = "Floyd Code CLI";
+              homepage = "https://github.com/LegacyAI/floyd-code";
               license = lib.licenses.mit;
-              mainProgram = "kimi";
+              mainProgram = "floyd";
               platforms = systems;
             };
           });
         in
         {
-          inherit kimi-code;
-          default = kimi-code;
+          inherit floyd-code;
+          default = floyd-code;
         }
       );
 
       apps = forAllSystems (pkgs: {
-        kimi-code = {
+        floyd-code = {
           type = "app";
-          program = "${self.packages.${pkgs.system}.kimi-code}/bin/kimi";
+          program = "${self.packages.${pkgs.system}.floyd-code}/bin/floyd";
         };
-        default = self.apps.${pkgs.system}.kimi-code;
+        default = self.apps.${pkgs.system}.floyd-code;
       });
 
       devShells = forAllSystems (pkgs: {

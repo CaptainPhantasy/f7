@@ -40,8 +40,8 @@ describe('server-v2 /api/v1 fs folder picker', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fs-'));
-    instancesDir = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fs-instances-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fs-'));
+    instancesDir = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fs-instances-'));
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',
@@ -184,8 +184,8 @@ describe('server-v2 /api/v1 fs:mkdir', () => {
   let base: string;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fsmkdir-'));
-    instancesDir = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fsmkdir-instances-'));
+    dir = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fsmkdir-'));
+    instancesDir = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fsmkdir-instances-'));
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',
@@ -286,8 +286,8 @@ describe('server-v2 /api/v1 fs:content', () => {
   let base: string;
 
   beforeAll(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fscontent-'));
-    instancesDir = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fscontent-instances-'));
+    dir = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fscontent-'));
+    instancesDir = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fscontent-instances-'));
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',

@@ -160,7 +160,7 @@ describe('LLMRequester service migration coverage', () => {
       });
     });
 
-    it('records the resolved Kimi thinking keep default when thinking is enabled', async () => {
+    it('records the resolved Floyd thinking keep default when thinking is enabled', async () => {
       ctx.configure({
         modelCapabilities: {
           image_in: false,
@@ -183,9 +183,9 @@ describe('LLMRequester service migration coverage', () => {
       });
     });
 
-    it('records the env-forced Kimi effort used by the provider', async () => {
+    it('records the env-forced Floyd effort used by the provider', async () => {
       await ctx.dispose();
-      vi.stubEnv('KIMI_MODEL_THINKING_EFFORT', 'max');
+      vi.stubEnv('FLOYD_MODEL_THINKING_EFFORT', 'max');
       ctx = createTestAgent();
       llmRequester = ctx.get(IAgentLLMRequesterService);
       ctx.configure({
@@ -405,7 +405,7 @@ describe('LLMRequester service migration coverage', () => {
           agent_id: 'main',
           model: 'mock-model',
           alias: 'mock-model',
-          provider_type: 'kimi',
+          provider_type: 'floyd',
           protocol: 'openai',
           retryable: expect.any(Boolean),
           duration_ms: expect.any(Number),

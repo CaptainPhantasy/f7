@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { createKimiConfigRpc } from '#/index';
+import { createFloydConfigRpc } from '#/index';
 import { parseConfigString } from '#/config/index';
 
 const toPosix = (p: string): string => p.replaceAll('\\', '/');
@@ -18,7 +18,7 @@ afterEach(async () => {
 });
 
 async function makeTempDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'kimi-sdk-config-'));
+  const dir = await mkdtemp(join(tmpdir(), 'floyd-sdk-config-'));
   tempDirs.push(dir);
   return dir;
 }
@@ -26,23 +26,23 @@ async function makeTempDir(): Promise<string> {
 describe('SDK config TOML', () => {
   it('resolves config paths through the config RPC wrapper', async () => {
     const dir = await makeTempDir();
-    const rpc = createKimiConfigRpc();
+    const rpc = createFloydConfigRpc();
 
     await expect(rpc.resolveConfigPath({ homeDir: dir })).resolves.toBe(toPosix(join(dir, 'config.toml')));
   });
 
   it('returns structured validation issues through the config RPC wrapper', async () => {
-    const rpc = createKimiConfigRpc();
+    const rpc = createFloydConfigRpc();
 
     await expect(
       rpc.validateConfigToml({
         text: `
-[providers.kimi]
-type = "kimi"
+[providers.floyd]
+type = "floyd"
 
-[models.kimi]
-provider = "kimi"
-model = "kimi"
+[models.floyd]
+provider = "floyd"
+model = "floyd"
 max_context_size = "large"
 `,
         filePath: 'broken.toml',
@@ -51,7 +51,7 @@ max_context_size = "large"
       details: {
         validationIssues: [
           {
-            path: ['models', 'kimi', 'maxContextSize'],
+            path: ['models', 'floyd', 'maxContextSize'],
           },
         ],
       },
@@ -59,7 +59,7 @@ max_context_size = "large"
   });
 
   it('parses a provider api_key_env into camelCase apiKeyEnv', async () => {
-    const rpc = createKimiConfigRpc();
+    const rpc = createFloydConfigRpc();
     const text = `
 [providers.acme]
 type = "openai"

@@ -28,71 +28,71 @@ export type { LoginOptions, OAuthManagerOptions, OAuthRefreshOutcome } from './o
 export { OAuthManager, defaultRefreshThreshold, newInstanceId } from './oauth-manager';
 
 export {
-  assertKimiHostIdentity,
-  createKimiDefaultHeaders,
-  createKimiDeviceHeaders,
-  createKimiDeviceId,
-  createKimiUserAgent,
-  KIMI_CODE_CUSTOM_HEADERS_ENV,
-  KIMI_CODE_PLATFORM,
-  parseKimiCodeCustomHeaders,
-  readKimiDeviceId,
+  assertFloydHostIdentity,
+  createFloydDefaultHeaders,
+  createFloydDeviceHeaders,
+  createFloydDeviceId,
+  createFloydUserAgent,
+  FLOYD_CODE_CUSTOM_HEADERS_ENV,
+  FLOYD_CODE_PLATFORM,
+  parseFloydCodeCustomHeaders,
+  readFloydDeviceId,
   replaceUserAgentProduct,
 } from './identity';
-export type { KimiHostIdentity, KimiIdentityOptions } from './identity';
+export type { FloydHostIdentity, FloydIdentityOptions } from './identity';
 
-export { KIMI_CODE_FLOW_CONFIG } from './constants';
+export { FLOYD_CODE_FLOW_CONFIG } from './constants';
 
 export {
-  KIMI_REGION_MARKER_FILENAME,
-  KIMI_REGION_PROFILES,
-  kimiCdnContentUrl,
-  kimiRegionLoginHosts,
-  kimiRegionProfile,
-  kimiRegionSchema,
-  resolveKimiRegion,
+  FLOYD_REGION_MARKER_FILENAME,
+  FLOYD_REGION_PROFILES,
+  floydCdnContentUrl,
+  floydRegionLoginHosts,
+  floydRegionProfile,
+  floydRegionSchema,
+  resolveFloydRegion,
 } from './region';
-export type { KimiRegion, KimiRegionProfile, ResolveKimiRegionOptions } from './region';
+export type { FloydRegion, FloydRegionProfile, ResolveFloydRegionOptions } from './region';
 
 export {
   applyManagedApiKeyProviderModels,
-  applyManagedKimiCodeLogoutConfig,
-  applyManagedKimiCodeConfig,
-  clearManagedKimiCodeConfig,
-  fetchManagedKimiCodeModels,
-  kimiCodeEnvBaseUrl,
-  kimiCodeEnvOAuthHost,
-  KIMI_CODE_OAUTH_KEY,
-  KIMI_CODE_PLATFORM_ID,
-  KIMI_CODE_PROVIDER_NAME,
-  ManagedKimiCodeModelsAuthError,
-  provisionManagedKimiCodeConfig,
-  resolveKimiCodeLoginAuth,
-  resolveKimiCodeOAuthKey,
-  resolveKimiCodeOAuthRef,
-  resolveKimiCodeRuntimeAuth,
+  applyManagedFloydCodeLogoutConfig,
+  applyManagedFloydCodeConfig,
+  clearManagedFloydCodeConfig,
+  fetchManagedFloydCodeModels,
+  floydCodeEnvBaseUrl,
+  floydCodeEnvOAuthHost,
+  FLOYD_CODE_OAUTH_KEY,
+  FLOYD_CODE_PLATFORM_ID,
+  FLOYD_CODE_PROVIDER_NAME,
+  ManagedFloydCodeModelsAuthError,
+  provisionManagedFloydCodeConfig,
+  resolveFloydCodeLoginAuth,
+  resolveFloydCodeOAuthKey,
+  resolveFloydCodeOAuthRef,
+  resolveFloydCodeRuntimeAuth,
   toManagedModelAlias,
-} from './managed-kimi-code';
+} from './managed-floyd-code';
 export type {
-  FetchManagedKimiCodeModelsOptions,
-  ManagedKimiCodeApplyResult,
-  ManagedKimiCodeCleanupResult,
-  ManagedKimiCodeProtocol,
-  ManagedKimiEnv,
-  ManagedKimiLoginAuth,
-  ManagedKimiCodeModelInfo,
-  ManagedKimiCodeProvisionResult,
-  ManagedKimiConfigAdapter,
-  ManagedKimiConfigShape,
-  ManagedKimiOAuthRef,
-  ManagedKimiOAuthRefInput,
-  ManagedKimiRuntimeAuth,
-  ProvisionManagedKimiCodeConfigOptions,
-} from './managed-kimi-code';
+  FetchManagedFloydCodeModelsOptions,
+  ManagedFloydCodeApplyResult,
+  ManagedFloydCodeCleanupResult,
+  ManagedFloydCodeProtocol,
+  ManagedFloydEnv,
+  ManagedFloydLoginAuth,
+  ManagedFloydCodeModelInfo,
+  ManagedFloydCodeProvisionResult,
+  ManagedFloydConfigAdapter,
+  ManagedFloydConfigShape,
+  ManagedFloydOAuthRef,
+  ManagedFloydOAuthRefInput,
+  ManagedFloydRuntimeAuth,
+  ProvisionManagedFloydCodeConfigOptions,
+} from './managed-floyd-code';
 
 export {
   fetchManagedUserInfo,
-  kimiCodeUserInfoUrl,
+  floydCodeUserInfoUrl,
   managedUserInfoPhoneSchema,
   managedUserInfoResultSchema,
   managedUserInfoSchema,
@@ -110,10 +110,10 @@ export {
   boosterWalletInfoSchema,
   fetchManagedUsage,
   formatDuration,
-  isManagedKimiCode,
-  isManagedKimiCodeBaseUrl,
-  kimiCodeBaseUrl,
-  kimiCodeUsageUrl,
+  isManagedFloydCode,
+  isManagedFloydCodeBaseUrl,
+  floydCodeBaseUrl,
+  floydCodeUsageUrl,
   managedQuotaEntrySchema,
   managedQuotaSchema,
   managedQuotaUsagesSchema,
@@ -130,14 +130,14 @@ export type {
   ManagedUsageResult,
 } from './managed-usage';
 
-export { fetchChatTitle, kimiCodeToolsUrl } from './managed-tools';
+export { fetchChatTitle, floydCodeToolsUrl } from './managed-tools';
 export type {
   FetchChatTitleError,
   FetchChatTitleOk,
   FetchChatTitleResult,
 } from './managed-tools';
 
-export { fetchSubmitFeedback, kimiCodeFeedbackUrl } from './managed-feedback';
+export { fetchSubmitFeedback, floydCodeFeedbackUrl } from './managed-feedback';
 export type {
   FetchSubmitFeedbackError,
   FetchSubmitFeedbackOk,
@@ -148,8 +148,8 @@ export type {
 export {
   fetchCompleteFeedbackUpload,
   fetchCreateFeedbackUploadUrl,
-  kimiCodeFeedbackUploadCompleteUrl,
-  kimiCodeFeedbackUploadUrl,
+  floydCodeFeedbackUploadCompleteUrl,
+  floydCodeFeedbackUploadUrl,
 } from './managed-feedback-upload';
 export type {
   CompleteFeedbackUploadBody,
@@ -212,18 +212,18 @@ export type {
   ProviderCredentialView,
 } from './provider-credential';
 
-export { KimiOAuthToolkit, resolveKimiTokenStorageName } from './toolkit';
+export { FloydOAuthToolkit, resolveFloydTokenStorageName } from './toolkit';
 export type {
   AuthManagedUsageResult,
   AuthManagedUserInfoResult,
   AuthProviderStatus,
   AuthStatus,
   BearerTokenProvider,
-  KimiOAuthLoginOptions,
-  KimiOAuthLoginResult,
-  KimiOAuthLogoutResult,
-  KimiOAuthTokenRef,
-  KimiOAuthToolkitOptions,
+  FloydOAuthLoginOptions,
+  FloydOAuthLoginResult,
+  FloydOAuthLogoutResult,
+  FloydOAuthTokenRef,
+  FloydOAuthToolkitOptions,
 } from './toolkit';
 
 export { refreshProviderModels } from './refreshProviderModels';

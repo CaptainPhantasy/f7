@@ -134,18 +134,18 @@ describe('resolveCatalogImport — endpoint resolution', () => {
     expect(
       resolveCatalogImport({ id: 'google-vertex-anthropic', npm: '@ai-sdk/google-vertex/anthropic' }),
     ).toEqual({ kind: 'needs-base-url', wire: 'anthropic', guessed: false });
-    // kimi-for-coding declares a concrete api — no prompt needed.
+    // floyd-for-coding declares a concrete api — no prompt needed.
     expect(
       resolveCatalogImport({
-        id: 'kimi-for-coding',
+        id: 'floyd-for-coding',
         npm: '@ai-sdk/anthropic',
-        api: 'https://api.kimi.com/coding/v1',
+        api: 'https://api.floyd.com/coding/v1',
       }),
     ).toEqual({
       kind: 'ok',
       wire: 'anthropic',
       guessed: false,
-      baseUrl: 'https://api.kimi.com/coding',
+      baseUrl: 'https://api.floyd.com/coding',
     });
   });
 
@@ -220,11 +220,11 @@ describe('resolveCatalogImport — endpoint resolution', () => {
 
 describe('catalogBaseUrl', () => {
   it('strips a trailing /v1 for anthropic so the official SDK does not double it', () => {
-    expect(catalogBaseUrl({ id: 'k', api: 'https://api.kimi.com/coding/v1' }, 'anthropic')).toBe(
-      'https://api.kimi.com/coding',
+    expect(catalogBaseUrl({ id: 'k', api: 'https://api.floyd.com/coding/v1' }, 'anthropic')).toBe(
+      'https://api.floyd.com/coding',
     );
-    expect(catalogBaseUrl({ id: 'k', api: 'https://api.kimi.com/coding/v1/' }, 'anthropic')).toBe(
-      'https://api.kimi.com/coding',
+    expect(catalogBaseUrl({ id: 'k', api: 'https://api.floyd.com/coding/v1/' }, 'anthropic')).toBe(
+      'https://api.floyd.com/coding',
     );
   });
 
@@ -351,7 +351,7 @@ describe('catalogModelToCapability', () => {
   });
 
   it('extracts declared effort levels from reasoning_options', () => {
-    // The models.dev `kimi-for-coding`/`k3` shape: toggle plus effort values.
+    // The models.dev `floyd-for-coding`/`k3` shape: toggle plus effort values.
     const model = catalogModelToCapability({
       id: 'k3',
       reasoning: true,
@@ -445,21 +445,21 @@ describe('catalogModelToCapability', () => {
     expect(anthropic[0]?.alwaysThinking).toBeUndefined();
     expect(anthropic[0]?.supportEfforts).toEqual(['low', 'medium', 'high', 'max']);
 
-    // The Kimi wire shares the same protocol-level disable
+    // The Floyd wire shares the same protocol-level disable
     // (`thinking: {type: 'disabled'}`), so the marker is stripped there too.
-    const kimi = catalogProviderModels({
-      id: 'kimi-entry',
-      type: 'kimi',
+    const floyd = catalogProviderModels({
+      id: 'floyd-entry',
+      type: 'floyd',
       models: {
-        'kimi-model': {
-          id: 'kimi-model',
+        'floyd-model': {
+          id: 'floyd-model',
           reasoning: true,
           reasoning_options: [{ type: 'effort', values: ['low', 'high', 'max'] }],
           limit: { context: 262144 },
         },
       },
     });
-    expect(kimi[0]?.alwaysThinking).toBeUndefined();
+    expect(floyd[0]?.alwaysThinking).toBeUndefined();
 
     // The same shape on the OpenAI wire keeps the marker (gpt-5-class
     // models really cannot be turned off).

@@ -14,39 +14,39 @@
  * memory behave identically by construction.
  */
 
-import type { ServiceIdentifier } from '@moonshot-ai/agent-core-v2/_base/di/instantiation';
-import type { IAgentScopeHandle } from '@moonshot-ai/agent-core-v2/_base/di/scope';
-import { IWorkspaceInstanceManager } from '@moonshot-ai/agent-core-v2/workspace/workspaceInstance/workspaceInstanceManager';
-import { ISessionManager } from '@moonshot-ai/agent-core-v2/app/sessionManager/sessionManager';
-import { getLiveSessionById } from '@moonshot-ai/agent-core-v2/app/sessionManager/sessionLookup';
-import { IAgentLifecycleService } from '@moonshot-ai/agent-core-v2/session/agentLifecycle/agentLifecycle';
-import { MAIN_AGENT_ID } from '@moonshot-ai/agent-core-v2/session/agentLifecycle/agentLifecycle';
-import { ensureMainAgent } from '@moonshot-ai/agent-core-v2/session/agentLifecycle/mainAgent';
-import { agentContextOf } from '@moonshot-ai/agent-core-v2/agent/scopeContext/scopeContext';
+import type { ServiceIdentifier } from '@legacy-ai/agent-core-v2/_base/di/instantiation';
+import type { IAgentScopeHandle } from '@legacy-ai/agent-core-v2/_base/di/scope';
+import { IWorkspaceInstanceManager } from '@legacy-ai/agent-core-v2/workspace/workspaceInstance/workspaceInstanceManager';
+import { ISessionManager } from '@legacy-ai/agent-core-v2/app/sessionManager/sessionManager';
+import { getLiveSessionById } from '@legacy-ai/agent-core-v2/app/sessionManager/sessionLookup';
+import { IAgentLifecycleService } from '@legacy-ai/agent-core-v2/session/agentLifecycle/agentLifecycle';
+import { MAIN_AGENT_ID } from '@legacy-ai/agent-core-v2/session/agentLifecycle/agentLifecycle';
+import { ensureMainAgent } from '@legacy-ai/agent-core-v2/session/agentLifecycle/mainAgent';
+import { agentContextOf } from '@legacy-ai/agent-core-v2/agent/scopeContext/scopeContext';
 import {
   INTERACTION_TAG_AGENT_ID,
   INTERACTION_TAG_SESSION_ID,
   type Interaction,
   type InteractionKind,
   type InteractionRequest,
-} from '@moonshot-ai/agent-core-v2/human/interaction/interaction';
-import { interactions } from '@moonshot-ai/agent-core-v2/human/interaction/facade';
-import { IAgentLoopService } from '@moonshot-ai/agent-core-v2/agent/loop/loop';
-import type { SkillActivationOrigin } from '@moonshot-ai/agent-core-v2/agent/contextMemory/types';
-import { ITelemetryService } from '@moonshot-ai/agent-core-v2/app/telemetry/telemetry';
+} from '@legacy-ai/agent-core-v2/human/interaction/interaction';
+import { interactions } from '@legacy-ai/agent-core-v2/human/interaction/facade';
+import { IAgentLoopService } from '@legacy-ai/agent-core-v2/agent/loop/loop';
+import type { SkillActivationOrigin } from '@legacy-ai/agent-core-v2/agent/contextMemory/types';
+import { ITelemetryService } from '@legacy-ai/agent-core-v2/app/telemetry/telemetry';
 import type {
   PromptWithSkillsInput,
   SkillActivationInput,
-} from '@moonshot-ai/agent-core-v2/features/skill/skill';
-import { IAgentSkillService } from '@moonshot-ai/agent-core-v2/features/skill/skillService';
-import { IEventBus } from '@moonshot-ai/agent-core-v2/app/event/eventBus';
+} from '@legacy-ai/agent-core-v2/features/skill/skill';
+import { IAgentSkillService } from '@legacy-ai/agent-core-v2/features/skill/skillService';
+import { IEventBus } from '@legacy-ai/agent-core-v2/app/event/eventBus';
 import type {
   FileMeta,
   GetResult,
   SaveOptions,
-} from '@moonshot-ai/agent-core-v2/app/file/fileService';
-import { FileErrors } from '@moonshot-ai/agent-core-v2/app/file/fileService';
-import { Error2, ErrorCodes } from '@moonshot-ai/agent-core-v2/errors';
+} from '@legacy-ai/agent-core-v2/app/file/fileService';
+import { FileErrors } from '@legacy-ai/agent-core-v2/app/file/fileService';
+import { Error2, ErrorCodes } from '@legacy-ai/agent-core-v2/errors';
 
 import { Readable } from 'node:stream';
 

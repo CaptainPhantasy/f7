@@ -876,14 +876,14 @@ describe('WsConnectionV1 global target registration', () => {
     expect(removed).toEqual([conn]);
   });
 
-  it('opts only kimi-inspect connections into the event.di.* debug feed on client_hello', async () => {
+  it('opts only floyd-inspect connections into the event.di.* debug feed on client_hello', async () => {
     const socket = new FakeSocket();
     const { broadcaster, diOptIns } = makeGlobalTargetBroadcaster();
     const conn = makeConn(socket, { broadcaster });
 
     socket.emit(
       'message',
-      JSON.stringify({ type: 'client_hello', id: 'h1', payload: { client_id: 'kimi-web' } }),
+      JSON.stringify({ type: 'client_hello', id: 'h1', payload: { client_id: 'floyd-web' } }),
     );
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(diOptIns).toEqual([]);
@@ -893,7 +893,7 @@ describe('WsConnectionV1 global target registration', () => {
       JSON.stringify({
         type: 'client_hello',
         id: 'h2',
-        payload: { client_id: 'kimi-inspect' },
+        payload: { client_id: 'floyd-inspect' },
       }),
     );
     await vi.waitFor(() => expect(diOptIns).toEqual([conn]));

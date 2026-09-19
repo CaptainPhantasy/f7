@@ -970,7 +970,7 @@ describe('AgentMediaToolsRegistrar', () => {
     ]);
     const { registry, bindModel } = createRegistrarHarness(
       { '/workspace/photo.heic': { data: heic } },
-      { 'kimi-vision': 'kimi' },
+      { 'floyd-vision': 'floyd' },
     );
     const readWith = async (alias: string) => {
       bindModel(alias, capabilities({ image_in: true, video_in: false }));
@@ -978,7 +978,7 @@ describe('AgentMediaToolsRegistrar', () => {
       return execute(tool, { path: '/workspace/photo.heic' });
     };
 
-    expect((await readWith('kimi-vision')).isError).toBeFalsy();
+    expect((await readWith('floyd-vision')).isError).toBeFalsy();
     expect((await readWith('other-vision')).isError).toBe(true);
   });
 
@@ -999,7 +999,7 @@ describe('AgentMediaToolsRegistrar', () => {
     };
 
     expect((await read()).isError).toBe(true);
-    providerTypes['vision'] = 'kimi';
+    providerTypes['vision'] = 'floyd';
     expect((await read()).isError).toBeFalsy();
   });
 
@@ -1037,7 +1037,7 @@ describe('AgentMediaToolsRegistrar', () => {
     setRuntimeAvailable(false);
     const tool = registry.resolve('ReadMediaFile');
     expect(tool).toBeDefined();
-    const execution = await tool!.resolveExecution({ path: 'kimi-file://f_picture' });
+    const execution = await tool!.resolveExecution({ path: 'floyd-file://f_picture' });
     if (execution.isError === true) throw new Error('expected runnable attachment read');
     const result = await execution.execute({ turnId: 1, toolCallId: 'image', signal: new AbortController().signal });
     expect(result.isError).not.toBe(true);
@@ -1122,7 +1122,7 @@ describe('createVideoUploader', () => {
     const records: TelemetryRecord[] = [];
     const uploader = createVideoUploader(modelWith(vi.fn().mockResolvedValue(uploadResult)), {
       client: recordingTelemetry(records),
-      props: { model: 'example-model', protocol: 'kimi' },
+      props: { model: 'example-model', protocol: 'floyd' },
     });
     await expect(uploader!(input)).resolves.toEqual(uploadResult);
     expect(records).toHaveLength(1);
@@ -1132,7 +1132,7 @@ describe('createVideoUploader', () => {
       mime_type: 'video/mp4',
       size_bytes: 2048,
       model: 'example-model',
-      protocol: 'kimi',
+      protocol: 'floyd',
     });
     expect(records[0]!.properties?.['duration_ms']).toEqual(expect.any(Number));
   });
@@ -1208,12 +1208,12 @@ describe('createVideoUploader', () => {
     expect(result.output).not.toContain('heif-convert');
   });
 
-  function kimiTool(files: Record<string, FakeFile>): ReadMediaFileTool {
-    return makeTool(files, capabilities(), undefined, undefined, undefined, 'kimi');
+  function floydTool(files: Record<string, FakeFile>): ReadMediaFileTool {
+    return makeTool(files, capabilities(), undefined, undefined, undefined, 'floyd');
   }
 
-  it('sends HEIC untouched when the provider is kimi', async () => {
-    const result = await execute(kimiTool({ '/workspace/photo.heic': { data: heicBytes() } }), {
+  it('sends HEIC untouched when the provider is floyd', async () => {
+    const result = await execute(floydTool({ '/workspace/photo.heic': { data: heicBytes() } }), {
       path: '/workspace/photo.heic',
     });
 
@@ -1226,9 +1226,9 @@ describe('createVideoUploader', () => {
     expect(noteText(result)).toContain('Mime type: image/heic.');
   });
 
-  it('passes a HEIC above the read budget through inline up to the kimi limit', async () => {
+  it('passes a HEIC above the read budget through inline up to the floyd limit', async () => {
     const heic = Buffer.concat([heicBytes(), Buffer.alloc(4 * 1024 * 1024, 1)]);
-    const result = await execute(kimiTool({ '/workspace/photo.heic': { data: heic } }), {
+    const result = await execute(floydTool({ '/workspace/photo.heic': { data: heic } }), {
       path: '/workspace/photo.heic',
     });
 
@@ -1237,9 +1237,9 @@ describe('createVideoUploader', () => {
     expect(url).toBe(`data:image/heic;base64,${heic.toString('base64')}`);
   });
 
-  it('refuses a HEIC above the kimi inline limit with a conversion command', async () => {
+  it('refuses a HEIC above the floyd inline limit with a conversion command', async () => {
     const heic = Buffer.concat([heicBytes(), Buffer.alloc(5 * 1024 * 1024, 1)]);
-    const result = await execute(kimiTool({ '/workspace/photo.heic': { data: heic } }), {
+    const result = await execute(floydTool({ '/workspace/photo.heic': { data: heic } }), {
       path: '/workspace/photo.heic',
     });
 
@@ -1251,8 +1251,8 @@ describe('createVideoUploader', () => {
     expect(result.output).toMatch(/sips -s format jpeg|heif-convert|magick/);
   });
 
-  it('still refuses formats outside the kimi set with conversion guidance', async () => {
-    const tool = kimiTool({ '/workspace/photo.avif': { data: ftypBytes('avif') } });
+  it('still refuses formats outside the floyd set with conversion guidance', async () => {
+    const tool = floydTool({ '/workspace/photo.avif': { data: ftypBytes('avif') } });
     const result = await execute(tool, { path: '/workspace/photo.avif' });
 
     expect(result.isError).toBe(true);

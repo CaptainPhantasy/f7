@@ -28,10 +28,10 @@ import {
   type StreamedMessagePart,
   type TokenUsage,
   type Tool,
-} from '@moonshot-ai/agent-core-v2';
-import type { FinishReason } from '@moonshot-ai/agent-core-v2/human/llm/finish-reason';
-import { fromLlmMessage } from '@moonshot-ai/agent-core-v2/llm-adapter/contract/message';
-import type { LlmRequester } from '@moonshot-ai/agent-core-v2/human/llm/requester/requester';
+} from '@legacy-ai/agent-core-v2';
+import type { FinishReason } from '@legacy-ai/agent-core-v2/human/llm/finish-reason';
+import { fromLlmMessage } from '@legacy-ai/agent-core-v2/llm-adapter/contract/message';
+import type { LlmRequester } from '@legacy-ai/agent-core-v2/human/llm/requester/requester';
 
 interface ScriptedResponse {
   readonly parts: readonly StreamedMessagePart[];

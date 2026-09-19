@@ -1,7 +1,7 @@
-import type { SwarmModeTrigger } from '@moonshot-ai/agent-core-v2/features/swarm/agent/swarm';
+import type { SwarmModeTrigger } from '@legacy-ai/agent-core-v2/features/swarm/agent/swarm';
 
 import type { AgentContextData } from '#/context';
-import { ErrorCodes, KimiError, type KimiErrorCode } from '#/errors';
+import { ErrorCodes, FloydError, type FloydErrorCode } from '#/errors';
 
 import { type ApprovalHandler, type Event, type QuestionHandler } from '#/events';
 import type { SDKRpcClientBase } from '#/rpc';
@@ -53,8 +53,8 @@ export interface SessionOptions {
 }
 
 /**
- * The capability surface (built-in product capabilities: kimi-cu,
- * kimi-webbridge) exists only on the v2 engine — v1 has no capability
+ * The capability surface (built-in product capabilities: floyd-cu,
+ * floyd-webbridge) exists only on the v2 engine — v1 has no capability
  * domain. Feature-detect structurally so a Session backed by v1 fails with
  * a clear message instead of a confusing missing-method error.
  */
@@ -280,7 +280,7 @@ export class Session {
   async setPermission(mode: PermissionMode): Promise<void> {
     this.ensureOpen();
     if (!isPermissionMode(mode)) {
-      throw new KimiError(
+      throw new FloydError(
         ErrorCodes.SESSION_PERMISSION_MODE_INVALID,
         'Session permission mode must be yolo, manual, or auto',
       );
@@ -292,7 +292,7 @@ export class Session {
   async updateMetadata(patch: JsonObject): Promise<void> {
     this.ensureOpen();
     if (Object.hasOwn(patch, 'goal')) {
-      throw new KimiError(
+      throw new FloydError(
         ErrorCodes.GOAL_METADATA_RESERVED,
         'Session metadata key "goal" is reserved for the goal lifecycle',
       );
@@ -315,7 +315,7 @@ export class Session {
   async setPlanMode(enabled: boolean): Promise<void> {
     this.ensureOpen();
     if (typeof enabled !== 'boolean') {
-      throw new KimiError(
+      throw new FloydError(
         ErrorCodes.SESSION_PLAN_MODE_INVALID,
         'Session plan mode must be a boolean',
       );
@@ -326,7 +326,7 @@ export class Session {
   async setSwarmMode(enabled: boolean, trigger: SwarmModeTrigger): Promise<void> {
     this.ensureOpen();
     if (typeof enabled !== 'boolean') {
-      throw new KimiError(
+      throw new FloydError(
         ErrorCodes.REQUEST_INVALID,
         'Session swarm mode must be a boolean',
       );
@@ -341,13 +341,13 @@ export class Session {
   async setTowerMode(enabled: boolean, base?: string): Promise<void> {
     this.ensureOpen();
     if (typeof enabled !== 'boolean') {
-      throw new KimiError(
+      throw new FloydError(
         ErrorCodes.REQUEST_INVALID,
         'Session tower mode must be a boolean',
       );
     }
     if (base !== undefined && typeof base !== 'string') {
-      throw new KimiError(
+      throw new FloydError(
         ErrorCodes.REQUEST_INVALID,
         'Session tower mode base must be a string',
       );
@@ -518,7 +518,7 @@ export class Session {
 
   /**
    * Block until every still-running background task (across all agents in this
-   * session) reaches a terminal state. Used by `kimi -p` after the main agent's
+   * session) reaches a terminal state. Used by `floyd -p` after the main agent's
    * turn finishes when the resolved print background mode is `'drain'`
    * (`print_background_mode = "drain"`, or the legacy `keep_alive_on_exit = true`
    * fallback), so background subagents get a chance to complete before the process
@@ -530,7 +530,7 @@ export class Session {
   }
 
   /**
-   * Used by `kimi -p` after the main agent's turn ends with `reason ===
+   * Used by `floyd -p` after the main agent's turn ends with `reason ===
    * 'completed'`. Returns `'finish'` when the run may exit, or `'continue'` when
    * the caller must keep the session alive so a background-task completion can
    * steer the main agent into a new turn. Policy is selected by
@@ -575,7 +575,7 @@ export class Session {
 
   /**
    * Enumerate the cron tasks scheduled in this session. Hosts running a
-   * bounded session lifetime (e.g. `kimi -p`) poll this to decide whether
+   * bounded session lifetime (e.g. `floyd -p`) poll this to decide whether
    * pending scheduled work still needs the process alive.
    */
   async getCronTasks(): Promise<GetCronTasksResult> {
@@ -706,7 +706,7 @@ export class Session {
     const normalizedPluginId = pluginId.trim();
     const normalizedCommandName = commandName.trim();
     if (normalizedPluginId.length === 0 || normalizedCommandName.length === 0) {
-      throw new KimiError(
+      throw new FloydError(
         ErrorCodes.REQUEST_INVALID,
         'Plugin id and command name cannot be empty',
       );
@@ -729,7 +729,7 @@ export class Session {
     this.ensureOpen();
     const commandName = name.trim();
     if (commandName.length === 0) {
-      throw new KimiError(ErrorCodes.REQUEST_INVALID, 'Command name cannot be empty');
+      throw new FloydError(ErrorCodes.REQUEST_INVALID, 'Command name cannot be empty');
     }
     await this.rpc.runCommand({
       sessionId: this.id,
@@ -766,13 +766,13 @@ export class Session {
 
   private ensureOpen(): void {
     if (this.closed) {
-      throw new KimiError(ErrorCodes.SESSION_CLOSED, 'Session is closed');
+      throw new FloydError(ErrorCodes.SESSION_CLOSED, 'Session is closed');
     }
   }
 
   private requireSummary(): SessionSummary {
     if (this.summary === undefined) {
-      throw new KimiError(ErrorCodes.SESSION_STATE_INVALID, 'Session summary is unavailable');
+      throw new FloydError(ErrorCodes.SESSION_STATE_INVALID, 'Session summary is unavailable');
     }
     return this.summary;
   }
@@ -781,20 +781,20 @@ export class Session {
 function normalizePromptInput(input: string | PromptInput): PromptInput {
   if (typeof input === 'string') {
     if (input.trim().length === 0) {
-      throw new KimiError(ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY, 'Prompt input cannot be empty');
+      throw new FloydError(ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY, 'Prompt input cannot be empty');
     }
     return [{ type: 'text', text: input }];
   }
 
   if (input.length === 0) {
-    throw new KimiError(ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY, 'Prompt input cannot be empty');
+    throw new FloydError(ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY, 'Prompt input cannot be empty');
   }
 
   for (const part of input) {
     switch (part.type) {
       case 'text':
         if (part.text.trim().length === 0) {
-          throw new KimiError(
+          throw new FloydError(
             ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY,
             'Prompt input cannot contain empty text parts',
           );
@@ -802,7 +802,7 @@ function normalizePromptInput(input: string | PromptInput): PromptInput {
         break;
       case 'image_url':
         if (part.imageUrl.url.trim().length === 0) {
-          throw new KimiError(
+          throw new FloydError(
             ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY,
             'Prompt input cannot contain empty image URLs',
           );
@@ -810,7 +810,7 @@ function normalizePromptInput(input: string | PromptInput): PromptInput {
         break;
       case 'video_url':
         if (part.videoUrl.url.trim().length === 0) {
-          throw new KimiError(
+          throw new FloydError(
             ErrorCodes.REQUEST_PROMPT_INPUT_EMPTY,
             'Prompt input cannot contain empty video URLs',
           );
@@ -824,11 +824,11 @@ function normalizePromptInput(input: string | PromptInput): PromptInput {
 function normalizeRequiredString(
   value: string,
   message: string,
-  code: KimiErrorCode,
+  code: FloydErrorCode,
 ): string {
   const normalized = value.trim();
   if (normalized.length === 0) {
-    throw new KimiError(code, message);
+    throw new FloydError(code, message);
   }
   return normalized;
 }

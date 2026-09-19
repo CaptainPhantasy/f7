@@ -3,10 +3,10 @@ import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { inflateRawSync } from 'node:zlib';
-import { ISessionMediaStore } from '@moonshot-ai/agent-core-v2/agent/media/sessionMediaStore';
-import { mcpResultToExecutableOutput } from '@moonshot-ai/agent-core-v2/agent/mcp/output';
-import { renderToolResultForModel } from '@moonshot-ai/agent-core-v2/agent/contextMemory/toolResultRender';
-import { IReadTool, ReadInputSchema, type ReadInput } from '@moonshot-ai/agent-core-v2/agent/tools/os/read/read';
+import { ISessionMediaStore } from '@legacy-ai/agent-core-v2/agent/media/sessionMediaStore';
+import { mcpResultToExecutableOutput } from '@legacy-ai/agent-core-v2/agent/mcp/output';
+import { renderToolResultForModel } from '@legacy-ai/agent-core-v2/agent/contextMemory/toolResultRender';
+import { IReadTool, ReadInputSchema, type ReadInput } from '@legacy-ai/agent-core-v2/agent/tools/os/read/read';
 
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -35,13 +35,13 @@ import {
   sessionDirOf,
   type ContextMessage,
   type ScopeSeed,
-} from '@moonshot-ai/agent-core-v2';
-import { SessionMetaUpdated } from '@moonshot-ai/agent-core-v2/session/sessionMetadata/sessionMetaEvents';
-import { TurnSteer } from '@moonshot-ai/agent-core-v2/agent/loop/turnOps';
-import type { AgentTranscriptSnapshot } from '@moonshot-ai/transcript';
-import { TurnStarted } from '@moonshot-ai/agent-core-v2/agent/loop/turnEvents';
-import { sessionWarningsResponseSchema } from '@moonshot-ai/agent-core-v2/app/sessionLegacy/sessionProtocol';
-import { encodeWorkDirKey } from '@moonshot-ai/agent-core-v2/_base/utils/workdir-slug';
+} from '@legacy-ai/agent-core-v2';
+import { SessionMetaUpdated } from '@legacy-ai/agent-core-v2/session/sessionMetadata/sessionMetaEvents';
+import { TurnSteer } from '@legacy-ai/agent-core-v2/agent/loop/turnOps';
+import type { AgentTranscriptSnapshot } from '@legacy-ai/transcript';
+import { TurnStarted } from '@legacy-ai/agent-core-v2/agent/loop/turnEvents';
+import { sessionWarningsResponseSchema } from '@legacy-ai/agent-core-v2/app/sessionLegacy/sessionProtocol';
+import { encodeWorkDirKey } from '@legacy-ai/agent-core-v2/_base/utils/workdir-slug';
 
 import { type RunningServer, startServer } from '../src/start';
 import { TEST_HOST_IDENTITY } from './helpers/hostIdentity';
@@ -95,7 +95,7 @@ describe('server-v2 /api/v1/sessions', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-sessions-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-sessions-'));
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',
@@ -138,7 +138,7 @@ describe('server-v2 /api/v1/sessions', () => {
       await new Promise((resolve) => setTimeout(resolve, 25));
       await rm(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 } as never);
     }
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-sessions-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-sessions-'));
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',
@@ -204,7 +204,7 @@ describe('server-v2 /api/v1/sessions', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('application/zip');
     expect(res.headers.get('content-disposition')).toBe(
-      `attachment; filename="kimi-session-${id}.zip"`,
+      `attachment; filename="floyd-session-${id}.zip"`,
     );
     expect(res.headers.get('content-length')).toBe(String(archive.length));
     expect(res.headers.get('cache-control')).toBe('no-store');
@@ -212,15 +212,15 @@ describe('server-v2 /api/v1/sessions', () => {
     const entries = readZipEntries(archive);
     const manifest = JSON.parse(entries.get('manifest.json')?.toString('utf8') ?? 'null') as {
       sessionId: string;
-      kimiCodeVersion: string;
+      floydCodeVersion: string;
       desktopVersion?: string;
       webLogPath?: string;
     };
-    expect(entries.get('logs/kimi-web.jsonl')?.toString('utf8')).toBe(webLog);
+    expect(entries.get('logs/floyd-web.jsonl')?.toString('utf8')).toBe(webLog);
     expect(manifest).toMatchObject({
       sessionId: id,
-      kimiCodeVersion: TEST_HOST_IDENTITY.version,
-      webLogPath: 'logs/kimi-web.jsonl',
+      floydCodeVersion: TEST_HOST_IDENTITY.version,
+      webLogPath: 'logs/floyd-web.jsonl',
     });
     expect(manifest.desktopVersion).toBeUndefined();
     await expect.poll(() => listExportTempDirs(id)).toEqual([]);
@@ -285,7 +285,7 @@ describe('server-v2 /api/v1/sessions', () => {
     const id = created.body.data.id;
     await mkdir(join(home as string, 'logs'), { recursive: true });
     await writeFile(
-      join(home as string, 'logs', 'kimi-code-desktop.log'),
+      join(home as string, 'logs', 'floyd-code-desktop.log'),
       '2026-07-27T00:00:00.000Z INFO  [renderer] hello\n',
       'utf-8',
     );
@@ -303,15 +303,15 @@ describe('server-v2 /api/v1/sessions', () => {
     expect(res.status).toBe(200);
     const entries = readZipEntries(archive);
     const manifest = JSON.parse(entries.get('manifest.json')?.toString('utf8') ?? 'null') as {
-      kimiCodeVersion: string;
+      floydCodeVersion: string;
       desktopLogPath?: string;
       desktopVersion?: string;
     };
-    expect(entries.get('logs/kimi-desktop.log')?.toString('utf8')).toBe(
+    expect(entries.get('logs/floyd-desktop.log')?.toString('utf8')).toBe(
       '2026-07-27T00:00:00.000Z INFO  [renderer] hello\n',
     );
-    expect(manifest.desktopLogPath).toBe('logs/kimi-desktop.log');
-    expect(manifest.kimiCodeVersion).toBe(TEST_HOST_IDENTITY.version);
+    expect(manifest.desktopLogPath).toBe('logs/floyd-desktop.log');
+    expect(manifest.floydCodeVersion).toBe(TEST_HOST_IDENTITY.version);
     expect(manifest.desktopVersion).toBe(TEST_HOST_IDENTITY.version);
   });
 
@@ -638,13 +638,13 @@ describe('server-v2 /api/v1/sessions', () => {
         'model = "stub"',
         'max_context_size = 1000',
         '',
-        '[providers."managed:kimi-code"]',
-        'type = "kimi"',
+        '[providers."managed:floyd-code"]',
+        'type = "floyd"',
         'base_url = "https://api.example.test/coding/v1"',
         '',
-        '[providers."managed:kimi-code".oauth]',
+        '[providers."managed:floyd-code".oauth]',
         'storage = "file"',
-        'key = "kimi-code"',
+        'key = "floyd-code"',
         '',
       ].join('\n'),
       'utf-8',
@@ -662,7 +662,7 @@ describe('server-v2 /api/v1/sessions', () => {
       logout: async () => {
         throw new Error('unused');
       },
-      status: async () => ({ loggedIn: true, provider: 'managed:kimi-code' }),
+      status: async () => ({ loggedIn: true, provider: 'managed:floyd-code' }),
       refreshOAuthProviderModels: async () => ({ changed: [], unchanged: [], failed: [] }),
       getManagedUsage: async () => ({ kind: 'error', message: 'unused' }),
       getManagedUserInfo: async () => ({ kind: 'error', message: 'unused' }),
@@ -818,7 +818,7 @@ describe('server-v2 /api/v1/sessions', () => {
     });
     expect(on.body.code).toBe(50001);
     expect(on.body.msg).toContain('the tower experiment is disabled');
-    expect(on.body.msg).toContain('KIMI_CODE_EXPERIMENTAL_TOWER=1');
+    expect(on.body.msg).toContain('FLOYD_CODE_EXPERIMENTAL_TOWER=1');
     const after = await getJson<{
       tower_mode?: boolean;
     }>(`/api/v1/sessions/${id}/status`);
@@ -2014,7 +2014,7 @@ describe('server-v2 /api/v1/sessions', () => {
 });
 
 async function listExportTempDirs(sessionId: string): Promise<string[]> {
-  const prefix = `kimi-session-export-${sessionId}-`;
+  const prefix = `floyd-session-export-${sessionId}-`;
   return (await readdir(tmpdir())).filter((entry) => entry.startsWith(prefix)).toSorted();
 }
 
@@ -2064,22 +2064,22 @@ describe('server-v2 /api/v1/sessions status context window', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-status-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-status-'));
     await writeFile(
       join(home, 'config.toml'),
       [
         'default_model = "k2"',
         '',
-        '[providers.kimi]',
-        'type = "kimi"',
+        '[providers.floyd]',
+        'type = "floyd"',
         'api_key = "sk-test"',
         'base_url = "https://api.example.test/v1"',
         '',
         '[models.k2]',
-        'provider = "kimi"',
-        'model = "kimi-k2"',
+        'provider = "floyd"',
+        'model = "floyd-k2"',
         'max_context_size = 131072',
-        'display_name = "Kimi K2"',
+        'display_name = "Floyd K2"',
         '',
       ].join('\n'),
       'utf-8',
@@ -2152,7 +2152,7 @@ describe('server-v2 /api/v1/sessions (minidb read model)', () => {
   let home: string | undefined;
   let base: string;
 
-  const READ_MODEL_ENV = 'KIMI_CODE_PERSISTENCE_MINIDB_READMODEL';
+  const READ_MODEL_ENV = 'FLOYD_CODE_PERSISTENCE_MINIDB_READMODEL';
 
   const READ_MODEL_CONFIG = [
     'default_model = "stub"',
@@ -2171,7 +2171,7 @@ describe('server-v2 /api/v1/sessions (minidb read model)', () => {
 
   beforeAll(async () => {
     process.env[READ_MODEL_ENV] = '1';
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-sessions-rm-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-sessions-rm-'));
     await writeFile(join(home, 'config.toml'), READ_MODEL_CONFIG, 'utf8');
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,

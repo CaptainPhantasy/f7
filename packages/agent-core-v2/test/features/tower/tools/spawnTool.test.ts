@@ -186,7 +186,7 @@ describe('TowerSpawnTool', () => {
     ix.stub(ISessionSubagentService, { run: runAgent } as unknown as ISessionSubagentService);
     ix.stub(IAgentTaskService, { registerTask, getTask: (taskId: string) => taskInfoLookup(taskId) } as unknown as IAgentTaskService);
     ix.stub(IAgentProfileService, {
-      data: () => ({ profileName: 'agent', modelAlias: 'kimi-code', thinkingLevel: 'off' }),
+      data: () => ({ profileName: 'agent', modelAlias: 'floyd-code', thinkingLevel: 'off' }),
     } as unknown as IAgentProfileService);
     ix.stub(IConfigService, {
       get: ((domain: string) =>
@@ -310,7 +310,7 @@ describe('TowerSpawnTool', () => {
     expect(result.output).toContain('Agent(resume="agent-7", run_in_background=true');
 
     expect(createAgent).toHaveBeenCalledWith({
-      binding: { profile: 'tower-worker', model: 'kimi-code', thinking: 'off' },
+      binding: { profile: 'tower-worker', model: 'floyd-code', thinking: 'off' },
       labels: { parentAgentId: 'main' },
     });
     expect(runAgent).toHaveBeenCalledWith(
@@ -394,7 +394,7 @@ describe('TowerSpawnTool', () => {
       kind: 'agent',
       agentId: 'agent-7',
       subagentType: 'tower-worker',
-      model: 'kimi-code',
+      model: 'floyd-code',
       thinkingEffort: 'high',
     });
   });
@@ -475,9 +475,9 @@ describe('TowerSpawnTool', () => {
     const result = await execute(WORKER_ARGS);
 
     expect(result.isError).toBeUndefined();
-    expect(result.output).toContain('model: kimi-code');
+    expect(result.output).toContain('model: floyd-code');
     const activityLog = await readFile(join(repo, '.tower/comms/log/activity.log'), 'utf8');
-    expect(activityLog).toMatch(/spawn .*model=kimi-code/);
+    expect(activityLog).toMatch(/spawn .*model=floyd-code/);
   });
 
   it('binds reviewers to the tower model even when the secondary model is configured', async () => {
@@ -490,9 +490,9 @@ describe('TowerSpawnTool', () => {
     });
 
     expect(result.isError).toBeUndefined();
-    expect(result.output).toContain('model: kimi-code');
+    expect(result.output).toContain('model: floyd-code');
     expect(createAgent).toHaveBeenCalledWith({
-      binding: { profile: 'tower-worker', model: 'kimi-code', thinking: 'off' },
+      binding: { profile: 'tower-worker', model: 'floyd-code', thinking: 'off' },
       labels: { parentAgentId: 'main' },
     });
   });

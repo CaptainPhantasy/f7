@@ -473,7 +473,7 @@ describe('AgentPermissionPolicyService git cwd write approval', () => {
   beforeEach(async () => {
     disposables = new DisposableStore();
     mode = 'manual';
-    workspaceDir = await mkdtemp(join(tmpdir(), 'kimi-permission-git-'));
+    workspaceDir = await mkdtemp(join(tmpdir(), 'floyd-permission-git-'));
     cleanupDirs = [workspaceDir];
     await mkdir(join(workspaceDir, '.git'), { recursive: true });
     workspace = workspaceStub(workspaceDir);
@@ -568,7 +568,7 @@ describe('AgentPermissionPolicyService git cwd write approval', () => {
   });
 
   it('approves Edit on an additionalDir path in manual mode', async () => {
-    const extraDir = await mkdtemp(join(tmpdir(), 'kimi-permission-extra-'));
+    const extraDir = await mkdtemp(join(tmpdir(), 'floyd-permission-extra-'));
     cleanupDirs.push(extraDir);
     workspace.addAdditionalDir(extraDir);
     await expect(evaluate({
@@ -582,7 +582,7 @@ describe('AgentPermissionPolicyService git cwd write approval', () => {
   });
 
   it('asks for paths outside cwd and additionalDirs', async () => {
-    const extraDir = await mkdtemp(join(tmpdir(), 'kimi-permission-extra-'));
+    const extraDir = await mkdtemp(join(tmpdir(), 'floyd-permission-extra-'));
     cleanupDirs.push(extraDir);
     workspace.addAdditionalDir(extraDir);
     const outsidePath = join(`${extraDir}-evil`, 'outside.ts');

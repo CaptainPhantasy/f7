@@ -1,7 +1,7 @@
-import type { AgentTaskStatus } from '@moonshot-ai/agent-core-v2/agent/task/types';
-import type { QuestionTaskInfo } from '@moonshot-ai/agent-core-v2/agent/tools/ask-user-question/question-background-task';
-import type { SubagentTaskInfo } from '@moonshot-ai/agent-core-v2/agent/tools/agent/subagent-task';
-import type { ProcessTaskInfo } from '@moonshot-ai/agent-core-v2/agent/tools/os/bash/process-task';
+import type { AgentTaskStatus } from '@legacy-ai/agent-core-v2/agent/task/types';
+import type { QuestionTaskInfo } from '@legacy-ai/agent-core-v2/agent/tools/ask-user-question/question-background-task';
+import type { SubagentTaskInfo } from '@legacy-ai/agent-core-v2/agent/tools/agent/subagent-task';
+import type { ProcessTaskInfo } from '@legacy-ai/agent-core-v2/agent/tools/os/bash/process-task';
 
 export type BackgroundTaskStatus = AgentTaskStatus;
 

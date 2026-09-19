@@ -5,7 +5,7 @@ import {
   APIStatusError,
   APITimeoutError,
   ChatProviderError,
-} from '@moonshot-ai/kosong';
+} from '@legacy-ai/kosong';
 
 export const ErrorCodes = {
   CONFIG_INVALID: 'config.invalid',
@@ -81,16 +81,16 @@ export const ErrorCodes = {
   INTERNAL: 'internal',
 } as const;
 
-export type KimiErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
+export type FloydErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
 
-export interface KimiErrorInfo {
+export interface FloydErrorInfo {
   readonly title: string;
   readonly retryable: boolean;
   readonly public: boolean;
   readonly action?: string;
 }
 
-export const KIMI_ERROR_INFO = {
+export const FLOYD_ERROR_INFO = {
   'config.invalid': {
     title: 'Invalid configuration',
     retryable: false,
@@ -416,7 +416,7 @@ export const KIMI_ERROR_INFO = {
     title: 'Plugin state failed to load',
     retryable: true,
     public: true,
-    action: 'Fix the installed.json file under $KIMI_CODE_HOME/plugins/ and run /plugins reload.',
+    action: 'Fix the installed.json file under $FLOYD_CODE_HOME/plugins/ and run /plugins reload.',
   },
 
   'request.invalid': {
@@ -442,7 +442,7 @@ export const KIMI_ERROR_INFO = {
     title: 'Git Bash not found',
     retryable: false,
     public: true,
-    action: 'Install Git for Windows from https://gitforwindows.org/ or set KIMI_SHELL_PATH to a bash.exe.',
+    action: 'Install Git for Windows from https://gitforwindows.org/ or set FLOYD_SHELL_PATH to a bash.exe.',
   },
 
   not_implemented: {
@@ -457,70 +457,70 @@ export const KIMI_ERROR_INFO = {
     public: true,
     action: 'Inspect logs or report the issue with diagnostics.',
   },
-} as const satisfies Record<KimiErrorCode, KimiErrorInfo>;
+} as const satisfies Record<FloydErrorCode, FloydErrorInfo>;
 
-export function isKimiErrorCode(code: unknown): code is KimiErrorCode {
-  return typeof code === 'string' && Object.hasOwn(KIMI_ERROR_INFO, code);
+export function isFloydErrorCode(code: unknown): code is FloydErrorCode {
+  return typeof code === 'string' && Object.hasOwn(FLOYD_ERROR_INFO, code);
 }
 
-export interface KimiErrorOptions {
+export interface FloydErrorOptions {
   readonly details?: Record<string, unknown>;
   readonly cause?: unknown;
 }
 
-export class KimiError extends Error {
-  readonly code: KimiErrorCode;
+export class FloydError extends Error {
+  readonly code: FloydErrorCode;
   readonly details?: Record<string, unknown>;
   override readonly cause?: unknown;
 
-  constructor(code: KimiErrorCode, message: string, options: KimiErrorOptions = {}) {
+  constructor(code: FloydErrorCode, message: string, options: FloydErrorOptions = {}) {
     super(message);
-    this.name = 'KimiError';
+    this.name = 'FloydError';
     this.code = code;
     this.details = options.details;
     this.cause = options.cause;
   }
 }
 
-export interface KimiErrorPayload {
-  readonly code: KimiErrorCode;
+export interface FloydErrorPayload {
+  readonly code: FloydErrorCode;
   readonly message: string;
   readonly name?: string;
   readonly details?: Record<string, unknown>;
   readonly retryable: boolean;
 }
 
-export function isKimiError(error: unknown): error is KimiError {
-  return error instanceof KimiError;
+export function isFloydError(error: unknown): error is FloydError {
+  return error instanceof FloydError;
 }
 
 export function makeErrorPayload(
-  code: KimiErrorCode,
+  code: FloydErrorCode,
   message: string,
   options?: { readonly details?: Record<string, unknown>; readonly name?: string },
-): KimiErrorPayload {
+): FloydErrorPayload {
   return {
     code,
     message,
     name: options?.name,
     details: options?.details,
-    retryable: KIMI_ERROR_INFO[code].retryable,
+    retryable: FLOYD_ERROR_INFO[code].retryable,
   };
 }
 
-export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
-  if (isKimiError(error)) {
+export function toFloydErrorPayload(error: unknown): FloydErrorPayload {
+  if (isFloydError(error)) {
     return {
       code: error.code,
       message: error.message,
       name: error.name,
       details: error.details,
-      retryable: KIMI_ERROR_INFO[error.code].retryable,
+      retryable: FLOYD_ERROR_INFO[error.code].retryable,
     };
   }
 
   if (error instanceof APIStatusError) {
-    const code: KimiErrorCode =
+    const code: FloydErrorCode =
       error instanceof APIProviderQuotaExhaustedError
         ? ErrorCodes.PROVIDER_API_ERROR
         : error.statusCode === 429
@@ -536,7 +536,7 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
         statusCode: error.statusCode,
         requestId: error.requestId,
       },
-      retryable: KIMI_ERROR_INFO[code].retryable,
+      retryable: FLOYD_ERROR_INFO[code].retryable,
     };
   }
 
@@ -545,7 +545,7 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
       code: ErrorCodes.PROVIDER_CONNECTION_ERROR,
       message: error.message,
       name: error.name,
-      retryable: KIMI_ERROR_INFO[ErrorCodes.PROVIDER_CONNECTION_ERROR].retryable,
+      retryable: FLOYD_ERROR_INFO[ErrorCodes.PROVIDER_CONNECTION_ERROR].retryable,
     };
   }
 
@@ -562,7 +562,7 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
         finishReason: error.finishReason,
         rawFinishReason: error.rawFinishReason,
       },
-      retryable: KIMI_ERROR_INFO[code].retryable,
+      retryable: FLOYD_ERROR_INFO[code].retryable,
     };
   }
 
@@ -571,7 +571,7 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
       code: ErrorCodes.PROVIDER_API_ERROR,
       message: error.message,
       name: error.name,
-      retryable: KIMI_ERROR_INFO[ErrorCodes.PROVIDER_API_ERROR].retryable,
+      retryable: FLOYD_ERROR_INFO[ErrorCodes.PROVIDER_API_ERROR].retryable,
     };
   }
 
@@ -580,14 +580,14 @@ export function toKimiErrorPayload(error: unknown): KimiErrorPayload {
       code: ErrorCodes.INTERNAL,
       message: error.message,
       name: error.name,
-      retryable: KIMI_ERROR_INFO[ErrorCodes.INTERNAL].retryable,
+      retryable: FLOYD_ERROR_INFO[ErrorCodes.INTERNAL].retryable,
     };
   }
 
   return {
     code: ErrorCodes.INTERNAL,
     message: String(error),
-    retryable: KIMI_ERROR_INFO[ErrorCodes.INTERNAL].retryable,
+    retryable: FLOYD_ERROR_INFO[ErrorCodes.INTERNAL].retryable,
   };
 }
 
@@ -598,8 +598,8 @@ function sanitizeStatusErrorMessage(message: string): string {
   return normalized.replaceAll('\r', '');
 }
 
-export function fromKimiErrorPayload(payload: KimiErrorPayload): KimiError {
-  return new KimiError(payload.code, payload.message, {
+export function fromFloydErrorPayload(payload: FloydErrorPayload): FloydError {
+  return new FloydError(payload.code, payload.message, {
     details: payload.details,
   });
 }

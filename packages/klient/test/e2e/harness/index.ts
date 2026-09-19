@@ -1,5 +1,5 @@
 /**
- * `@moonshot-ai/server-e2e` — wire-level test client for the kimi-code server.
+ * `@legacy-ai/server-e2e` — wire-level test client for the floyd-code server.
  *
  * Use this package from scenarios (`scenarios/*.ts`) and vitest e2e tests
  * to drive a real server process at `http://127.0.0.1:58627` (or any baseUrl
@@ -15,7 +15,7 @@
  *   - `waitForFrame` / `waitForSessionBusy` — standalone wait helpers
  *
  * Wire DTO types are NOT re-exported here — scenarios import them from
- * `@moonshot-ai/kap-server/protocol/*` or agent-core-v2 directly.
+ * `@legacy-ai/kap-server/protocol/*` or agent-core-v2 directly.
  */
 export { DaemonClient } from './client.js';
 export type {

@@ -269,7 +269,7 @@ describe('normalizeAPIStatusError', () => {
   });
 
   it.each([
-    // Moonshot / Kimi 413 observed in the field when accumulated media pushed
+    // Legacy / Floyd 413 observed in the field when accumulated media pushed
     // the request body over the provider's byte ceiling.
     [413, 'Request exceeds the maximum size'],
     // Reverse-proxy (nginx-style) 413 with an HTML body.
@@ -350,15 +350,15 @@ describe('isToolExchangeAdjacencyError', () => {
     );
   });
 
-  // The exact OpenAI-compatible (Moonshot / Kimi) message observed in the field
+  // The exact OpenAI-compatible (Legacy / Floyd) message observed in the field
   // when a `tool` message's `tool_call_id` has no matching `tool_calls` entry in
   // the preceding assistant message. The doubled space is verbatim from the
   // provider.
-  const MOONSHOT_TOOL_CALL_ID_NOT_FOUND = '400 tool_call_id  is not found';
+  const LEGACY_TOOL_CALL_ID_NOT_FOUND = '400 tool_call_id  is not found';
 
-  it('matches the OpenAI/Moonshot tool_call_id-not-found 400', () => {
+  it('matches the OpenAI/Legacy tool_call_id-not-found 400', () => {
     expect(
-      isToolExchangeAdjacencyError(new APIStatusError(400, MOONSHOT_TOOL_CALL_ID_NOT_FOUND)),
+      isToolExchangeAdjacencyError(new APIStatusError(400, LEGACY_TOOL_CALL_ID_NOT_FOUND)),
     ).toBe(true);
     expect(
       isToolExchangeAdjacencyError(new APIStatusError(400, "tool_call_id 'call_abc123' is not found")),
@@ -367,7 +367,7 @@ describe('isToolExchangeAdjacencyError', () => {
 
   it('also matches a 422 tool_call_id-not-found', () => {
     expect(
-      isToolExchangeAdjacencyError(new APIStatusError(422, MOONSHOT_TOOL_CALL_ID_NOT_FOUND)),
+      isToolExchangeAdjacencyError(new APIStatusError(422, LEGACY_TOOL_CALL_ID_NOT_FOUND)),
     ).toBe(true);
   });
 
@@ -456,7 +456,7 @@ describe('isRecoverableRequestStructureError', () => {
     ).toBe(true);
   });
 
-  it('matches the OpenAI/Moonshot tool_call_id-not-found 400', () => {
+  it('matches the OpenAI/Legacy tool_call_id-not-found 400', () => {
     expect(
       isRecoverableRequestStructureError(new APIStatusError(400, '400 tool_call_id  is not found')),
     ).toBe(true);
@@ -519,7 +519,7 @@ describe('isRecoverableRequestStructureError', () => {
     ).toBe(true);
   });
 
-  it('matches the Moonshot/Kimi vacuous-message rejection', () => {
+  it('matches the Legacy/Floyd vacuous-message rejection', () => {
     expect(
       isRecoverableRequestStructureError(
         new APIStatusError(
@@ -590,7 +590,7 @@ describe('isImageFormatError', () => {
     ).toBe(true);
     // Anthropic decode failure
     expect(isImageFormatError(new APIStatusError(400, 'Could not process image'))).toBe(true);
-    // Moonshot/Kimi (from the Kimi Code error reference)
+    // Legacy/Floyd (from the Floyd Code error reference)
     expect(
       isImageFormatError(
         new APIStatusError(400, 'Invalid request: unsupported image url: /tmp/photo.avif'),
@@ -644,7 +644,7 @@ describe('isImageFormatError', () => {
     ).toBe(false);
     expect(isImageFormatError(new APIStatusError(400, 'image_url is not allowed'))).toBe(false);
     // Documented provider messages that are image-shaped but not
-    // format/data errors: Anthropic's per-image size cap, Moonshot's
+    // format/data errors: Anthropic's per-image size cap, Legacy's
     // capability code, Gemini's unsupported-inlineData rejection.
     expect(
       isImageFormatError(
@@ -707,7 +707,7 @@ describe('APIProviderQuotaExhaustedError', () => {
 
 describe('normalizeAPIStatusError: 429 stays vendor-neutral', () => {
   // The shared normalization never decides what a vendor's 429 means: quota
-  // classification lives with the vendor (`classifyKimiQuotaError`, the
+  // classification lives with the vendor (`classifyFloydQuotaError`, the
   // OpenAI base's own insufficient_quota check), so even billing wordings
   // normalize to a retryable rate limit here.
   it.each([

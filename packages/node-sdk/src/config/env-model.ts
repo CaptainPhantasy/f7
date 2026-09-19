@@ -1,22 +1,22 @@
-import { ErrorCodes, KimiError } from '#/errors';
+import { ErrorCodes, FloydError } from '#/errors';
 
 import { parseBooleanEnv } from './resolve';
 import {
   validateConfig,
-  type KimiConfig,
+  type FloydConfig,
   type ModelAlias,
   type ProviderConfig,
   type ProviderType,
   type ThinkingConfig,
 } from './schema';
 
-export const ENV_MODEL_PROVIDER_KEY = '__kimi_env__';
-export const ENV_MODEL_ALIAS_KEY = '__kimi_env_model__';
+export const ENV_MODEL_PROVIDER_KEY = '__floyd_env__';
+export const ENV_MODEL_ALIAS_KEY = '__floyd_env_model__';
 
-const ALLOWED_TYPES: readonly ProviderType[] = ['kimi', 'anthropic', 'openai'];
+const ALLOWED_TYPES: readonly ProviderType[] = ['floyd', 'anthropic', 'openai'];
 
 const DEFAULT_BASE_URL: Partial<Record<ProviderType, string>> = {
-  kimi: 'https://api.moonshot.ai/v1',
+  floyd: 'https://api.legacy.ai/v1',
   openai: 'https://api.openai.com/v1',
 };
 
@@ -32,7 +32,7 @@ function trimmed(value: string | undefined): string | undefined {
 }
 
 function fail(message: string): never {
-  throw new KimiError(ErrorCodes.CONFIG_INVALID, message);
+  throw new FloydError(ErrorCodes.CONFIG_INVALID, message);
 }
 
 function parsePositiveInt(raw: string, varName: string): number {
@@ -43,11 +43,11 @@ function parsePositiveInt(raw: string, varName: string): number {
 }
 
 function parseProviderType(raw: string | undefined): ProviderType {
-  if (raw === undefined) return 'kimi';
+  if (raw === undefined) return 'floyd';
   const normalized = raw.toLowerCase() as ProviderType;
   if (!ALLOWED_TYPES.includes(normalized)) {
     fail(
-      `KIMI_MODEL_PROVIDER_TYPE must be one of ${ALLOWED_TYPES.join(', ')}, got "${raw}".`,
+      `FLOYD_MODEL_PROVIDER_TYPE must be one of ${ALLOWED_TYPES.join(', ')}, got "${raw}".`,
     );
   }
   return normalized;
@@ -72,23 +72,23 @@ function parseBooleanVar(raw: string | undefined, varName: string): boolean | un
   return parsed;
 }
 
-export function applyEnvModelConfig(config: KimiConfig, env: Env = process.env): KimiConfig {
-  const model = trimmed(env['KIMI_MODEL_NAME']);
+export function applyEnvModelConfig(config: FloydConfig, env: Env = process.env): FloydConfig {
+  const model = trimmed(env['FLOYD_MODEL_NAME']);
   if (model === undefined) return config;
 
-  const apiKey = trimmed(env['KIMI_MODEL_API_KEY']);
+  const apiKey = trimmed(env['FLOYD_MODEL_API_KEY']);
   if (apiKey === undefined) {
-    fail('KIMI_MODEL_NAME is set but KIMI_MODEL_API_KEY is missing.');
+    fail('FLOYD_MODEL_NAME is set but FLOYD_MODEL_API_KEY is missing.');
   }
 
-  const maxContextRaw = trimmed(env['KIMI_MODEL_MAX_CONTEXT_SIZE']);
+  const maxContextRaw = trimmed(env['FLOYD_MODEL_MAX_CONTEXT_SIZE']);
   const maxContextSize =
     maxContextRaw === undefined
       ? DEFAULT_MAX_CONTEXT_SIZE
-      : parsePositiveInt(maxContextRaw, 'KIMI_MODEL_MAX_CONTEXT_SIZE');
+      : parsePositiveInt(maxContextRaw, 'FLOYD_MODEL_MAX_CONTEXT_SIZE');
 
-  const type = parseProviderType(trimmed(env['KIMI_MODEL_PROVIDER_TYPE']));
-  const baseUrl = trimmed(env['KIMI_MODEL_BASE_URL']) ?? DEFAULT_BASE_URL[type];
+  const type = parseProviderType(trimmed(env['FLOYD_MODEL_PROVIDER_TYPE']));
+  const baseUrl = trimmed(env['FLOYD_MODEL_BASE_URL']) ?? DEFAULT_BASE_URL[type];
 
   const provider: ProviderConfig = {
     type,
@@ -96,17 +96,17 @@ export function applyEnvModelConfig(config: KimiConfig, env: Env = process.env):
     ...(baseUrl !== undefined ? { baseUrl } : {}),
   };
 
-  const maxOutputRaw = trimmed(env['KIMI_MODEL_MAX_OUTPUT_SIZE']);
+  const maxOutputRaw = trimmed(env['FLOYD_MODEL_MAX_OUTPUT_SIZE']);
   const maxOutputSize =
     maxOutputRaw !== undefined
-      ? parsePositiveInt(maxOutputRaw, 'KIMI_MODEL_MAX_OUTPUT_SIZE')
+      ? parsePositiveInt(maxOutputRaw, 'FLOYD_MODEL_MAX_OUTPUT_SIZE')
       : undefined;
-  const capabilities = parseCapabilities(env['KIMI_MODEL_CAPABILITIES']) ?? DEFAULT_CAPABILITIES;
-  const displayName = trimmed(env['KIMI_MODEL_DISPLAY_NAME']);
-  const reasoningKey = trimmed(env['KIMI_MODEL_REASONING_KEY']);
+  const capabilities = parseCapabilities(env['FLOYD_MODEL_CAPABILITIES']) ?? DEFAULT_CAPABILITIES;
+  const displayName = trimmed(env['FLOYD_MODEL_DISPLAY_NAME']);
+  const reasoningKey = trimmed(env['FLOYD_MODEL_REASONING_KEY']);
   const adaptiveThinking = parseBooleanVar(
-    env['KIMI_MODEL_ADAPTIVE_THINKING'],
-    'KIMI_MODEL_ADAPTIVE_THINKING',
+    env['FLOYD_MODEL_ADAPTIVE_THINKING'],
+    'FLOYD_MODEL_ADAPTIVE_THINKING',
   );
 
   const alias: ModelAlias = {
@@ -120,11 +120,11 @@ export function applyEnvModelConfig(config: KimiConfig, env: Env = process.env):
     ...(adaptiveThinking !== undefined ? { adaptiveThinking } : {}),
   };
 
-  const thinkingEffort = trimmed(env['KIMI_MODEL_THINKING_EFFORT']);
+  const thinkingEffort = trimmed(env['FLOYD_MODEL_THINKING_EFFORT']);
   const thinking: ThinkingConfig | undefined =
     thinkingEffort !== undefined ? { ...config.thinking, effort: thinkingEffort } : config.thinking;
 
-  const merged: KimiConfig = {
+  const merged: FloydConfig = {
     ...config,
     providers: { ...config.providers, [ENV_MODEL_PROVIDER_KEY]: provider },
     models: { ...config.models, [ENV_MODEL_ALIAS_KEY]: alias },
@@ -135,7 +135,7 @@ export function applyEnvModelConfig(config: KimiConfig, env: Env = process.env):
   return validateConfig(merged);
 }
 
-export function stripEnvModelConfig(config: KimiConfig): KimiConfig {
+export function stripEnvModelConfig(config: FloydConfig): FloydConfig {
   const hasProvider = ENV_MODEL_PROVIDER_KEY in config.providers;
   const hasModel = config.models !== undefined && ENV_MODEL_ALIAS_KEY in config.models;
   const defaultIsEnv = config.defaultModel === ENV_MODEL_ALIAS_KEY;
@@ -159,12 +159,12 @@ export function stripEnvModelConfig(config: KimiConfig): KimiConfig {
   };
 }
 
-function rawDefaultModel(config: KimiConfig): string | undefined {
+function rawDefaultModel(config: FloydConfig): string | undefined {
   const raw = config.raw?.['default_model'];
   return typeof raw === 'string' ? raw : undefined;
 }
 
-function rawThinking(config: KimiConfig): ThinkingConfig | undefined {
+function rawThinking(config: FloydConfig): ThinkingConfig | undefined {
   const raw = config.raw?.['thinking'];
   return typeof raw === 'object' && raw !== null && !Array.isArray(raw)
     ? (raw as ThinkingConfig)

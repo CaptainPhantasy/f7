@@ -2,7 +2,7 @@
  * OAuth type definitions for managed providers.
  *
  * Only Device Code Flow (RFC 8628) is supported, against
- * `https://auth.kimi.com`.
+ * `https://auth.floyd.com`.
  *
  * Wire format (on disk / server) uses snake_case to match the server
  * contract; in-process types use camelCase per TS convention.
@@ -36,7 +36,7 @@ export interface DeviceAuthorization {
 
 /** OAuth flow endpoint + client configuration. */
 export interface OAuthFlowConfig {
-  /** Logical provider name for storage (e.g. "kimi-code"). */
+  /** Logical provider name for storage (e.g. "floyd-code"). */
   readonly name: string;
   /** Base URL of the OAuth server, no trailing slash. */
   readonly oauthHost: string;

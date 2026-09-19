@@ -33,40 +33,40 @@ const OAuthRefSchema = z.object({
 
 type _AssertOAuthRef = AssertExact<Equal<z.infer<typeof OAuthRefSchema>, OAuthRef>>;
 
-export const MoonshotServiceConfigSchema = z.object({
+export const LegacyServiceConfigSchema = z.object({
   baseUrl: z.string().optional(),
   apiKey: z.string().optional(),
   oauth: OAuthRefSchema.optional(),
   customHeaders: StringRecordSchema.optional(),
 });
 
-export type MoonshotServiceConfig = z.infer<typeof MoonshotServiceConfigSchema>;
+export type LegacyServiceConfig = z.infer<typeof LegacyServiceConfigSchema>;
 
 export const ServicesConfigSchema = z
   .object({
-    moonshotSearch: MoonshotServiceConfigSchema.optional(),
-    moonshotFetch: MoonshotServiceConfigSchema.optional(),
+    legacySearch: LegacyServiceConfigSchema.optional(),
+    legacyFetch: LegacyServiceConfigSchema.optional(),
   })
   .passthrough();
 
 export type ServicesConfig = z.infer<typeof ServicesConfigSchema>;
 
-export const WEB_SEARCH_BASE_URL_ENV = 'KIMI_WEB_SEARCH_BASE_URL';
-export const WEB_SEARCH_API_KEY_ENV = 'KIMI_WEB_SEARCH_API_KEY';
-export const WEB_FETCH_BASE_URL_ENV = 'KIMI_WEB_FETCH_BASE_URL';
-export const WEB_FETCH_API_KEY_ENV = 'KIMI_WEB_FETCH_API_KEY';
+export const WEB_SEARCH_BASE_URL_ENV = 'FLOYD_WEB_SEARCH_BASE_URL';
+export const WEB_SEARCH_API_KEY_ENV = 'FLOYD_WEB_SEARCH_API_KEY';
+export const WEB_FETCH_BASE_URL_ENV = 'FLOYD_WEB_FETCH_BASE_URL';
+export const WEB_FETCH_API_KEY_ENV = 'FLOYD_WEB_FETCH_API_KEY';
 
 const nonBlankEnv = (raw: string): string | undefined => {
   const trimmed = raw.trim();
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
-const moonshotSearchEnvBindings = envBindings(MoonshotServiceConfigSchema, {
+const legacySearchEnvBindings = envBindings(LegacyServiceConfigSchema, {
   baseUrl: { env: WEB_SEARCH_BASE_URL_ENV, parse: nonBlankEnv },
   apiKey: { env: WEB_SEARCH_API_KEY_ENV, parse: nonBlankEnv },
 });
 
-const moonshotFetchEnvBindings = envBindings(MoonshotServiceConfigSchema, {
+const legacyFetchEnvBindings = envBindings(LegacyServiceConfigSchema, {
   baseUrl: { env: WEB_FETCH_BASE_URL_ENV, parse: nonBlankEnv },
   apiKey: { env: WEB_FETCH_API_KEY_ENV, parse: nonBlankEnv },
 });
@@ -74,8 +74,8 @@ const moonshotFetchEnvBindings = envBindings(MoonshotServiceConfigSchema, {
 export const servicesEnvBindings: EnvBindings<ServicesConfig> = envBindings(
   ServicesConfigSchema,
   {
-    moonshotSearch: moonshotSearchEnvBindings,
-    moonshotFetch: moonshotFetchEnvBindings,
+    legacySearch: legacySearchEnvBindings,
+    legacyFetch: legacyFetchEnvBindings,
   },
 );
 
@@ -83,28 +83,28 @@ const servicesCredentialEnvOverlay: ConfigEffectiveOverlay = {
   apply(effective, getEnv, validate) {
     const services = effective[SERVICES_SECTION];
     if (!isPlainObject(services)) return [];
-    const moonshotSearch = isolateEnvServiceCredentials(
-      services['moonshotSearch'],
+    const legacySearch = isolateEnvServiceCredentials(
+      services['legacySearch'],
       getEnv,
       WEB_SEARCH_BASE_URL_ENV,
       WEB_SEARCH_API_KEY_ENV,
     );
-    const moonshotFetch = isolateEnvServiceCredentials(
-      services['moonshotFetch'],
+    const legacyFetch = isolateEnvServiceCredentials(
+      services['legacyFetch'],
       getEnv,
       WEB_FETCH_BASE_URL_ENV,
       WEB_FETCH_API_KEY_ENV,
     );
     if (
-      moonshotSearch === services['moonshotSearch'] &&
-      moonshotFetch === services['moonshotFetch']
+      legacySearch === services['legacySearch'] &&
+      legacyFetch === services['legacyFetch']
     ) {
       return [];
     }
     effective[SERVICES_SECTION] = validate(SERVICES_SECTION, {
       ...services,
-      moonshotSearch,
-      moonshotFetch,
+      legacySearch,
+      legacyFetch,
     });
     return [SERVICES_SECTION];
   },
@@ -125,15 +125,15 @@ function isolateEnvServiceCredentials(
   return { ...rest, apiKey };
 }
 
-const stripMoonshotSearchEnv = stripEnvBoundFields(moonshotSearchEnvBindings);
-const stripMoonshotFetchEnv = stripEnvBoundFields(moonshotFetchEnvBindings);
+const stripLegacySearchEnv = stripEnvBoundFields(legacySearchEnvBindings);
+const stripLegacyFetchEnv = stripEnvBoundFields(legacyFetchEnvBindings);
 
 export const stripServicesEnv: ConfigStripEnv<ServicesConfig> = (value, raw, getEnv) => {
   if (!isPlainObject(value)) return value;
   let out: ServicesConfig | undefined;
   for (const [key, strip] of [
-    ['moonshotSearch', stripMoonshotSearchEnv],
-    ['moonshotFetch', stripMoonshotFetchEnv],
+    ['legacySearch', stripLegacySearchEnv],
+    ['legacyFetch', stripLegacyFetchEnv],
   ] as const) {
     const entry = value[key];
     if (entry === undefined) continue;
@@ -176,8 +176,8 @@ function serviceEntryFromToml(data: Record<string, unknown>): Record<string, unk
 export const servicesToToml = (value: unknown, rawSnake: unknown): unknown => {
   if (!isPlainObject(value)) return value;
   const out = cloneRecord(rawSnake);
-  writeService(out, 'moonshot_search', value['moonshotSearch']);
-  writeService(out, 'moonshot_fetch', value['moonshotFetch']);
+  writeService(out, 'legacy_search', value['legacySearch']);
+  writeService(out, 'legacy_fetch', value['legacyFetch']);
   return out;
 };
 

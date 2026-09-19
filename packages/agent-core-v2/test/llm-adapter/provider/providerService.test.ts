@@ -21,27 +21,27 @@ describe('providers TOML transforms', () => {
   it('converts snake_case entries to camelCase and back', () => {
     const from = providersFromToml({
       'my-provider': {
-        type: 'kimi',
-        base_url: 'https://api.moonshot.ai/v1',
+        type: 'floyd',
+        base_url: 'https://api.legacy.ai/v1',
         custom_headers: { 'x-a': 'b' },
-        default_model: 'kimi-k2',
+        default_model: 'floyd-k2',
         oauth: { storage: 'file', key: 'k', oauth_host: 'example.com' },
       },
     }) as Record<string, Record<string, unknown>>;
     expect(from['my-provider']).toEqual({
-      type: 'kimi',
-      baseUrl: 'https://api.moonshot.ai/v1',
+      type: 'floyd',
+      baseUrl: 'https://api.legacy.ai/v1',
       customHeaders: { 'x-a': 'b' },
-      defaultModel: 'kimi-k2',
+      defaultModel: 'floyd-k2',
       oauth: { storage: 'file', key: 'k', oauthHost: 'example.com' },
     });
 
     const back = providersToToml(from, undefined) as Record<string, Record<string, unknown>>;
     expect(back['my-provider']).toEqual({
-      type: 'kimi',
-      base_url: 'https://api.moonshot.ai/v1',
+      type: 'floyd',
+      base_url: 'https://api.legacy.ai/v1',
       custom_headers: { 'x-a': 'b' },
-      default_model: 'kimi-k2',
+      default_model: 'floyd-k2',
       oauth: { storage: 'file', key: 'k', oauth_host: 'example.com' },
     });
   });
@@ -91,11 +91,11 @@ describe('ProviderService', () => {
     await Promise.resolve();
     expect(ready).toBe(false);
 
-    service.loadAll({ moonshot: { type: 'kimi' } }, 'moonshot');
+    service.loadAll({ legacy: { type: 'floyd' } }, 'legacy');
     await service.ready;
     expect(ready).toBe(true);
-    expect(service.get('moonshot')).toEqual({ type: 'kimi' });
-    expect(service.getDefaultProvider()).toBe('moonshot');
+    expect(service.get('legacy')).toEqual({ type: 'floyd' });
+    expect(service.getDefaultProvider()).toBe('legacy');
   });
 
   it('supports CRUD and diffs state changes into onDidChangeProviders', async () => {
@@ -109,58 +109,58 @@ describe('ProviderService', () => {
       events.push({ added: e.added, removed: e.removed, changed: e.changed }),
     );
 
-    const moonshot: ProviderConfig = { type: 'kimi', baseUrl: 'https://api.moonshot.ai/v1' };
-    await service.set('moonshot', moonshot);
-    expect(service.get('moonshot')).toEqual(moonshot);
-    expect(service.list()).toEqual({ moonshot });
-    expect(events).toEqual([{ added: ['moonshot'], removed: [], changed: [] }]);
+    const legacy: ProviderConfig = { type: 'floyd', baseUrl: 'https://api.legacy.ai/v1' };
+    await service.set('legacy', legacy);
+    expect(service.get('legacy')).toEqual(legacy);
+    expect(service.list()).toEqual({ legacy });
+    expect(events).toEqual([{ added: ['legacy'], removed: [], changed: [] }]);
 
-    const updated: ProviderConfig = { ...moonshot, apiKey: 'sk-1' };
-    await service.set('moonshot', updated);
-    expect(events.at(-1)).toEqual({ added: [], removed: [], changed: ['moonshot'] });
+    const updated: ProviderConfig = { ...legacy, apiKey: 'sk-1' };
+    await service.set('legacy', updated);
+    expect(events.at(-1)).toEqual({ added: [], removed: [], changed: ['legacy'] });
 
-    await service.set('moonshot', updated);
+    await service.set('legacy', updated);
     expect(events).toHaveLength(2);
 
-    await service.delete('moonshot');
-    expect(service.get('moonshot')).toBeUndefined();
-    expect(events.at(-1)).toEqual({ added: [], removed: ['moonshot'], changed: [] });
+    await service.delete('legacy');
+    expect(service.get('legacy')).toBeUndefined();
+    expect(events.at(-1)).toEqual({ added: [], removed: ['legacy'], changed: [] });
   });
 
   it('loadAll fires only for real diffs on re-sync', async () => {
-    const service = createService({ moonshot: { type: 'kimi' } });
+    const service = createService({ legacy: { type: 'floyd' } });
     const events: unknown[] = [];
     service.onDidChangeProviders((e) =>
       events.push({ added: e.added, removed: e.removed, changed: e.changed }),
     );
 
-    service.loadAll({ moonshot: { type: 'kimi' } }, undefined);
+    service.loadAll({ legacy: { type: 'floyd' } }, undefined);
     expect(events).toHaveLength(0);
 
-    service.loadAll({ moonshot: { type: 'kimi' }, other: { baseUrl: 'https://example.com' } }, undefined);
+    service.loadAll({ legacy: { type: 'floyd' }, other: { baseUrl: 'https://example.com' } }, undefined);
     expect(events).toEqual([{ added: ['other'], removed: [], changed: [] }]);
   });
 
   it('replaceAll replaces the records and keeps the default pointer', async () => {
-    const service = createService({ a: { type: 'kimi' }, b: { type: 'kimi' } });
+    const service = createService({ a: { type: 'floyd' }, b: { type: 'floyd' } });
     await service.setDefaultProvider('a');
 
-    await service.replaceAll({ c: { type: 'kimi' } });
-    expect(service.list()).toEqual({ c: { type: 'kimi' } });
+    await service.replaceAll({ c: { type: 'floyd' } });
+    expect(service.list()).toEqual({ c: { type: 'floyd' } });
     expect(service.getDefaultProvider()).toBe('a');
   });
 
   it('clears the defaultProvider pointer when the default provider is deleted', async () => {
-    const service = createService({ moonshot: { type: 'kimi' } });
+    const service = createService({ legacy: { type: 'floyd' } });
     const pointerEvents: Array<string | undefined> = [];
     service.onDidChangeDefaultProvider((e) => pointerEvents.push(e.id));
 
-    await service.setDefaultProvider('moonshot');
-    expect(service.getDefaultProvider()).toBe('moonshot');
+    await service.setDefaultProvider('legacy');
+    expect(service.getDefaultProvider()).toBe('legacy');
 
-    await service.delete('moonshot');
+    await service.delete('legacy');
     expect(service.getDefaultProvider()).toBeUndefined();
-    expect(pointerEvents).toEqual(['moonshot', undefined]);
+    expect(pointerEvents).toEqual(['legacy', undefined]);
   });
 
   it('a mutation resolves only after the listeners’ waitUntil work completes', async () => {
@@ -174,7 +174,7 @@ describe('ProviderService', () => {
       );
     });
 
-    await service.set('moonshot', { type: 'kimi' });
+    await service.set('legacy', { type: 'floyd' });
     expect(persistDone).toBe(true);
   });
 });

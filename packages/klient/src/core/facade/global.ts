@@ -9,34 +9,34 @@
 import type {
   SessionListQuery,
   SessionSummary,
-} from '@moonshot-ai/agent-core-v2/app/sessionIndex/sessionIndex';
-import type { SessionMeta } from '@moonshot-ai/agent-core-v2/session/sessionMetadata/sessionMetadata';
-import type { Page } from '@moonshot-ai/agent-core-v2/persistence/interface/queryStore';
+} from '@legacy-ai/agent-core-v2/app/sessionIndex/sessionIndex';
+import type { SessionMeta } from '@legacy-ai/agent-core-v2/session/sessionMetadata/sessionMetadata';
+import type { Page } from '@legacy-ai/agent-core-v2/persistence/interface/queryStore';
 import type {
   Workspace,
   WorkspaceUpdate,
-} from '@moonshot-ai/agent-core-v2/app/workspace/workspace';
+} from '@legacy-ai/agent-core-v2/app/workspace/workspace';
 import type {
   ConfigDiagnostic,
   ConfigInspectValue,
   ConfigTarget,
-} from '@moonshot-ai/agent-core-v2/app/config/config';
-import type { ProviderConfig } from '@moonshot-ai/agent-core-v2/llm-adapter/provider/provider';
+} from '@legacy-ai/agent-core-v2/app/config/config';
+import type { ProviderConfig } from '@legacy-ai/agent-core-v2/llm-adapter/provider/provider';
 import type {
   AuthStatus,
   IOAuthService,
   OAuthLoginOptions,
-} from '@moonshot-ai/agent-core-v2/app/auth/auth';
-import type { ExperimentalFeatureState } from '@moonshot-ai/agent-core-v2/app/flag/flag';
+} from '@legacy-ai/agent-core-v2/app/auth/auth';
+import type { ExperimentalFeatureState } from '@legacy-ai/agent-core-v2/app/flag/flag';
 import type {
   FsBrowseResponse,
   FsHomeResponse,
-} from '@moonshot-ai/agent-core-v2/app/hostFolderBrowser/hostFolderBrowser';
-import type { FileMeta } from '@moonshot-ai/agent-core-v2/app/file/fileService';
-import type { ModelRecord } from '@moonshot-ai/agent-core-v2/llm-adapter/model/model';
-import type { IModelCatalog } from '@moonshot-ai/agent-core-v2/llm-adapter/model/catalog';
-import type { IProviderDiscoveryService } from '@moonshot-ai/agent-core-v2/app/kosongConfig/discovery';
-import type { IModelsDevImportService } from '@moonshot-ai/agent-core-v2/app/kosongConfig/modelsDevImport';
+} from '@legacy-ai/agent-core-v2/app/hostFolderBrowser/hostFolderBrowser';
+import type { FileMeta } from '@legacy-ai/agent-core-v2/app/file/fileService';
+import type { ModelRecord } from '@legacy-ai/agent-core-v2/llm-adapter/model/model';
+import type { IModelCatalog } from '@legacy-ai/agent-core-v2/llm-adapter/model/catalog';
+import type { IProviderDiscoveryService } from '@legacy-ai/agent-core-v2/app/kosongConfig/discovery';
+import type { IModelsDevImportService } from '@legacy-ai/agent-core-v2/app/kosongConfig/modelsDevImport';
 
 import type { McpServerConfig } from '../../contract/mcp.js';
 import type { CallOptions } from '../channel.js';
@@ -49,7 +49,7 @@ import type {
   McpServerLocator,
   McpServerTestResult,
   McpServerTestTarget,
-} from '@moonshot-ai/agent-core-v2/app/mcpManagement/mcpManagement';
+} from '@legacy-ai/agent-core-v2/app/mcpManagement/mcpManagement';
 import type { AnonymousProviderInput, GenerateEvent, GenerateInput, GenerateParams, ProviderInput } from './kosong-types.js';
 import type {
   PluginCommandDef,
@@ -57,8 +57,8 @@ import type {
   PluginSummary,
   PluginUpdateStatus,
   ReloadSummary,
-} from '@moonshot-ai/agent-core-v2/app/plugin/types';
-import type { CapabilityStatus } from '@moonshot-ai/agent-core-v2/app/capability/types';
+} from '@legacy-ai/agent-core-v2/app/plugin/types';
+import type { CapabilityStatus } from '@legacy-ai/agent-core-v2/app/capability/types';
 
 /** Low-level caller the klient factory builds: routes + validates one service call. */
 export type Caller = (

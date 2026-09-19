@@ -2,7 +2,7 @@ import {
   BUDGET_THINKING_EFFORTS,
   matchKnownAnthropicModelProfile,
   matchUnknownClaudeProfile,
-} from '@moonshot-ai/kosong/providers/anthropic-profile';
+} from '@legacy-ai/kosong/providers/anthropic-profile';
 
 import type { ModelAlias, ProviderType } from './schema';
 
@@ -33,7 +33,7 @@ export function effectiveModelAlias(
 function withAnthropicProfile(model: ModelAlias, providerType?: ProviderType): ModelAlias {
   const protocol = model.protocol ?? providerType;
   const profile =
-    providerType !== undefined && providerType !== 'kimi' && protocol === 'anthropic'
+    providerType !== undefined && providerType !== 'floyd' && protocol === 'anthropic'
       ? (matchKnownAnthropicModelProfile(model.model) ?? matchUnknownClaudeProfile(model.model))
       : matchKnownAnthropicModelProfile(model.model);
   if (profile === undefined) return model;

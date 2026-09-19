@@ -25,9 +25,9 @@ import {
   type Interaction,
   type ISessionScopeHandle,
   type Scope,
-} from '@moonshot-ai/agent-core-v2';
-import { planKey } from '@moonshot-ai/agent-core-v2/features/plan/planOps';
-import { swarmKey } from '@moonshot-ai/agent-core-v2/features/swarm/swarmOps';
+} from '@legacy-ai/agent-core-v2';
+import { planKey } from '@legacy-ai/agent-core-v2/features/plan/planOps';
+import { swarmKey } from '@legacy-ai/agent-core-v2/features/swarm/swarmOps';
 
 import { serverMessageSchema, type ServerMessage } from '../../protocol/messages';
 import { readLegacyStatus } from '../legacyStatus/legacyStatus';

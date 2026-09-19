@@ -13,7 +13,7 @@ import {
   type ProjectionPolicy,
 } from '#/agent/contextProjector/contextProjector';
 import { AgentContextProjectorService } from '#/agent/contextProjector/contextProjectorService';
-import { AgentLLMRequesterService, KIMI_CODE_INFINITE_RETRY_ENV } from '#/agent/llmRequester/llmRequesterService';
+import { AgentLLMRequesterService, FLOYD_CODE_INFINITE_RETRY_ENV } from '#/agent/llmRequester/llmRequesterService';
 import { IAgentLLMRequesterService } from '#/agent/llmRequester/llmRequester';
 import { createMachineRequester } from '#/agent/loop/machine/requester';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
@@ -218,7 +218,7 @@ function createService(
   } = {},
 ) {
   const ix = disposables.add(new TestInstantiationService());
-  ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-code-llm-requester-test', options.env ?? {}));
+  ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-code-llm-requester-test', options.env ?? {}));
   const thinkingLevel = options.thinkingLevel ?? 'off';
   const profile: Partial<IAgentProfileService> = {
     hasProvider: () => true,
@@ -420,7 +420,7 @@ describe('AgentLLMRequesterService infinite retry', () => {
     vi.useRealTimers();
   });
 
-  it('retries every request error while KIMI_CODE_INFINITE_RETRY is set', async () => {
+  it('retries every request error while FLOYD_CODE_INFINITE_RETRY is set', async () => {
     vi.useFakeTimers();
     const calls = { value: 0 };
     const requester = createRequester(calls, new APIStatusError(400, 'endpoint broken'), [
@@ -429,7 +429,7 @@ describe('AgentLLMRequesterService infinite retry', () => {
       new APIProviderQuotaExhaustedError('quota exhausted'),
     ]);
     const { service } = createService(requester, undefined, {
-      env: { [KIMI_CODE_INFINITE_RETRY_ENV]: '1' },
+      env: { [FLOYD_CODE_INFINITE_RETRY_ENV]: '1' },
     });
 
     const promise = service.request();
@@ -444,7 +444,7 @@ describe('AgentLLMRequesterService infinite retry', () => {
     const calls = { value: 0 };
     const requester = createRequester(calls, new APIProviderRateLimitError('slow down', null, 1));
     const { service } = createService(requester, undefined, {
-      env: { [KIMI_CODE_INFINITE_RETRY_ENV]: '1' },
+      env: { [FLOYD_CODE_INFINITE_RETRY_ENV]: '1' },
     });
 
     const startedAt = Date.now();
@@ -459,7 +459,7 @@ describe('AgentLLMRequesterService infinite retry', () => {
     const calls = { value: 0 };
     const requester = createRequester(calls, new APIStatusError(400, 'endpoint broken'));
     const { service } = createService(requester, undefined, {
-      env: { [KIMI_CODE_INFINITE_RETRY_ENV]: '1' },
+      env: { [FLOYD_CODE_INFINITE_RETRY_ENV]: '1' },
     });
     const controller = new AbortController();
     setTimeout(() => controller.abort(new Error('stop')), 100);
@@ -477,7 +477,7 @@ describe('AgentLLMRequesterService infinite retry', () => {
     const calls = { value: 0 };
     const requester = createRequester(calls, new APIRequestTooLargeError(413, 'Request Entity Too Large'));
     const { service } = createService(requester, undefined, {
-      env: { [KIMI_CODE_INFINITE_RETRY_ENV]: '1' },
+      env: { [FLOYD_CODE_INFINITE_RETRY_ENV]: '1' },
     });
 
     await service.request();
@@ -493,7 +493,7 @@ describe('AgentLLMRequesterService infinite retry', () => {
       new APIContextOverflowError(400, 'context length exceeded'),
     );
     const { service } = createService(requester, undefined, {
-      env: { [KIMI_CODE_INFINITE_RETRY_ENV]: '1' },
+      env: { [FLOYD_CODE_INFINITE_RETRY_ENV]: '1' },
     });
 
     await expect(service.request()).rejects.toBeInstanceOf(APIContextOverflowError);
@@ -507,7 +507,7 @@ describe('AgentLLMRequesterService infinite retry', () => {
       new APIStatusError(404, 'model not found'),
     ]);
     const { service } = createService(requester, undefined, {
-      env: { [KIMI_CODE_INFINITE_RETRY_ENV]: '1' },
+      env: { [FLOYD_CODE_INFINITE_RETRY_ENV]: '1' },
     });
 
     const promise = service.request({
@@ -644,16 +644,16 @@ describe('AgentLLMRequesterService media-degraded resend', () => {
       {
         mediaResolver: {
           resolve: async (messages) => messages,
-          displayPaths: async () => new Map([['kimi-file://f_old', '/session/media/f_old.png']]),
+          displayPaths: async () => new Map([['floyd-file://f_old', '/session/media/f_old.png']]),
         },
       },
     );
 
     await service.request({
       messages: [
-        imageMessage('kimi-file://f_old'),
-        imageMessage('kimi-file://f_keep1'),
-        imageMessage('kimi-file://f_keep2'),
+        imageMessage('floyd-file://f_old'),
+        imageMessage('floyd-file://f_keep1'),
+        imageMessage('floyd-file://f_keep2'),
       ],
       source: { type: 'turn', turnId: 1, step: 1 },
     });
@@ -663,7 +663,7 @@ describe('AgentLLMRequesterService media-degraded resend', () => {
     const urls = parts
       .filter((part) => part.type === 'image_url')
       .map((part) => part.imageUrl.url);
-    expect(urls).toEqual(['kimi-file://f_keep1', 'kimi-file://f_keep2']);
+    expect(urls).toEqual(['floyd-file://f_keep1', 'floyd-file://f_keep2']);
     const texts = parts.filter((part) => part.type === 'text').map((part) => part.text);
     expect(texts).toContain('<image path="/session/media/f_old.png"></image>');
   });
@@ -1327,7 +1327,7 @@ describe('AgentLLMRequesterService attempt retry notification', () => {
       new APIConnectionError('socket hang up again'),
     ]);
     const { service } = createService(requester, undefined, {
-      env: { [KIMI_CODE_INFINITE_RETRY_ENV]: '1' },
+      env: { [FLOYD_CODE_INFINITE_RETRY_ENV]: '1' },
     });
     const onAttemptRetry = vi.fn();
 
@@ -1365,7 +1365,7 @@ describe('turn machine stream state across service-internal retries', () => {
         { ids: ['call_b'] },
       ]),
       undefined,
-      { env: { [KIMI_CODE_INFINITE_RETRY_ENV]: '1' } },
+      { env: { [FLOYD_CODE_INFINITE_RETRY_ENV]: '1' } },
     );
     const machineRequester = createMachineRequester(service);
     const doneEntries: AssistantEntry[] = [];

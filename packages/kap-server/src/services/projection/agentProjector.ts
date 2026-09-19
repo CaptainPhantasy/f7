@@ -4,7 +4,7 @@ import {
   type AgentTaskInfo,
   type ContentPart,
   type TokenUsage,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 
 import type {
   AssistantMessage,

@@ -142,7 +142,7 @@ describe('TowerFeature — config-sourced flag assembly', () => {
 
   beforeEach(() => {
     disposables = new DisposableStore();
-    homeDir = `/tmp/kimi-code-tower-assembly-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    homeDir = `/tmp/floyd-code-tower-assembly-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     _clearScopedRegistryForTests();
     _clearFeatureRecipesForTests();
     registerScopedService(
@@ -225,7 +225,7 @@ describe('tower flag — resolution', () => {
 
   beforeEach(() => {
     disposables = new DisposableStore();
-    homeDir = `/tmp/kimi-code-tower-flag-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    homeDir = `/tmp/floyd-code-tower-flag-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   });
   afterEach(() => disposables.dispose());
 

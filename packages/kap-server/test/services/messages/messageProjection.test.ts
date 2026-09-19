@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ContextMessage } from '@moonshot-ai/agent-core-v2';
+import type { ContextMessage } from '@legacy-ai/agent-core-v2';
 
 import { projectPromptContentParts, toProtocolMessage } from '../../../src/services/messages/messageProjection';
 
@@ -39,7 +39,7 @@ describe('toProtocolMessage', () => {
       role: 'user',
       content: [
         { type: 'text', text: 'what is this?' },
-        { type: 'image_url', imageUrl: { url: 'kimi-file://file_9?path=%2Fcache%2Fpic.png' } },
+        { type: 'image_url', imageUrl: { url: 'floyd-file://file_9?path=%2Fcache%2Fpic.png' } },
       ],
       toolCalls: [],
     };
@@ -53,7 +53,7 @@ describe('toProtocolMessage', () => {
   it('preserves media names in live and prompt projections', () => {
     const part = {
       type: 'image_url' as const,
-      imageUrl: { url: 'kimi-file://file_9', id: 'file_9', name: 'photo.png' },
+      imageUrl: { url: 'floyd-file://file_9', id: 'file_9', name: 'photo.png' },
     };
     const msg: ContextMessage = { role: 'user', content: [part], toolCalls: [] };
 
@@ -70,7 +70,7 @@ describe('toProtocolMessage', () => {
       role: 'user',
       content: [
         { type: 'text', text: '<image path="/cache/pic.png"></image>' },
-        { type: 'image_url', imageUrl: { url: 'kimi-file://file_9?path=%2Fcache%2Fpic.png' } },
+        { type: 'image_url', imageUrl: { url: 'floyd-file://file_9?path=%2Fcache%2Fpic.png' } },
       ],
       toolCalls: [],
     };
@@ -109,11 +109,11 @@ describe('toProtocolMessage', () => {
     ]);
   });
 
-  it('projects a kimi-file video reference to a structured file source without leaking the path', () => {
+  it('projects a floyd-file video reference to a structured file source without leaking the path', () => {
     const msg: ContextMessage = {
       role: 'user',
       content: [
-        { type: 'video_url', videoUrl: { url: 'kimi-file://file_9?path=%2Fcache%2Fclip.mp4' } },
+        { type: 'video_url', videoUrl: { url: 'floyd-file://file_9?path=%2Fcache%2Fclip.mp4' } },
       ],
       toolCalls: [],
     };

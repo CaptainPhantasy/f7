@@ -73,9 +73,9 @@ export function SessionCard({ session, onDelete, deleting }: SessionCardProps) {
               {subagentCount}sub
             </span>
           ) : null}
-          {session.imported && session.importMeta?.manifest?.kimiCodeVersion ? (
-            <span className="tabular text-fg-3" title="kimi-code version that produced this bundle">
-              v{session.importMeta.manifest.kimiCodeVersion}
+          {session.imported && session.importMeta?.manifest?.floydCodeVersion ? (
+            <span className="tabular text-fg-3" title="floyd-code version that produced this bundle">
+              v{session.importMeta.manifest.floydCodeVersion}
             </span>
           ) : null}
           {session.health !== 'ok' ? (

@@ -200,7 +200,7 @@ export function createProxyDispatcher(
     return undefined;
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`kimi: ignoring invalid proxy configuration (${reason}); connecting directly\n`);
+    process.stderr.write(`floyd: ignoring invalid proxy configuration (${reason}); connecting directly\n`);
     return undefined;
   }
 }

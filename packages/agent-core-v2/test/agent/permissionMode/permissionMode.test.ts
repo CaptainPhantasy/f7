@@ -72,7 +72,7 @@ beforeEach(() => {
   ix.stub(IFileSystemStorageService, new InMemoryStorageService());
   ix.set(IAppendLogStore, new SyncDescriptor(AppendLogStore));
   ix.stub(IAgentReminderService, injectorStub);
-  ix.stub(IBootstrapService, stubBootstrap('/tmp/kimi-home', bootstrapEnv));
+  ix.stub(IBootstrapService, stubBootstrap('/tmp/floyd-home', bootstrapEnv));
   ix.set(IAgentStateService, new AgentStateService());
   ix.set(IAgentPermissionModeService, new SyncDescriptor(AgentPermissionModeService));
   log = ix.get(IAppendLogStore);
@@ -251,7 +251,7 @@ describe('AgentPermissionModeService (wire-backed)', () => {
     expect(written.slice(1)).toEqual([{ type: 'permission.set_mode', mode: 'auto' }]);
   });
 
-  it('skips the auto-mode reminder injection when KIMI_CODE_PERMISSION_MODE_REMINDER is disabled', () => {
+  it('skips the auto-mode reminder injection when FLOYD_CODE_PERMISSION_MODE_REMINDER is disabled', () => {
     registeredInjection = undefined;
     const ix2 = disposables.add(new TestInstantiationService());
     ix2.stub(IFileSystemStorageService, new InMemoryStorageService());
@@ -259,7 +259,7 @@ describe('AgentPermissionModeService (wire-backed)', () => {
     ix2.stub(IAgentReminderService, injectorStub);
     ix2.stub(
       IBootstrapService,
-      stubBootstrap('/tmp/kimi-home', { [PERMISSION_MODE_REMINDER_ENV]: '0' }),
+      stubBootstrap('/tmp/floyd-home', { [PERMISSION_MODE_REMINDER_ENV]: '0' }),
     );
     ix2.set(IAgentStateService, new AgentStateService());
     ix2.set(IAgentPermissionModeService, new SyncDescriptor(AgentPermissionModeService));
@@ -284,7 +284,7 @@ describe('AgentPermissionModeService (wire-backed)', () => {
     ix2.stub(IAgentReminderService, injectorStub);
     ix2.stub(
       IBootstrapService,
-      stubBootstrap('/tmp/kimi-home', { [PERMISSION_MODE_REMINDER_ENV]: '1' }),
+      stubBootstrap('/tmp/floyd-home', { [PERMISSION_MODE_REMINDER_ENV]: '1' }),
     );
     ix2.set(IAgentStateService, new AgentStateService());
     ix2.set(IAgentPermissionModeService, new SyncDescriptor(AgentPermissionModeService));

@@ -16,8 +16,8 @@ import {
   resolveThinkingKeep,
   type ModelThinkingMetadata,
 } from '#/llm/thinking';
-import { kimiConnection, kimiOpenAITrait } from '#/llm-kimi/trait';
-import { classifyKimiQuotaError } from '#/llm-kimi/errors';
+import { floydConnection, floydOpenAITrait } from '#/llm-floyd/trait';
+import { classifyFloydQuotaError } from '#/llm-floyd/errors';
 import { createOpenAIRequester } from '#/llm/requester/bases/openai/requester';
 import type { LlmClientContext, LlmRequestEvent } from '#/llm/requester/requester';
 
@@ -30,10 +30,10 @@ const model: LlmModel = {
 const ctx: TraitContext = { model };
 const messages: readonly Message[] = [createUserMessage('hi')];
 
-const kimiOpenAI = {
-  connection: kimiConnection,
-  trait: kimiOpenAITrait,
-  classifyError: classifyKimiQuotaError,
+const floydOpenAI = {
+  connection: floydConnection,
+  trait: floydOpenAITrait,
+  classifyError: classifyFloydQuotaError,
 } as const;
 
 function modelWith(meta: ModelThinkingMetadata): LlmModel {
@@ -102,16 +102,16 @@ function bodyMessages(body: Record<string, unknown>): Record<string, unknown>[] 
   return body['messages'] as Record<string, unknown>[];
 }
 
-describe('kimiOpenAITrait thinking', () => {
+describe('floydOpenAITrait thinking', () => {
   it('encodes thinking configs and resolves thinking defaults and keep', () => {
-    expect(kimiOpenAITrait.strictThinkingValidation).toBe(true);
-    expect(kimiOpenAITrait.thinking?.({ effort: 'off' }, ctx)).toEqual({
+    expect(floydOpenAITrait.strictThinkingValidation).toBe(true);
+    expect(floydOpenAITrait.thinking?.({ effort: 'off' }, ctx)).toEqual({
       kwargs: { thinking: { type: 'disabled' } },
     });
-    expect(kimiOpenAITrait.thinking?.({ effort: 'on' }, ctx)).toEqual({
+    expect(floydOpenAITrait.thinking?.({ effort: 'on' }, ctx)).toEqual({
       kwargs: { thinking: { type: 'enabled' } },
     });
-    expect(kimiOpenAITrait.thinking?.({ effort: 'high', keep: 'all' }, ctx)).toEqual({
+    expect(floydOpenAITrait.thinking?.({ effort: 'high', keep: 'all' }, ctx)).toEqual({
       kwargs: { thinking: { type: 'enabled', effort: 'high', keep: 'all' } },
       preserveThinking: true,
     });
@@ -170,26 +170,26 @@ describe('kimiOpenAITrait thinking', () => {
   });
 
   it('preserves thinking only when keep is all and thinking is not disabled', () => {
-    expect(kimiOpenAITrait.thinking?.({ effort: 'on', keep: 'all' }, ctx)?.preserveThinking).toBe(
+    expect(floydOpenAITrait.thinking?.({ effort: 'on', keep: 'all' }, ctx)?.preserveThinking).toBe(
       true,
     );
     expect(
-      kimiOpenAITrait.thinking?.({ effort: 'off', keep: 'all' }, ctx)?.preserveThinking,
+      floydOpenAITrait.thinking?.({ effort: 'off', keep: 'all' }, ctx)?.preserveThinking,
     ).toBeUndefined();
     expect(
-      kimiOpenAITrait.thinking?.({ effort: 'on' }, ctx)?.preserveThinking,
+      floydOpenAITrait.thinking?.({ effort: 'on' }, ctx)?.preserveThinking,
     ).toBeUndefined();
     expect(
-      kimiOpenAITrait.thinking?.({ effort: 'on', keep: '1' }, ctx)?.preserveThinking,
+      floydOpenAITrait.thinking?.({ effort: 'on', keep: '1' }, ctx)?.preserveThinking,
     ).toBeUndefined();
   });
 });
 
 describe('openai requester thinking', () => {
-  it('sends kimi thinking params at the top level and flattens extra_body', async () => {
+  it('sends floyd thinking params at the top level and flattens extra_body', async () => {
     const client = stubOpenAIClient(chatCompletionChunks());
     const requester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: client.clientFactory,
     });
     await requester.generate(
@@ -209,7 +209,7 @@ describe('openai requester thinking', () => {
   it('sends disabled thinking for off', async () => {
     const client = stubOpenAIClient(chatCompletionChunks());
     const requester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: client.clientFactory,
     });
     await requester.generate(
@@ -411,7 +411,7 @@ describe('openai requester thinking', () => {
       ]),
     );
     const inboundRequester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: inbound.clientFactory,
     });
     const accumulator = createMessageAccumulator();
@@ -449,7 +449,7 @@ describe('openai requester thinking', () => {
 
     const outbound = stubOpenAIClient(chatCompletionChunks());
     const outboundRequester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: outbound.clientFactory,
     });
     await outboundRequester.generate(
@@ -582,7 +582,7 @@ describe('openai requester thinking', () => {
   it('echoes an empty reasoning_content on think-less assistant messages only when keeping all', async () => {
     const preserving = stubOpenAIClient(chatCompletionChunks());
     const preservingRequester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: preserving.clientFactory,
     });
     await preservingRequester.generate(
@@ -594,7 +594,7 @@ describe('openai requester thinking', () => {
 
     const plain = stubOpenAIClient(chatCompletionChunks());
     const plainRequester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: plain.clientFactory,
     });
     await plainRequester.generate(

@@ -26,7 +26,7 @@ describe('config.toml writeback preservation', () => {
   let homeDir: string;
 
   beforeEach(() => {
-    homeDir = mkdtempSync(join(tmpdir(), 'kimi-v2-writeback-'));
+    homeDir = mkdtempSync(join(tmpdir(), 'floyd-v2-writeback-'));
   });
 
   afterEach(() => {
@@ -61,7 +61,7 @@ describe('config.toml writeback preservation', () => {
   it('preserves comments, blank lines and untouched domains byte-for-byte on set()', async () => {
     const seed = [
       '# 顶部注释：全局设置',
-      'default_model = "kimi-k2"   # 行尾注释',
+      'default_model = "floyd-k2"   # 行尾注释',
       '',
       '# 图片配置区块',
       '[image]',
@@ -83,7 +83,7 @@ describe('config.toml writeback preservation', () => {
     const text = await readText();
     expect(
       text.startsWith(
-        '# 顶部注释：全局设置\ndefault_model = "kimi-k2"   # 行尾注释\n\n# 图片配置区块\n',
+        '# 顶部注释：全局设置\ndefault_model = "floyd-k2"   # 行尾注释\n\n# 图片配置区块\n',
       ),
     ).toBe(true);
     expect(
@@ -93,7 +93,7 @@ describe('config.toml writeback preservation', () => {
     ).toBe(true);
     const parsed = parseToml(text) as Record<string, unknown>;
     expect(section(parsed, 'image')['max_edge_px']).toBe(2000);
-    expect(parsed['default_model']).toBe('kimi-k2');
+    expect(parsed['default_model']).toBe('floyd-k2');
     expect(section(parsed, 'custom')['keep_me']).toBe('yes');
     expect(config.get<ImageConfig>(IMAGE_SECTION)).toEqual({ maxEdgePx: 2000 });
 
@@ -165,13 +165,13 @@ describe('config.toml writeback preservation', () => {
   });
 
   it('preserves CRLF line endings in untouched regions', async () => {
-    const seed = '# 注释\r\ndefault_model = "kimi-k2"\r\n\r\n[image]\r\nmax_edge_px = 1500\r\n';
+    const seed = '# 注释\r\ndefault_model = "floyd-k2"\r\n\r\n[image]\r\nmax_edge_px = 1500\r\n';
     const { config, disposables, readText } = await setup(seed);
 
     await config.set(IMAGE_SECTION, { maxEdgePx: 3000 });
 
     const text = await readText();
-    expect(text.startsWith('# 注释\r\ndefault_model = "kimi-k2"\r\n\r\n')).toBe(true);
+    expect(text.startsWith('# 注释\r\ndefault_model = "floyd-k2"\r\n\r\n')).toBe(true);
     const parsed = parseToml(text) as Record<string, unknown>;
     expect(section(parsed, 'image')['max_edge_px']).toBe(3000);
 

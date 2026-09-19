@@ -225,7 +225,7 @@ describe('convertMCPContentBlock', () => {
       uri: 'https://example.com/photo.heic',
       mimeType: 'image/heic',
     });
-    expect(convertMCPContentBlock(block, 'kimi')).toEqual({
+    expect(convertMCPContentBlock(block, 'floyd')).toEqual({
       type: 'image_url',
       imageUrl: { url: 'https://example.com/photo.heic' },
     });
@@ -318,7 +318,7 @@ describe('mcpResultToExecutableOutput', () => {
     const heic = Buffer.from([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63]);
     const block = { type: 'image', data: heic.toString('base64'), mimeType: 'image/heic' };
     const accepted = await mcpResultToExecutableOutput(result([block]), 'mcp__s__t', {
-      providerType: 'kimi',
+      providerType: 'floyd',
     });
     const parts = accepted.output as ContentPart[];
     expect(parts.some((part) => part.type === 'image_url')).toBe(true);
@@ -955,7 +955,7 @@ describe('createMcpTool', () => {
     };
 
     expect(JSON.stringify((await run()).output)).toContain('unsupported image format image/heic');
-    providerType = 'kimi';
+    providerType = 'floyd';
     const accepted = (await run()).output as ContentPart[];
     expect(accepted.some((part) => part.type === 'image_url')).toBe(true);
   });

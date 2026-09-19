@@ -13,8 +13,8 @@ import {
 
 async function bootCronContext(options: TestAgentOptions = {}): Promise<TestAgentContext> {
   const ctx = createTestAgent(options);
-  ctx.kimiConfig = {
-    ...ctx.kimiConfig,
+  ctx.floydConfig = {
+    ...ctx.floydConfig,
     cron: { debug: false, noJitter: true, noStale: false, disabled: false, manualTick: true },
   };
   return ctx;
@@ -123,8 +123,8 @@ describe('session cron wire persistence', () => {
     };
     process.on('unhandledRejection', onUnhandled);
     const ctx = createTestAgent();
-    ctx.kimiConfig = {
-      ...ctx.kimiConfig,
+    ctx.floydConfig = {
+      ...ctx.floydConfig,
       cron: {
         debug: false,
         noJitter: true,

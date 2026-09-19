@@ -6,21 +6,21 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: '@moonshot-ai/kimi-code-oauth/provider-credential',
+        find: '@legacy-ai/floyd-code-oauth/provider-credential',
         replacement: fileURLToPath(
           new URL('../oauth/src/provider-credential.ts', import.meta.url),
         ),
       },
       {
-        find: '@moonshot-ai/kimi-code-oauth',
+        find: '@legacy-ai/floyd-code-oauth',
         replacement: fileURLToPath(new URL('../oauth/src/index.ts', import.meta.url)),
       },
     ],
   },
   test: {
-    name: 'kimi-sdk',
+    name: 'floyd-sdk',
     env: {
-      KIMI_LOG_LEVEL: 'off',
+      FLOYD_LOG_LEVEL: 'off',
     },
     include: ['test/**/*.test.ts'],
     testTimeout: 15_000,

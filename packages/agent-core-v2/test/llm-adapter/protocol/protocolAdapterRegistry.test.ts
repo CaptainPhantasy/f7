@@ -15,8 +15,8 @@ import {
 const ENV_KEYS = [
   'OPENAI_API_KEY',
   'OPENAI_BASE_URL',
-  'KIMI_API_KEY',
-  'KIMI_BASE_URL',
+  'FLOYD_API_KEY',
+  'FLOYD_BASE_URL',
   'GOOGLE_API_KEY',
   'VERTEXAI_API_KEY',
 ] as const;
@@ -91,31 +91,31 @@ function modelWith(spec: {
 }
 
 describe('supportedProtocols', () => {
-  it('lists the four wire protocols and contains neither kimi nor vertexai', () => {
+  it('lists the four wire protocols and contains neither floyd nor vertexai', () => {
     const protocols = registry.supportedProtocols();
     expect(protocols).toHaveLength(4);
     expect([...protocols].toSorted()).toEqual(
       ['anthropic', 'google-genai', 'openai', 'openai_responses'].toSorted(),
     );
-    expect(protocols).not.toContain('kimi');
+    expect(protocols).not.toContain('floyd');
     expect(protocols).not.toContain('vertexai');
   });
 });
 
 describe('resolveAdapterIdentity', () => {
-  it('resolves the kimi pair registrations to their vendor traits', () => {
-    expect(registry.resolveAdapterIdentity('openai', 'kimi').baseId).toBe('openai');
-    expect(registry.resolveAdapterIdentity('openai', 'kimi').trait).toBeDefined();
-    expect(registry.resolveAdapterIdentity('anthropic', 'kimi').baseId).toBe('anthropic');
-    expect(registry.resolveAdapterIdentity('anthropic', 'kimi').trait).toBeDefined();
-    expect(registry.resolveAdapterIdentity('openai_responses', 'kimi').baseId).toBe(
+  it('resolves the floyd pair registrations to their vendor traits', () => {
+    expect(registry.resolveAdapterIdentity('openai', 'floyd').baseId).toBe('openai');
+    expect(registry.resolveAdapterIdentity('openai', 'floyd').trait).toBeDefined();
+    expect(registry.resolveAdapterIdentity('anthropic', 'floyd').baseId).toBe('anthropic');
+    expect(registry.resolveAdapterIdentity('anthropic', 'floyd').trait).toBeDefined();
+    expect(registry.resolveAdapterIdentity('openai_responses', 'floyd').baseId).toBe(
       'openai_responses',
     );
-    expect(registry.resolveAdapterIdentity('openai_responses', 'kimi').trait).toBeUndefined();
+    expect(registry.resolveAdapterIdentity('openai_responses', 'floyd').trait).toBeUndefined();
   });
 
   it('resolves unregistered pairs to the protocol itself with no vendor trait', () => {
-    const google = registry.resolveAdapterIdentity('google-genai', 'kimi');
+    const google = registry.resolveAdapterIdentity('google-genai', 'floyd');
     expect(google.baseId).toBe('google-genai');
     expect(google.trait).toBeUndefined();
     const unknown = registry.resolveAdapterIdentity('openai', 'no-such-vendor');
@@ -132,12 +132,12 @@ describe('resolveAdapterIdentity', () => {
 
 describe('resolveProviderBaseId', () => {
   it('returns the pair registration’s baseProtocol — the protocol itself by construction', () => {
-    expect(registry.resolveProviderBaseId('openai', 'kimi')).toBe('openai');
-    expect(registry.resolveProviderBaseId('anthropic', 'kimi')).toBe('anthropic');
+    expect(registry.resolveProviderBaseId('openai', 'floyd')).toBe('openai');
+    expect(registry.resolveProviderBaseId('anthropic', 'floyd')).toBe('anthropic');
   });
 
   it('returns the protocol itself otherwise', () => {
-    expect(registry.resolveProviderBaseId('google-genai', 'kimi')).toBe('google-genai');
+    expect(registry.resolveProviderBaseId('google-genai', 'floyd')).toBe('google-genai');
     expect(registry.resolveProviderBaseId('openai', 'no-such-vendor')).toBe('openai');
     expect(registry.resolveProviderBaseId('openai')).toBe('openai');
   });
@@ -157,17 +157,17 @@ describe('resolveCapability', () => {
     expect(registry.resolveCapability('anthropic', 'claude-opus-4-1').thinking).toBe(true);
   });
 
-  it('kimi declares no vendor-level capability — the base catalog answers instead', () => {
-    expect(isUnknownCapability(registry.resolveCapability('openai', 'kimi-for-coding', 'kimi'))).toBe(
+  it('floyd declares no vendor-level capability — the base catalog answers instead', () => {
+    expect(isUnknownCapability(registry.resolveCapability('openai', 'floyd-for-coding', 'floyd'))).toBe(
       true,
     );
-    expect(registry.resolveCapability('openai', 'gpt-4o', 'kimi').image_in).toBe(true);
+    expect(registry.resolveCapability('openai', 'gpt-4o', 'floyd').image_in).toBe(true);
   });
 });
 
 describe('resolve gateway routes', () => {
-  it('routes kimi+openai to the kimi trait with the video upload media', () => {
-    const resolved = registry.resolve(modelWith({ protocol: 'openai', providerType: 'kimi' }));
+  it('routes floyd+openai to the floyd trait with the video upload media', () => {
+    const resolved = registry.resolve(modelWith({ protocol: 'openai', providerType: 'floyd' }));
     expect(resolved.protocol).toBe('openai');
     expect(resolved.model.provider).toBe('openai');
     expect(resolved.model.model).toBe('wire-model');
@@ -196,8 +196,8 @@ describe('resolve gateway routes', () => {
     expect(vertex.protocol).toBe('google-genai');
   });
 
-  it('routes kimi+anthropic through the kimi anthropic trait with media', () => {
-    const resolved = registry.resolve(modelWith({ protocol: 'anthropic', providerType: 'kimi' }));
+  it('routes floyd+anthropic through the floyd anthropic trait with media', () => {
+    const resolved = registry.resolve(modelWith({ protocol: 'anthropic', providerType: 'floyd' }));
     expect(resolved.protocol).toBe('anthropic');
     expect(typeof resolved.media?.uploadVideo).toBe('function');
     expect(typeof resolved.media?.uploadImage).toBe('function');
@@ -220,17 +220,17 @@ describe('resolve gateway routes', () => {
 });
 
 describe('resolveProviderEndpoint', () => {
-  it('resolves the kimi endpoint chain from process.env', () => {
-    process.env['KIMI_API_KEY'] = 'sk-kimi-env';
-    expect(resolveProviderEndpoint('kimi')).toEqual({
-      apiKey: 'sk-kimi-env',
-      baseUrl: 'https://api.moonshot.ai/v1',
+  it('resolves the floyd endpoint chain from process.env', () => {
+    process.env['FLOYD_API_KEY'] = 'sk-floyd-env';
+    expect(resolveProviderEndpoint('floyd')).toEqual({
+      apiKey: 'sk-floyd-env',
+      baseUrl: 'https://api.legacy.ai/v1',
     });
   });
 
   it('reads a caller-supplied env bag instead of process.env', () => {
-    process.env['KIMI_API_KEY'] = 'sk-kimi-env';
-    expect(resolveProviderEndpoint('kimi', { KIMI_BASE_URL: 'https://example.com/v1' })).toEqual({
+    process.env['FLOYD_API_KEY'] = 'sk-floyd-env';
+    expect(resolveProviderEndpoint('floyd', { FLOYD_BASE_URL: 'https://example.com/v1' })).toEqual({
       baseUrl: 'https://example.com/v1',
     });
   });
@@ -263,11 +263,11 @@ describe('resolveProviderEndpoint', () => {
   });
 });
 
-describe('kimi provider definitions', () => {
+describe('floyd provider definitions', () => {
   it('registers one definition per transport, with shared vendor-level facts', () => {
-    const native = getProviderDefinition('kimi', 'openai');
-    const anthropic = getProviderDefinition('kimi', 'anthropic');
-    const responses = getProviderDefinition('kimi', 'openai_responses');
+    const native = getProviderDefinition('floyd', 'openai');
+    const anthropic = getProviderDefinition('floyd', 'anthropic');
+    const responses = getProviderDefinition('floyd', 'openai_responses');
     expect(native?.baseProtocol).toBe('openai');
     expect(native?.trait).toBeDefined();
     expect(anthropic?.baseProtocol).toBe('anthropic');
@@ -276,9 +276,9 @@ describe('kimi provider definitions', () => {
     expect(responses?.trait).toBeUndefined();
     for (const definition of [native, anthropic, responses]) {
       expect(definition?.endpoint).toEqual({
-        apiKeyEnv: 'KIMI_API_KEY',
-        baseUrlEnv: 'KIMI_BASE_URL',
-        defaultBaseUrl: 'https://api.moonshot.ai/v1',
+        apiKeyEnv: 'FLOYD_API_KEY',
+        baseUrlEnv: 'FLOYD_BASE_URL',
+        defaultBaseUrl: 'https://api.legacy.ai/v1',
       });
       expect(definition?.hostHeaders).toBe('full');
       expect(definition?.modelSource).toBe('oauth-catalog');
@@ -286,11 +286,11 @@ describe('kimi provider definitions', () => {
   });
 
   it('answers id-level queries and reports unregistered pairs', () => {
-    expect(getProviderDefinition('kimi')?.baseProtocol).toBe('openai');
-    expect(getProviderDefinitions('kimi')).toHaveLength(3);
-    expect(hasProviderDefinition('kimi')).toBe(true);
+    expect(getProviderDefinition('floyd')?.baseProtocol).toBe('openai');
+    expect(getProviderDefinitions('floyd')).toHaveLength(3);
+    expect(hasProviderDefinition('floyd')).toBe(true);
     expect(hasProviderDefinition('no-such-vendor')).toBe(false);
-    expect(getProviderDefinition('kimi', 'google-genai')).toBeUndefined();
+    expect(getProviderDefinition('floyd', 'google-genai')).toBeUndefined();
   });
 
   it('allows the same id on several protocols but rejects a duplicate (id, baseProtocol) pair', () => {
@@ -312,7 +312,7 @@ describe('kimi provider definitions', () => {
     ).toThrow(/already registered/);
     expect(() =>
       registerProviderDefinition({
-        id: 'kimi',
+        id: 'floyd',
         baseProtocol: 'openai',
       }),
     ).toThrow(/already registered/);

@@ -1,21 +1,21 @@
 {
-  "name": "@moonshot-ai/kimi-code-sdk",
+  "name": "@legacy-ai/floyd-code-sdk",
   "version": "0.20.0",
   "private": true,
-  "description": "TypeScript SDK for the Kimi Code Agent",
+  "description": "TypeScript SDK for the Floyd Code Agent",
   "license": "MIT",
-  "author": "Moonshot AI",
-  "homepage": "https://github.com/MoonshotAI/kimi-code/tree/main/packages/node-sdk#readme",
+  "author": "Legacy AI",
+  "homepage": "https://github.com/LegacyAI/floyd-code/tree/main/packages/node-sdk#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MoonshotAI/kimi-code.git",
+    "url": "git+https://github.com/LegacyAI/floyd-code.git",
     "directory": "packages/node-sdk"
   },
   "bugs": {
-    "url": "https://github.com/MoonshotAI/kimi-code/issues"
+    "url": "https://github.com/LegacyAI/floyd-code/issues"
   },
   "keywords": [
-    "kimi",
+    "floyd",
     "sdk",
     "typescript",
     "agent",
@@ -59,11 +59,11 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@moonshot-ai/agent-core-v2": "workspace:^",
-    "@moonshot-ai/kaos": "workspace:^",
-    "@moonshot-ai/kimi-code-oauth": "workspace:^",
-    "@moonshot-ai/klient": "workspace:^",
-    "@moonshot-ai/kosong": "workspace:^",
+    "@legacy-ai/agent-core-v2": "workspace:^",
+    "@legacy-ai/kaos": "workspace:^",
+    "@legacy-ai/floyd-code-oauth": "workspace:^",
+    "@legacy-ai/klient": "workspace:^",
+    "@legacy-ai/kosong": "workspace:^",
     "@types/yazl": "^2.4.6",
     "jimp": "^1.6.1"
   }

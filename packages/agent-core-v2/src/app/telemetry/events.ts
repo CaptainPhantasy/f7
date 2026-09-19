@@ -590,7 +590,7 @@ export interface WorkspaceTrustReadFailedEvent {
 
 export const telemetryEventDefinitions = {
   wire_plan_revision_migrated: defineAgentTelemetryEvent<WirePlanRevisionMigratedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A legacy plan revision wire record is normalized during restore.',
     properties: {
       record_type: 'Wire record type',
@@ -599,7 +599,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   turn_started: defineAgentTelemetryEvent<TurnStartedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A turn starts running.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session',
@@ -610,7 +610,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   turn_interrupted: defineAgentTelemetryEvent<TurnInterruptedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A running turn is interrupted.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session',
@@ -621,11 +621,11 @@ export const telemetryEventDefinitions = {
       protocol: 'Request protocol',
       thinking_effort: 'Effective thinking effort the turn ran with',
       trace_id:
-        'Trace id of the most recent LLM request in this turn (the failed request when the turn errored); absent for non-Kimi protocols',
+        'Trace id of the most recent LLM request in this turn (the failed request when the turn errored); absent for non-Floyd protocols',
     },
   }),
   turn_ended: defineAgentTelemetryEvent<TurnEndedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A turn ends, unconditionally.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session',
@@ -637,11 +637,11 @@ export const telemetryEventDefinitions = {
       protocol: 'Request protocol',
       thinking_effort: 'Effective thinking effort the turn ran with',
       trace_id:
-        'Trace id of the most recent LLM request in this turn; absent for non-Kimi protocols',
+        'Trace id of the most recent LLM request in this turn; absent for non-Floyd protocols',
     },
   }),
   prompt_cache_probe: defineAgentTelemetryEvent<PromptCacheProbeEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment:
       'An agent whose first request is expected to hit the prompt cache reports that request\'s cache usage.',
     properties: {
@@ -656,7 +656,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   tool_call: defineAgentTelemetryEvent<ToolCallEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A tool call finishes execution.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session',
@@ -667,11 +667,11 @@ export const telemetryEventDefinitions = {
       dup_type: 'Whether the call was a duplicate within the same step or across steps',
       error_type: 'Error category when the call failed',
       trace_id:
-        'Trace id of the LLM request that produced this tool call; absent for non-Kimi protocols',
+        'Trace id of the LLM request that produced this tool call; absent for non-Floyd protocols',
     },
   }),
   api_error: defineAgentTelemetryEvent<ApiErrorEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'An LLM API request fails.',
     properties: {
       error_type: 'Classified error category',
@@ -687,11 +687,11 @@ export const telemetryEventDefinitions = {
       request_kind: "Request source vocabulary: 'turn' for turn requests, the operation's requestKind (e.g. 'full_compaction') otherwise",
       step_no: 'Step index within the turn, when the request belongs to a turn step',
       trace_id:
-        'Trace id of the failed request, from its response headers or its error response; absent when the failure happened before any response headers arrived (network errors, local aborts), and for non-Kimi protocols',
+        'Trace id of the failed request, from its response headers or its error response; absent when the failure happened before any response headers arrived (network errors, local aborts), and for non-Floyd protocols',
     },
   }),
   skill_invoked: defineAgentTelemetryEvent<SkillInvokedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A skill is invoked.',
     properties: {
       skill_name: 'Skill name',
@@ -699,45 +699,45 @@ export const telemetryEventDefinitions = {
     },
   }),
   flow_invoked: defineAgentTelemetryEvent<FlowInvokedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A flow-type skill is invoked.',
     properties: { flow_name: 'Flow name' },
   }),
   input_steer: defineAgentTelemetryEvent<InputSteerEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The user steers input while a turn is running.',
     properties: {
       parts: 'Number of input parts',
     },
   }),
   cancel: defineAgentTelemetryEvent<CancelEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The user cancels ongoing work.',
     properties: {
       from: 'What was running when cancelled',
       trace_id:
-        'Trace id of the in-flight request, or of the most recent request between steps; absent for non-Kimi protocols',
+        'Trace id of the in-flight request, or of the most recent request between steps; absent for non-Floyd protocols',
     },
   }),
   conversation_undo: defineAgentTelemetryEvent<ConversationUndoEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The user undoes conversation entries.',
     properties: {
       count: 'Number of entries undone',
     },
   }),
   yolo_toggle: defineAgentTelemetryEvent<YoloToggleEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Yolo permission mode is toggled.',
     properties: { enabled: 'Whether yolo mode is now enabled' },
   }),
   afk_toggle: defineAgentTelemetryEvent<AfkToggleEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'AFK (auto) permission mode is toggled.',
     properties: { enabled: 'Whether auto mode is now enabled' },
   }),
   permission_policy_decision: defineAgentTelemetryEvent<PermissionPolicyDecisionEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A permission policy evaluates a tool call.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session',
@@ -749,7 +749,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   permission_approval_result: defineAgentTelemetryEvent<PermissionApprovalResultEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A permission approval prompt resolves.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session',
@@ -763,18 +763,18 @@ export const telemetryEventDefinitions = {
       session_cache_written: 'Whether a session approval rule was cached',
       has_feedback: 'Whether the user attached feedback',
       trace_id:
-        'Trace id of the LLM request that produced the gated tool call; absent for non-Kimi protocols',
+        'Trace id of the LLM request that produced the gated tool call; absent for non-Floyd protocols',
     },
   }),
   plan_submitted: defineAgentTelemetryEvent<PlanSubmittedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A plan is submitted for review.',
     properties: {
       has_options: 'Whether the plan offered selectable options',
     },
   }),
   plan_resolved: defineAgentTelemetryEvent<PlanResolvedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A submitted plan is resolved.',
     properties: {
       outcome: 'How the plan was resolved',
@@ -783,14 +783,14 @@ export const telemetryEventDefinitions = {
     },
   }),
   plan_enter_resolved: defineAgentTelemetryEvent<PlanEnterResolvedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A request to enter plan mode is resolved.',
     properties: {
       outcome: 'How the request was resolved',
     },
   }),
   tower_mode_enter: defineAgentTelemetryEvent<TowerModeEnterEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A request to enter tower mode resolves.',
     properties: {
       outcome: 'Whether tower mode was entered or the request was rejected',
@@ -798,7 +798,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   tower_mode_exit: defineAgentTelemetryEvent<TowerModeExitEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Tower mode is exited.',
     properties: {
       reason:
@@ -806,21 +806,21 @@ export const telemetryEventDefinitions = {
     },
   }),
   swarm_mode_entered: defineAgentTelemetryEvent<SwarmModeTransitionEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Swarm mode is entered.',
     properties: {
       trigger: 'What triggered swarm mode',
     },
   }),
   swarm_mode_exited: defineAgentTelemetryEvent<SwarmModeTransitionEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Swarm mode is exited.',
     properties: {
       trigger: 'What originally triggered the swarm mode being exited',
     },
   }),
   external_hook_resolved: defineTelemetryEvent<ExternalHookResolvedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'An external hook trigger finishes running its matched hooks.',
     properties: {
       event: 'Hook event type (e.g. PreToolUse, UserPromptSubmit, Stop)',
@@ -830,7 +830,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   remote_control_toggle: defineTelemetryEvent<RemoteControlToggleEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A request to toggle the Remote Control tunnel resolves.',
     properties: {
       enabled: 'Whether the request was to enable or disable the tunnel',
@@ -838,7 +838,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   compaction_finished: defineAgentTelemetryEvent<CompactionFinishedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Context compaction completes.',
     properties: {
       turn_id: 'Per-agent turn index when compaction ran inside a turn; omitted for manual compaction between turns',
@@ -856,11 +856,11 @@ export const telemetryEventDefinitions = {
       input_cache_read: 'Cache-read input tokens',
       input_cache_creation: 'Cache-creation input tokens',
       trace_id:
-        'Trace id of the final compaction request round; absent for non-Kimi protocols',
+        'Trace id of the final compaction request round; absent for non-Floyd protocols',
     },
   }),
   compaction_failed: defineAgentTelemetryEvent<CompactionFailedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Context compaction fails.',
     properties: {
       turn_id: 'Per-agent turn index when compaction ran inside a turn; omitted for manual compaction between turns',
@@ -872,11 +872,11 @@ export const telemetryEventDefinitions = {
       thinking_effort: 'Thinking effort level in effect',
       error_type: 'Error class name',
       trace_id:
-        'Trace id of the failed compaction request, from its response headers or its error response; absent when the failure happened before any request or before response headers arrived (network errors), and for non-Kimi protocols',
+        'Trace id of the failed compaction request, from its response headers or its error response; absent when the failure happened before any request or before response headers arrived (network errors), and for non-Floyd protocols',
     },
   }),
   context_projection_repaired: defineAgentTelemetryEvent<ContextProjectionRepairedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The context projector repairs the outgoing request to keep it wire-valid.',
     properties: {
       reordered: 'Tool results moved back next to their call',
@@ -891,7 +891,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   background_task_created: defineAgentTelemetryEvent<BackgroundTaskCreatedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A background task is created.',
     properties: {
       task_id: 'Background task id; joins background_task_created with background_task_completed',
@@ -899,7 +899,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   background_task_completed: defineAgentTelemetryEvent<BackgroundTaskCompletedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A background task reaches a terminal state.',
     properties: {
       task_id: 'Background task id; joins background_task_created with background_task_completed',
@@ -909,7 +909,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   wait_for_completed: defineAgentTelemetryEvent<WaitForCompletedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A WaitFor tool call returns.',
     properties: {
       outcome:
@@ -921,12 +921,12 @@ export const telemetryEventDefinitions = {
     },
   }),
   model_switch: defineAgentTelemetryEvent<ModelSwitchEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The active model is bound or switched.',
     properties: { model: 'Model alias' },
   }),
   thinking_toggle: defineAgentTelemetryEvent<ThinkingToggleEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Thinking effort is toggled.',
     properties: {
       enabled: 'Whether thinking is now enabled',
@@ -935,25 +935,25 @@ export const telemetryEventDefinitions = {
     },
   }),
   question_dismissed: defineAgentTelemetryEvent<QuestionDismissedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A user question prompt is dismissed.',
     properties: {
       trace_id:
-        'Trace id of the LLM request that produced the questioning tool call; absent for non-Kimi protocols',
+        'Trace id of the LLM request that produced the questioning tool call; absent for non-Floyd protocols',
     },
   }),
   question_answered: defineAgentTelemetryEvent<QuestionAnsweredEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A user question prompt is answered.',
     properties: {
       answered: 'Number of questions answered',
       method: 'Input method used to answer',
       trace_id:
-        'Trace id of the LLM request that produced the questioning tool call; absent for non-Kimi protocols',
+        'Trace id of the LLM request that produced the questioning tool call; absent for non-Floyd protocols',
     },
   }),
   goal_created: defineAgentTelemetryEvent<GoalCreatedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A goal is created.',
     properties: {
       actor: 'Who created the goal',
@@ -961,7 +961,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   goal_budget_set: defineAgentTelemetryEvent<GoalBudgetSetEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A goal budget is set.',
     properties: {
       actor: 'Who set the budget',
@@ -971,17 +971,17 @@ export const telemetryEventDefinitions = {
     },
   }),
   goal_continued: defineAgentTelemetryEvent<GoalContinuedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A goal continues into another turn.',
     properties: { turns_used: 'Turns consumed so far' },
   }),
   goal_cleared: defineAgentTelemetryEvent<GoalClearedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A goal is cleared.',
     properties: { actor: 'Who cleared the goal' },
   }),
   goal_status_changed: defineAgentTelemetryEvent<GoalStatusChangedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A goal changes status.',
     properties: {
       actor: 'Who changed the status',
@@ -995,7 +995,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   tool_call_dedup_detected: defineAgentTelemetryEvent<ToolCallDedupDetectedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A duplicate tool call is detected.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session; omitted when no turn is active',
@@ -1005,11 +1005,11 @@ export const telemetryEventDefinitions = {
       dup_type: 'Whether the duplicate is within the same step or across steps',
       args_hash: 'Hash of the tool call arguments',
       trace_id:
-        'Trace id of the LLM request that produced the duplicate tool call; absent for non-Kimi protocols',
+        'Trace id of the LLM request that produced the duplicate tool call; absent for non-Floyd protocols',
     },
   }),
   tool_call_repeat: defineAgentTelemetryEvent<ToolCallRepeatEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A repeated tool call streak is detected.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session; omitted when no turn is active',
@@ -1017,11 +1017,11 @@ export const telemetryEventDefinitions = {
       repeat_count: 'Length of the repeat streak',
       action: 'Intervention action taken',
       trace_id:
-        'Trace id of the LLM request that produced the repeated tool call; absent for non-Kimi protocols',
+        'Trace id of the LLM request that produced the repeated tool call; absent for non-Floyd protocols',
     },
   }),
   tool_call_turn_repeat: defineAgentTelemetryEvent<ToolCallTurnRepeatEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A tool call reappears within the same turn.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session; omitted when no turn is active',
@@ -1031,11 +1031,11 @@ export const telemetryEventDefinitions = {
       turn_repeat_count: 'Number of prior-step tool-call reappearances counted in the turn',
       args_hash: 'Hash of the tool call arguments',
       trace_id:
-        'Trace id of the LLM request that produced the repeated tool call; absent for non-Kimi protocols',
+        'Trace id of the LLM request that produced the repeated tool call; absent for non-Floyd protocols',
     },
   }),
   tool_call_repeat_handoff: defineAgentTelemetryEvent<ToolCallRepeatHandoffEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The text-only handoff step that follows a repeat-breaker force stop finished.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session; omitted when no turn is active',
@@ -1043,18 +1043,18 @@ export const telemetryEventDefinitions = {
     },
   }),
   agents_md_reminder_shown: defineAgentTelemetryEvent<AgentsMdReminderShownEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'An AGENTS.md discovery reminder is queued for context injection after a tool call.',
     properties: {
       turn_id: 'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session',
       tool_name: 'Registered tool name whose execution discovered the file',
       reminded_count: 'Number of AGENTS.md paths listed in the reminder',
       trace_id:
-        'Trace id of the LLM request that produced the tool call; absent for non-Kimi protocols',
+        'Trace id of the LLM request that produced the tool call; absent for non-Floyd protocols',
     },
   }),
   grep_tool_rg_fallback: defineAgentTelemetryEvent<GrepToolRgFallbackEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The grep tool falls back when resolving ripgrep.',
     properties: {
       source: 'Where ripgrep was resolved from',
@@ -1062,7 +1062,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   glob_tool_rg_fallback: defineAgentTelemetryEvent<GlobToolRgFallbackEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The glob tool falls back when resolving ripgrep.',
     properties: {
       source: 'Where ripgrep was resolved from',
@@ -1070,17 +1070,17 @@ export const telemetryEventDefinitions = {
     },
   }),
   fs_grep_node_fallback: defineTelemetryEvent<FsGrepNodeFallbackEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The fs grep path falls back to the node implementation.',
     properties: { reason: 'Why the fallback was taken' },
   }),
   fs_suggest_node_fallback: defineTelemetryEvent<FsSuggestNodeFallbackEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The fs suggest path falls back to the node implementation.',
     properties: { reason: 'Why the fallback was taken' },
   }),
   subagent_created: defineTelemetryEvent<SubagentCreatedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A subagent run is created.',
     properties: {
       subagent_name: 'Profile name of the subagent',
@@ -1095,7 +1095,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   mcp_connected: defineTelemetryEvent<McpConnectedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'MCP servers connect at session start.',
     properties: {
       server_count: 'Number of servers connected',
@@ -1103,7 +1103,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   mcp_failed: defineTelemetryEvent<McpFailedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'MCP servers fail to connect at session start.',
     properties: {
       failed_count: 'Number of servers that failed',
@@ -1111,12 +1111,12 @@ export const telemetryEventDefinitions = {
     },
   }),
   cron_missed: defineTelemetryEvent<CronMissedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Cron tasks fire late after being slept through.',
     properties: { count: 'Number of tasks that missed their fire time' },
   }),
   cron_scheduled: defineTelemetryEvent<CronScheduledEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A cron task is scheduled.',
     properties: {
       recurring: 'Whether the task repeats',
@@ -1124,7 +1124,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   cron_deleted: defineTelemetryEvent<CronDeletedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A cron task is deleted.',
     properties: {
       task_id: 'Cron task id',
@@ -1132,7 +1132,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   cron_fired: defineTelemetryEvent<CronFiredEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A cron task fires.',
     properties: {
       recurring: 'Whether the task repeats',
@@ -1142,7 +1142,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   image_compress: defineTelemetryEvent<ImageCompressEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'An image is compressed before being sent to the model.',
     properties: {
       source: 'Where the image came from',
@@ -1160,7 +1160,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   image_crop: defineTelemetryEvent<ImageCropEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'An image is cropped to a region before being sent to the model.',
     properties: {
       source: 'Where the image came from',
@@ -1175,7 +1175,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   video_upload: defineAgentTelemetryEvent<VideoUploadEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A video is uploaded for the model.',
     properties: {
       model: 'Model the video is uploaded for',
@@ -1189,7 +1189,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   session_started: defineTelemetryEvent<SessionStartedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A session becomes active (created, forked, or resumed).',
     properties: {
       resumed: 'Whether the session was resumed from disk',
@@ -1198,12 +1198,12 @@ export const telemetryEventDefinitions = {
     },
   }),
   session_load_failed: defineTelemetryEvent<SessionLoadFailedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A session resume fails.',
     properties: { reason: 'Error code, error name, or unknown' },
   }),
   wire_repair: defineTelemetryEvent<WireRepairEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A corrupted wire journal is truncated to its valid prefix and healed on disk.',
     properties: {
       kind: 'Corruption kind: unparseable middle line or torn final line',
@@ -1213,17 +1213,17 @@ export const telemetryEventDefinitions = {
     },
   }),
   first_launch: defineTelemetryEvent<FirstLaunchEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The CLI runs for the first time on this device.',
     properties: {},
   }),
   exit: defineTelemetryEvent<ExitEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A CLI run exits.',
     properties: { duration_ms: 'Run wall-clock time in milliseconds' },
   }),
   oauth_login_finished: defineTelemetryEvent<OauthLoginFinishedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'An OAuth login flow reaches a terminal status.',
     properties: {
       provider: 'OAuth provider name',
@@ -1232,7 +1232,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   oauth_models_refresh_finished: defineTelemetryEvent<OauthModelsRefreshFinishedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A refresh of the managed OAuth provider model catalog finishes.',
     properties: {
       changed_count: 'Number of models added or updated by the refresh',
@@ -1241,7 +1241,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   auth_ensure_ready_failed: defineTelemetryEvent<AuthEnsureReadyFailedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Auth readiness check fails before a turn can start.',
     properties: {
       reason: 'Why auth is not ready',
@@ -1249,7 +1249,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   shell_command_finished: defineAgentTelemetryEvent<ShellCommandFinishedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A shell command execution finishes; this path bypasses the tool executor.',
     properties: {
       duration_ms: 'Execution wall-clock time in milliseconds',
@@ -1258,7 +1258,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   agent_create_failed: defineTelemetryEvent<AgentCreateFailedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Agent scope creation fails partway through.',
     properties: {
       agent_id: 'Id of the agent whose creation failed',
@@ -1267,12 +1267,12 @@ export const telemetryEventDefinitions = {
     },
   }),
   session_ended: defineTelemetryEvent<SessionEndedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A session is closed or archived.',
     properties: { reason: 'How the session ended' },
   }),
   web_fetch_fallback: defineTelemetryEvent<WebFetchFallbackEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The managed fetch-url provider fails and the call silently falls back to the local fetcher.',
     properties: {
       error_type: 'Classified error category of the managed fetch failure',
@@ -1280,7 +1280,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   media_resolve_fallback: defineAgentTelemetryEvent<MediaResolveFallbackEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A media part is silently degraded or replaced while resolving model input.',
     properties: {
       kind: 'Media kind being resolved',
@@ -1289,7 +1289,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   llm_request_projection_fallback: defineAgentTelemetryEvent<LlmRequestProjectionFallbackEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A rejected LLM request is retried with a degraded context projection.',
     properties: {
       projection: 'Projection policy the request is degraded to',
@@ -1299,7 +1299,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   session_index_degraded: defineTelemetryEvent<SessionIndexDegradedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The session index read model degrades to the authoritative directory scan.',
     properties: {
       reason: 'Why the read model degraded',
@@ -1308,7 +1308,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   session_index_projected: defineTelemetryEvent<SessionIndexProjectedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The session index finishes projecting the sessions directory into the read model.',
     properties: {
       duration_ms: 'Projection wall-clock time in milliseconds',
@@ -1317,7 +1317,7 @@ export const telemetryEventDefinitions = {
     },
   }),
   session_index_mirror_give_up: defineTelemetryEvent<SessionIndexMirrorGiveUpEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'The session index mirror stops retrying after consecutive write failures.',
     properties: {
       pending_count: 'Number of queued mirror writes left pending',
@@ -1325,12 +1325,12 @@ export const telemetryEventDefinitions = {
     },
   }),
   workspace_trust_changed: defineTelemetryEvent<WorkspaceTrustChangedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'A workspace is trusted or untrusted.',
     properties: { trusted: 'Whether the workspace is now trusted' },
   }),
   workspace_trust_read_failed: defineTelemetryEvent<WorkspaceTrustReadFailedEvent>({
-    owner: 'kimi-code',
+    owner: 'floyd-code',
     comment: 'Reading the workspace trust record fails and the workspace silently falls back to untrusted.',
     properties: { error_type: 'Classified error category' },
   }),

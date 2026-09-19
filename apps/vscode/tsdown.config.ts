@@ -19,16 +19,16 @@ export default defineConfig({
   sourcemap: false,
   plugins: [rawTextPlugin()],
   alias: {
-    '@moonshot-ai/kimi-code-sdk': resolve(root, '../../packages/node-sdk/src/index.ts'),
-    '@moonshot-ai/kimi-telemetry': resolve(root, '../../packages/telemetry/src/index.ts'),
-    '@moonshot-ai/migration-legacy': resolve(root, '../../packages/migration-legacy/src/index.ts'),
-    '@moonshot-ai/kaos': resolve(root, '../../packages/kaos/src/index.ts'),
-    '@moonshot-ai/kimi-code-oauth/provider-credential': resolve(
+    '@legacy-ai/floyd-code-sdk': resolve(root, '../../packages/node-sdk/src/index.ts'),
+    '@legacy-ai/floyd-telemetry': resolve(root, '../../packages/telemetry/src/index.ts'),
+    '@legacy-ai/migration-legacy': resolve(root, '../../packages/migration-legacy/src/index.ts'),
+    '@legacy-ai/kaos': resolve(root, '../../packages/kaos/src/index.ts'),
+    '@legacy-ai/floyd-code-oauth/provider-credential': resolve(
       root,
       '../../packages/oauth/src/provider-credential.ts',
     ),
-    '@moonshot-ai/kimi-code-oauth': resolve(root, '../../packages/oauth/src/index.ts'),
-    '@moonshot-ai/kosong': resolve(root, '../../packages/kosong/src/index.ts'),
+    '@legacy-ai/floyd-code-oauth': resolve(root, '../../packages/oauth/src/index.ts'),
+    '@legacy-ai/kosong': resolve(root, '../../packages/kosong/src/index.ts'),
   },
   define: {
     __EXTENSION_VERSION__: JSON.stringify(pkg.version),
@@ -43,7 +43,7 @@ export default defineConfig({
   },
   deps: {
     onlyBundle: false,
-    alwaysBundle: [/^@moonshot-ai\//, 'immer', 'zod'],
+    alwaysBundle: [/^@legacy-ai\//, 'immer', 'zod'],
     neverBundle: ['vscode'],
   },
   outputOptions: {

@@ -270,7 +270,7 @@ describe('AgentMcpService', () => {
       connectionManager: manager as unknown as McpConnectionManager,
       isBaselineServer,
     } satisfies ISessionMcpHandle);
-    ix.stub(ISessionContext, { sessionDir: '/tmp/kimi-code-mcp-test' });
+    ix.stub(ISessionContext, { sessionDir: '/tmp/floyd-code-mcp-test' });
     ix.set(IAgentMcpService, new SyncDescriptor(AgentMcpService));
     return ix.get(IAgentMcpService);
   }

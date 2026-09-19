@@ -14,12 +14,12 @@ import {
   sessionDirOf,
   type Event2,
   type SessionSummary,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import {
   type FsGitStatusResponse,
   type FsPullRequest,
   IGitService,
-} from '@moonshot-ai/agent-core-v2/app/git/git';
+} from '@legacy-ai/agent-core-v2/app/git/git';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type RunningServer, startServer } from '../src/start';
@@ -162,7 +162,7 @@ describe('server /api/v2/sessions', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-sessions-list-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-sessions-list-'));
     await bootSeeded();
   });
 
@@ -802,7 +802,7 @@ describe('server /api/v2/sessions batch archive/restore', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-sessions-batch-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-sessions-batch-'));
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',

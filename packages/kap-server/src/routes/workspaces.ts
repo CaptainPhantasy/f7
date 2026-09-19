@@ -7,7 +7,7 @@ import {
   IWorkspaceTrust,
   type Scope,
   type Workspace,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import { isAbsolute, join, normalize, resolve } from 'node:path';
 
 import { z } from 'zod';

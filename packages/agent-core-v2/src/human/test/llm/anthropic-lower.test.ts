@@ -7,7 +7,7 @@ import type { LlmModel } from '#/llm/model';
 import { lowerMessage } from '#/llm/requester/bases/anthropic/lower';
 import { createAnthropicRequester } from '#/llm/requester/bases/anthropic/requester';
 import type { LlmClientContext } from '#/llm/requester/requester';
-import { kimiAnthropicTrait } from '#/llm-kimi/trait';
+import { floydAnthropicTrait } from '#/llm-floyd/trait';
 
 const routedModel: LlmModel = {
   provider: 'anthropic',
@@ -66,8 +66,8 @@ function stubAnthropicClient(): {
 }
 
 describe('anthropic lowering of inline images', () => {
-  it('forwards a base64 image the Kimi policy accepts even though the route id is anthropic', () => {
-    const wire = lowerMessage(message, providerImagePolicy('kimi').acceptedMimes);
+  it('forwards a base64 image the Floyd policy accepts even though the route id is anthropic', () => {
+    const wire = lowerMessage(message, providerImagePolicy('floyd').acceptedMimes);
     expect(wire[0]?.content[0]).toEqual(HEIC_BLOCK);
   });
 
@@ -77,10 +77,10 @@ describe('anthropic lowering of inline images', () => {
     );
   });
 
-  it('sends the HEIC block on the wire when Kimi is reached over the Anthropic protocol', async () => {
+  it('sends the HEIC block on the wire when Floyd is reached over the Anthropic protocol', async () => {
     const client = stubAnthropicClient();
     const requester = createAnthropicRequester({
-      trait: kimiAnthropicTrait,
+      trait: floydAnthropicTrait,
       clientFactory: client.clientFactory,
     });
     await requester.generate(

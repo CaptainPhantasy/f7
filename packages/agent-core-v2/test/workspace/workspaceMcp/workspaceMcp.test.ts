@@ -75,7 +75,7 @@ describe('WorkspaceMcpService', () => {
   let manager: InstanceType<typeof McpConnectionManager> | undefined;
 
   beforeEach(() => {
-    cwd = mkdtempSync(join(tmpdir(), 'kimi-workspace-mcp-cwd-'));
+    cwd = mkdtempSync(join(tmpdir(), 'floyd-workspace-mcp-cwd-'));
     disposables = new DisposableStore();
     current = {};
     tunablesValue = {};
@@ -401,7 +401,7 @@ describe('WorkspaceMcpService', () => {
       manager = service.connectionManager();
       await service.ready;
 
-      const sessionCwd = mkdtempSync(join(tmpdir(), 'kimi-session-mcp-cwd-'));
+      const sessionCwd = mkdtempSync(join(tmpdir(), 'floyd-session-mcp-cwd-'));
       const servers = { eph: stdioServer() };
       const sessionOverlay = vi.spyOn(service, 'sessionOverlay');
       const { event, contributed, disposers } = willCreateEvent(servers, sessionCwd);

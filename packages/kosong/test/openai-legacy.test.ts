@@ -1206,7 +1206,7 @@ describe('OpenAILegacyChatProvider', () => {
     });
 
     it('passes max through verbatim', async () => {
-      const provider = createProvider({ model: 'kimi-for-coding' }).withThinking('max');
+      const provider = createProvider({ model: 'floyd-for-coding' }).withThinking('max');
       const history: Message[] = [
         { role: 'user', content: [{ type: 'text', text: 'Think' }], toolCalls: [] },
       ];
@@ -1222,7 +1222,7 @@ describe('OpenAILegacyChatProvider', () => {
       ];
       for (const requested of ['xhigh', 'medium', 'extreme'] as const) {
         const body = await captureRequestBody(
-          createProvider({ model: 'kimi-for-coding' }).withThinking(requested),
+          createProvider({ model: 'floyd-for-coding' }).withThinking(requested),
           '',
           [],
           history,
@@ -1236,7 +1236,7 @@ describe('OpenAILegacyChatProvider', () => {
         { role: 'user', content: [{ type: 'text', text: 'Think' }], toolCalls: [] },
       ];
       const provider = createProvider({
-        model: 'kimi-for-coding',
+        model: 'floyd-for-coding',
       });
 
       const maxBody = await captureRequestBody(provider.withThinking('max'), '', [], history);
@@ -1298,7 +1298,7 @@ describe('OpenAILegacyChatProvider', () => {
   describe('auto reasoning_effort', () => {
     it('auto-injects reasoning_effort when history has ThinkPart and reasoningKey is set', async () => {
       const provider = createProvider({
-        model: 'kimi-k2.5',
+        model: 'floyd-k2.5',
         reasoningKey: 'reasoning_content',
       });
       const history: Message[] = [
@@ -1324,7 +1324,7 @@ describe('OpenAILegacyChatProvider', () => {
 
     it('does not auto-inject reasoning_effort when history has no ThinkPart', async () => {
       const provider = createProvider({
-        model: 'kimi-k2.5',
+        model: 'floyd-k2.5',
         reasoningKey: 'reasoning_content',
       });
       const history: Message[] = [

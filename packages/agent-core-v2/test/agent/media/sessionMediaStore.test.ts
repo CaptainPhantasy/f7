@@ -241,7 +241,7 @@ describe('SessionMediaStoreService', () => {
     const path = /Original attachment saved at: ("[^\n]+")/.exec(text)?.[1];
     expect(path).toBeDefined();
     expect((await readFile(JSON.parse(path!) as string)).equals(bytes)).toBe(true);
-    expect(text).toContain('Attachment reference: "kimi-file://');
+    expect(text).toContain('Attachment reference: "floyd-file://');
   });
 
   it('provides a session-relative path for an original preserved during image compression', async () => {

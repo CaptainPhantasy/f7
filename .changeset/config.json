@@ -1,5 +1,5 @@
 {
-  "changelog": ["@changesets/changelog-github", { "repo": "MoonshotAI/kimi-code" }],
+  "changelog": ["@changesets/changelog-github", { "repo": "LegacyAI/floyd-code" }],
   "commit": false,
   "fixed": [],
   "linked": [],
@@ -7,10 +7,10 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
-    "@moonshot-ai/vis",
-    "@moonshot-ai/vis-server",
-    "@moonshot-ai/vis-web",
-    "@moonshot-ai/kimi-inspect"
+    "@legacy-ai/vis",
+    "@legacy-ai/vis-server",
+    "@legacy-ai/vis-web",
+    "@legacy-ai/floyd-inspect"
   ],
   "snapshot": {
     "useCalculatedVersion": true,

@@ -1,5 +1,5 @@
 /**
- * `DaemonClient` — wire-level test client for the kimi-code server.
+ * `DaemonClient` — wire-level test client for the floyd-code server.
  *
  * Wraps the server's HTTP REST + WS surfaces (`/api/v1/...` + `/api/v1/ws`)
  * into a single, typed object that scenarios can drive. Handles:
@@ -15,32 +15,32 @@
 import type {
   FsBrowseResponse,
   FsHomeResponse,
-} from '@moonshot-ai/agent-core-v2/app/hostFolderBrowser/hostFolderBrowser';
-import type { AuthSummary } from '@moonshot-ai/agent-core-v2/app/authLegacy/authLegacy';
-import type { FileMeta } from '@moonshot-ai/agent-core-v2/app/file/fileService';
-import type { UpdateSessionProfileRequest as SessionUpdate } from '@moonshot-ai/agent-core-v2/app/sessionLegacy/sessionProtocol';
+} from '@legacy-ai/agent-core-v2/app/hostFolderBrowser/hostFolderBrowser';
+import type { AuthSummary } from '@legacy-ai/agent-core-v2/app/authLegacy/authLegacy';
+import type { FileMeta } from '@legacy-ai/agent-core-v2/app/file/fileService';
+import type { UpdateSessionProfileRequest as SessionUpdate } from '@legacy-ai/agent-core-v2/app/sessionLegacy/sessionProtocol';
 import type {
   ProviderCatalogItem,
   SetDefaultModelResponse,
-} from '@moonshot-ai/agent-core-v2/llm-adapter/model/catalog';
-import type { Terminal } from '@moonshot-ai/agent-core-v2/os/interface/terminal';
+} from '@legacy-ai/agent-core-v2/llm-adapter/model/catalog';
+import type { Terminal } from '@legacy-ai/agent-core-v2/os/interface/terminal';
 import type {
   ApprovalRequest,
   ApprovalResponse,
-} from '@moonshot-ai/kap-server/protocol/approval';
-import type { Message } from '@moonshot-ai/kap-server/protocol/message';
+} from '@legacy-ai/kap-server/protocol/approval';
+import type { Message } from '@legacy-ai/kap-server/protocol/message';
 import type {
   QuestionRequest,
   QuestionResponse,
-} from '@moonshot-ai/kap-server/protocol/question';
+} from '@legacy-ai/kap-server/protocol/question';
 import type {
   ApprovalResolveResult,
   ListPendingApprovalsResponse,
-} from '@moonshot-ai/kap-server/protocol/rest-approval';
+} from '@legacy-ai/kap-server/protocol/rest-approval';
 import type {
   ListModelsResponse,
   ListProvidersResponse,
-} from '@moonshot-ai/kap-server/protocol/rest-modelCatalog';
+} from '@legacy-ai/kap-server/protocol/rest-modelCatalog';
 import type {
   PromptAbortResponse,
   PromptListResponse,
@@ -49,11 +49,11 @@ import type {
   PromptSteerResult,
   PromptSubmitResult,
   PromptThinking,
-} from '@moonshot-ai/kap-server/protocol/rest-prompt';
+} from '@legacy-ai/kap-server/protocol/rest-prompt';
 import type {
   ListPendingQuestionsResponse,
   QuestionResolveResult,
-} from '@moonshot-ai/kap-server/protocol/rest-question';
+} from '@legacy-ai/kap-server/protocol/rest-question';
 import type {
   CompactSessionRequest,
   CompactSessionResponse,
@@ -61,23 +61,23 @@ import type {
   SessionAbortResponse,
   UndoSessionRequest,
   UndoSessionResponse,
-} from '@moonshot-ai/kap-server/protocol/rest-session';
+} from '@legacy-ai/kap-server/protocol/rest-session';
 import type {
   CloseTerminalResponse,
   CreateTerminalRequest,
   ListTerminalsResponse,
-} from '@moonshot-ai/kap-server/protocol/rest-terminal';
+} from '@legacy-ai/kap-server/protocol/rest-terminal';
 import type {
   Session,
   SessionChildCreate,
   SessionCreate,
-} from '@moonshot-ai/kap-server/protocol/session';
+} from '@legacy-ai/kap-server/protocol/session';
 import type {
   Workspace,
   WorkspaceCreate,
   WorkspaceUpdate,
-} from '@moonshot-ai/kap-server/protocol/workspace';
-import type { ServerHelloMessage } from '@moonshot-ai/kap-server/protocol/ws-control';
+} from '@legacy-ai/kap-server/protocol/workspace';
+import type { ServerHelloMessage } from '@legacy-ai/kap-server/protocol/ws-control';
 import { ulid } from 'ulid';
 import { WebSocket as WsWebSocket } from 'ws';
 
@@ -123,10 +123,10 @@ const DEFAULT_CONTROL_ACK_TIMEOUT_MS = 5_000;
  * they need.
  *
  * `model` matches what the existing server-e2e scenarios assume (the
- * default provider exposes `kimi-code/kimi-for-coding`).
+ * default provider exposes `floyd-code/floyd-for-coding`).
  */
 export const DEFAULT_PROMPT_CONTROLS = {
-  model: 'kimi-code/kimi-for-coding',
+  model: 'floyd-code/floyd-for-coding',
   thinking: 'off' as PromptThinking,
   permission_mode: 'manual' as PromptPermissionMode,
   plan_mode: false,

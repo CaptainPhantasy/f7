@@ -11,13 +11,13 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { Service } from '@moonshot-ai/agent-core-v2/_base/di/service';
-import { CommandContribution } from '@moonshot-ai/agent-core-v2/agent/command/commandContribution';
-import { IFeatureManager } from '@moonshot-ai/agent-core-v2/app/feature/featureManager';
+import { Service } from '@legacy-ai/agent-core-v2/_base/di/service';
+import { CommandContribution } from '@legacy-ai/agent-core-v2/agent/command/commandContribution';
+import { IFeatureManager } from '@legacy-ai/agent-core-v2/app/feature/featureManager';
 import {
   resetModelsDevUpstreamForTest,
   setModelsDevUpstreamForTest,
-} from '@moonshot-ai/agent-core-v2/app/kosongConfig/modelsDevUpstream';
+} from '@legacy-ai/agent-core-v2/app/kosongConfig/modelsDevUpstream';
 
 import type { Klient } from '../../src/index.js';
 import type { TestEngine } from './engine.js';
@@ -142,9 +142,9 @@ export function defineKlientConformance(
     it('session skills.list returns the workspace skills as summaries', async () => {
       const workDir = await mkdtemp(join(tmpdir(), 'klient-conf-skills-'));
       try {
-        await mkdir(join(workDir, '.kimi-code', 'skills', 'conf-skill'), { recursive: true });
+        await mkdir(join(workDir, '.floyd-code', 'skills', 'conf-skill'), { recursive: true });
         await writeFile(
-          join(workDir, '.kimi-code', 'skills', 'conf-skill', 'SKILL.md'),
+          join(workDir, '.floyd-code', 'skills', 'conf-skill', 'SKILL.md'),
           '---\nname: conf-skill\ndescription: conformance fixture skill\n---\n\n# Conf\n',
         );
         const created = await target.klient.global.sessions.create({ workDir });

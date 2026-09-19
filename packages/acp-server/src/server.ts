@@ -62,9 +62,9 @@ import type {
   SessionHandle,
   SessionRestoreOptions,
   SessionSummary,
-} from '@moonshot-ai/klient';
-import { ErrorCodes, isError2 } from '@moonshot-ai/agent-core-v2';
-import { RPCError } from '@moonshot-ai/klient';
+} from '@legacy-ai/klient';
+import { ErrorCodes, isError2 } from '@legacy-ai/agent-core-v2';
+import { RPCError } from '@legacy-ai/klient';
 
 import type { AcpClient } from './acp-client';
 import type { IAcpConnection } from './acp-fs';
@@ -115,9 +115,9 @@ export interface AcpServerOptions {
    */
   readonly disableAuth?: boolean;
   /**
-   * Env vars to advertise in `authMethods[0].env` so the `kimi login`
+   * Env vars to advertise in `authMethods[0].env` so the `floyd login`
    * subprocess the client spawns (via terminal-auth) lands its token under the
-   * same data root the server uses (e.g. `{ KIMI_CODE_HOME: '/tmp/...' }` for
+   * same data root the server uses (e.g. `{ FLOYD_CODE_HOME: '/tmp/...' }` for
    * sandboxed test setups). Leave undefined in production so the advertised
    * env stays empty.
    */
@@ -383,7 +383,7 @@ export class AcpServer {
         `Unknown auth method: ${params.methodId}`,
       );
     }
-    // Re-check the gate; clients spawn `kimi login` themselves via the
+    // Re-check the gate; clients spawn `floyd login` themselves via the
     // terminal-auth method and re-invoke `authenticate('login')` to confirm the
     // token landed. `void` = empty success body.
     await this.ensureAuthed();
@@ -698,7 +698,7 @@ function parseSetSessionModelParams(params: unknown): SetSessionModelParams {
  * `extMethod` / `extNotification` fallbacks.
  */
 export function createAcpAgentApp(getServer: () => AcpServer): AgentApp {
-  return agent({ name: 'kimi-code-acp' })
+  return agent({ name: 'floyd-code-acp' })
     .onRequest(methods.agent.initialize, (ctx) => getServer().initialize(ctx.params))
     .onRequest(methods.agent.authenticate, (ctx) => getServer().authenticate(ctx.params))
     .onRequest(methods.agent.logout, (ctx) => getServer().logout(ctx.params))

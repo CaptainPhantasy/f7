@@ -18,8 +18,8 @@ import {
   type Event2,
   type ISessionScopeHandle,
   type Scope,
-} from '@moonshot-ai/agent-core-v2';
-import { Emitter, Event } from '@moonshot-ai/agent-core-v2/_base/event';
+} from '@legacy-ai/agent-core-v2';
+import { Emitter, Event } from '@legacy-ai/agent-core-v2/_base/event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { serverMessageSchema, type ServerMessage } from '../../src/protocol/messages';
@@ -1010,14 +1010,14 @@ describe('SessionStateAggregator', () => {
   it('aggregates session.state slices and dedupes identical emissions', () => {
     const agg = new SessionStateAggregator();
     agg.feedSessionActivity({ busy: true, mainTurnActive: true, pendingInteraction: 'approval' });
-    agg.feedSeed({ model: 'kimi-k2', contextTokens: 500, maxContextTokens: 1000, permission: 'yolo' });
+    agg.feedSeed({ model: 'floyd-k2', contextTokens: 500, maxContextTokens: 1000, permission: 'yolo' });
     agg.feedMainStatus({ thinkingEffort: 'on', usage: { currentTurn: { inputOther: 1, output: 2, inputCacheRead: 0, inputCacheCreation: 0 } } });
     const first = agg.changed(SESSION)!;
     expect(first).toMatchObject({
       type: 'session.state',
       status: 'running',
       pending_interaction: 'approval',
-      model: 'kimi-k2',
+      model: 'floyd-k2',
       thinking_effort: 'on',
       permission: 'yolo',
       context_tokens: 500,
@@ -1025,9 +1025,9 @@ describe('SessionStateAggregator', () => {
     });
     serverMessageSchema.parse(first);
     expect(agg.changed(SESSION)).toBeUndefined();
-    agg.feedMainStatus({ model: 'kimi-k2-turbo' });
+    agg.feedMainStatus({ model: 'floyd-k2-turbo' });
     const second = agg.changed(SESSION)!;
-    expect(second.model).toBe('kimi-k2-turbo');
+    expect(second.model).toBe('floyd-k2-turbo');
     expect(agg.snapshot(SESSION).status).toBe('running');
 
     agg.feedSessionActivity({ busy: false, mainTurnActive: false, pendingInteraction: 'none' });
@@ -1121,7 +1121,7 @@ describe('SessionProjection', () => {
           if (token === IAgentProfileService) {
             return {
               data: () => ({ profileName: 'coder' }),
-              getModel: () => 'kimi-k2',
+              getModel: () => 'floyd-k2',
               getEffectiveThinkingLevel: () => 'on',
               getModelCapabilities: () => ({ max_input_tokens: 100_000 }),
             };
@@ -1222,7 +1222,7 @@ describe('SessionProjection', () => {
     agent.bus.emit(ev({ type: 'turn.started', turnId: 1, origin: { kind: 'user' }, prompt: 'go' }) as Event2<any>);
     agent.bus.emit(ev({ type: 'turn.step.started', turnId: 1, step: 1 }) as Event2<any>);
     agent.bus.emit(ev({ type: 'assistant.delta', turnId: 1, delta: 'Hi' }) as Event2<any>);
-    agent.bus.emit(ev({ type: 'agent.status.updated', agentId: 'main', model: 'kimi-k2' }) as Event2<any>);
+    agent.bus.emit(ev({ type: 'agent.status.updated', agentId: 'main', model: 'floyd-k2' }) as Event2<any>);
     agent.bus.emit(ev({ type: 'agent.status.updated', agentId: 'main', planMode: true }) as Event2<any>);
     agent.bus.emit(
       ev({ type: 'plan.revision', agentId: 'main', id: 'r0', version: 1, key: 'boom', sha256: 'x', bytes: 1 }) as Event2<any>,
@@ -1327,7 +1327,7 @@ describe('SessionProjection', () => {
     const states = ofType(received, 'session.state');
     expect(states.length).toBeGreaterThan(0);
     expect(states.at(-1)).toMatchObject({
-      model: 'kimi-k2',
+      model: 'floyd-k2',
       context_tokens: 500,
       modes: { plan: { review_path: 'agents/main/plan/x.md', version: 2 } },
     });

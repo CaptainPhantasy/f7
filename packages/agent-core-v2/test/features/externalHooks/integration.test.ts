@@ -187,7 +187,7 @@ function stubProfileCatalog(name = 'default'): ISessionAgentProfileCatalog {
   } as unknown as ISessionAgentProfileCatalog;
 }
 
-function stubModelService(model = 'kimi-test'): IModelService {
+function stubModelService(model = 'floyd-test'): IModelService {
   return {
     _serviceBrand: undefined,
     getDefaultModel: () => model,
@@ -764,7 +764,7 @@ describe('IExternalHooksRunnerService integration', () => {
       {
         event: 'Notification',
         matcher: 'permission_prompt',
-        command: 'notify-send Kimi',
+        command: 'notify-send Floyd',
         timeout: 5,
       },
     ];
@@ -1116,7 +1116,7 @@ describe('IExternalHooksRunnerService integration', () => {
           reg.definePartialInstance(ISessionManager, lifecycle.service);
           reg.defineInstance(ISessionMetadata, stubSessionMetadata('My Session'));
           reg.defineInstance(ISessionAgentProfileCatalog, stubProfileCatalog('coder'));
-          reg.defineInstance(IModelService, stubModelService('kimi-k2'));
+          reg.defineInstance(IModelService, stubModelService('floyd-k2'));
           reg.definePartialInstance(ISessionSubagentService, {
             hooks: createHooks<AgentTaskHooks, keyof AgentTaskHooks>(['onWillStartAgentTask']),
             onDidStopAgentTask: Event.None as Event<AgentTaskStopHookContext>,
@@ -1147,7 +1147,7 @@ describe('IExternalHooksRunnerService integration', () => {
       expect(readHookLog(path)).toEqual([
         {
           event: 'SessionStart',
-          model: 'kimi-k2',
+          model: 'floyd-k2',
           profile: 'coder',
           sessionTitle: 'My Session',
           clientType: 'test_platform',

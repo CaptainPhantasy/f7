@@ -14,15 +14,15 @@ export type {
   PermissionMode,
   PromptOrigin,
   CronTask,
-} from '@moonshot-ai/agent-core-v2';
-export { WIRE_PROTOCOL_VERSION } from '@moonshot-ai/agent-core-v2/wire/migration/migration';
+} from '@legacy-ai/agent-core-v2';
+export { WIRE_PROTOCOL_VERSION } from '@legacy-ai/agent-core-v2/wire/migration/migration';
 export type {
   AgentTaskInfo as BackgroundTaskInfo,
   AgentTaskStatus as BackgroundTaskStatus,
-} from '@moonshot-ai/agent-core-v2';
-export type { SubagentTaskInfo as AgentBackgroundTaskInfo } from '@moonshot-ai/agent-core-v2';
-export type { ProcessTaskInfo as ProcessBackgroundTaskInfo } from '@moonshot-ai/agent-core-v2/agent/tools/os/bash/process-task';
-export type { QuestionTaskInfo as QuestionBackgroundTaskInfo } from '@moonshot-ai/agent-core-v2/agent/tools/ask-user-question/question-background-task';
+} from '@legacy-ai/agent-core-v2';
+export type { SubagentTaskInfo as AgentBackgroundTaskInfo } from '@legacy-ai/agent-core-v2';
+export type { ProcessTaskInfo as ProcessBackgroundTaskInfo } from '@legacy-ai/agent-core-v2/agent/tools/os/bash/process-task';
+export type { QuestionTaskInfo as QuestionBackgroundTaskInfo } from '@legacy-ai/agent-core-v2/agent/tools/ask-user-question/question-background-task';
 
 import type {
   AgentTaskInfo as BackgroundTaskInfo,
@@ -63,30 +63,30 @@ import type {
   TokenCountingTurnRecorded,
   ToolsRegisterUserTool,
   ToolsUnregisterUserTool,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import type {
   ContextAppendLoopEvent,
   ContextAppendMessage,
   ContextApplyCompactionPayload,
   ContextClear,
   ContextUndo,
-} from '@moonshot-ai/agent-core-v2/agent/contextMemory/contextEvents';
-import type { TurnCancel, TurnEnded, TurnPrompt, TurnSteer } from '@moonshot-ai/agent-core-v2/agent/loop/turnOps';
-import type { TurnStepInterrupted } from '@moonshot-ai/agent-core-v2/agent/loop/turnEvents';
-import type { TurnStepRetrying } from '@moonshot-ai/agent-core-v2/agent/loop/turnEvents';
-import type { UsageRecord } from '@moonshot-ai/agent-core-v2/agent/usage/usageOps';
+} from '@legacy-ai/agent-core-v2/agent/contextMemory/contextEvents';
+import type { TurnCancel, TurnEnded, TurnPrompt, TurnSteer } from '@legacy-ai/agent-core-v2/agent/loop/turnOps';
+import type { TurnStepInterrupted } from '@legacy-ai/agent-core-v2/agent/loop/turnEvents';
+import type { TurnStepRetrying } from '@legacy-ai/agent-core-v2/agent/loop/turnEvents';
+import type { UsageRecord } from '@legacy-ai/agent-core-v2/agent/usage/usageOps';
 import type {
   ConfigUpdate,
   ProfileBind,
   ToolsResetActiveTools,
   ToolsSetActiveTools,
-} from '@moonshot-ai/agent-core-v2/agent/profile/profileOps';
-import type { PermissionSetMode } from '@moonshot-ai/agent-core-v2/agent/permissionMode/permissionModeOps';
-import type { PermissionRecordApprovalResult } from '@moonshot-ai/agent-core-v2/agent/permissionRules/permissionRulesOps';
-import type { RuntimeSetBinding } from '@moonshot-ai/agent-core-v2/agent/runtimeBinding/runtimeBindingOps';
-import type { SwarmModeEnter, SwarmModeExit } from '@moonshot-ai/agent-core-v2/features/swarm/swarmOps';
-import type { TowerModeEnter, TowerModeExit } from '@moonshot-ai/agent-core-v2/features/tower/towerOps';
-import type { ToolsUpdateStore } from '@moonshot-ai/agent-core-v2/features/todo/todoOps';
+} from '@legacy-ai/agent-core-v2/agent/profile/profileOps';
+import type { PermissionSetMode } from '@legacy-ai/agent-core-v2/agent/permissionMode/permissionModeOps';
+import type { PermissionRecordApprovalResult } from '@legacy-ai/agent-core-v2/agent/permissionRules/permissionRulesOps';
+import type { RuntimeSetBinding } from '@legacy-ai/agent-core-v2/agent/runtimeBinding/runtimeBindingOps';
+import type { SwarmModeEnter, SwarmModeExit } from '@legacy-ai/agent-core-v2/features/swarm/swarmOps';
+import type { TowerModeEnter, TowerModeExit } from '@legacy-ai/agent-core-v2/features/tower/towerOps';
+import type { ToolsUpdateStore } from '@legacy-ai/agent-core-v2/features/todo/todoOps';
 
 /** A wire record with v2's literal `type` discriminant restored. v2 declares
  *  records as Event2 class + payload interface mergings whose `type` field is
@@ -232,7 +232,7 @@ export type AgentRecordOf<K extends AgentRecord['type']> = Extract<
 /**
  * `manifest.json` shape inside a `/export-debug-zip` bundle. Structural
  * current engine manifest with every field optional because the bundle may
- * come from another machine or an older kimi-code version.
+ * come from another machine or an older floyd-code version.
  */
 export type ImportManifest = Partial<ExportSessionManifest>;
 

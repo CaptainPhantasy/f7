@@ -1,18 +1,18 @@
 {
-  "name": "@moonshot-ai/kosong",
+  "name": "@legacy-ai/kosong",
   "version": "0.5.6",
   "private": true,
   "description": "The LLM abstraction layer for modern AI agent applications",
   "license": "MIT",
-  "author": "Moonshot AI",
-  "homepage": "https://github.com/MoonshotAI/kimi-code/tree/main/packages/kosong#readme",
+  "author": "Legacy AI",
+  "homepage": "https://github.com/LegacyAI/floyd-code/tree/main/packages/kosong#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MoonshotAI/kimi-code.git",
+    "url": "git+https://github.com/LegacyAI/floyd-code.git",
     "directory": "packages/kosong"
   },
   "bugs": {
-    "url": "https://github.com/MoonshotAI/kimi-code/issues"
+    "url": "https://github.com/LegacyAI/floyd-code/issues"
   },
   "keywords": [
     "llm",

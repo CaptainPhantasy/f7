@@ -148,7 +148,7 @@ function persistedAgent(
 interface FakeTaskAgent {
   emitEvent: ReturnType<typeof vi.fn>;
   emittedEvents: Array<{ type: string; info?: unknown }>;
-  kimiConfig?: { task?: { maxRunningTasks?: number } };
+  floydConfig?: { task?: { maxRunningTasks?: number } };
   context: { appendUserMessage: ReturnType<typeof vi.fn> };
   hooks?: { fireAndForgetTrigger: FireAndForgetTrigger };
 }
@@ -215,7 +215,7 @@ function createAgentTaskService(options: {
     emitEvent: vi.fn((event: { type: string; info?: unknown }) => {
       emittedEvents.push(event);
     }),
-    kimiConfig:
+    floydConfig:
       options.maxRunningTasks === undefined
         ? undefined
         : { task: { maxRunningTasks: options.maxRunningTasks } },
@@ -330,7 +330,7 @@ describe('AgentTaskService — event emission', () => {
         mode: 'agent',
         model: 'mock-model',
         protocol: 'openai',
-        provider_type: 'kimi',
+        provider_type: 'floyd',
       },
     });
   });
@@ -360,7 +360,7 @@ describe('AgentTaskService — event emission', () => {
         mode: 'agent',
         model: 'mock-model',
         protocol: 'openai',
-        provider_type: 'kimi',
+        provider_type: 'floyd',
       },
     });
   });
@@ -436,7 +436,7 @@ describe('AgentTaskService — event emission', () => {
   });
 
   it('emits task.terminated when a restored task is marked lost', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-agent-reconcile-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-agent-reconcile-'));
     let fixture: TaskServiceFixture | undefined;
     try {
       const persistence = createAgentTaskPersistence(sessionDir);
@@ -699,7 +699,7 @@ describe('AgentTaskService — notification delivery', () => {
   });
 
   it('TaskStopTool persists stop reason and suppression across reload', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-tool-stop-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-tool-stop-'));
     let writerFixture: TaskServiceFixture | undefined;
     let readerFixture: TaskServiceFixture | undefined;
     try {
@@ -739,7 +739,7 @@ describe('AgentTaskService — notification delivery', () => {
   });
 
   it('replays restored terminal agent task notifications when undelivered', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-agent-replay-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-agent-replay-'));
     let fixture: TaskServiceFixture | undefined;
     try {
       const persistence = createAgentTaskPersistence(sessionDir);
@@ -772,7 +772,7 @@ describe('AgentTaskService — notification delivery', () => {
   });
 
   it('replays restored terminal process task notifications when undelivered', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-bash-replay-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-bash-replay-'));
     let fixture: TaskServiceFixture | undefined;
     try {
       const persistence = createAgentTaskPersistence(sessionDir);
@@ -805,7 +805,7 @@ describe('AgentTaskService — notification delivery', () => {
   });
 
   it('references persisted output without reading a tail for restored process notifications', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-bash-tail-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-bash-tail-'));
     let fixture: TaskServiceFixture | undefined;
     try {
       const taskId = 'bash-large000';
@@ -834,7 +834,7 @@ describe('AgentTaskService — notification delivery', () => {
   });
 
   it('does not replay restored notifications already marked delivered', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-agent-replay-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-agent-replay-'));
     let fixture: TaskServiceFixture | undefined;
     try {
       const origin = {
@@ -870,7 +870,7 @@ describe('AgentTaskService — notification delivery', () => {
   });
 
   it('re-delivers a terminal task notification removed by undo when output is unavailable', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-agent-undo-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-agent-undo-'));
     let fixture: TaskServiceFixture | undefined;
     try {
       const persistence = createAgentTaskPersistence(sessionDir);
@@ -965,7 +965,7 @@ describe('AgentTaskService — notification delivery', () => {
   });
 
   it('does not double-notify newly lost restored agent tasks', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-agent-lost-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-agent-lost-'));
     let fixture: TaskServiceFixture | undefined;
     try {
       const fireAndForgetTrigger = vi.fn<FireAndForgetTrigger>(async () => []);
@@ -1019,7 +1019,7 @@ describe('AgentTaskService — notification delivery', () => {
   });
 
   it('does not repeat a restored lost-task reminder when its marker is missing', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-agent-reminded-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-agent-reminded-'));
     let fixture: TaskServiceFixture | undefined;
     try {
       const persistence = createAgentTaskPersistence(sessionDir);
@@ -1052,7 +1052,7 @@ describe('AgentTaskService — notification delivery', () => {
   });
 
   it('does not replace a delivered legacy lost-task notification with a reminder', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-agent-delivered-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-agent-delivered-'));
     let fixture: TaskServiceFixture | undefined;
     try {
       const persistence = createAgentTaskPersistence(sessionDir);
@@ -1099,7 +1099,7 @@ describe('AgentTaskService — notification delivery', () => {
   });
 
   it('does not block restore when persisting a reminder marker fails', async () => {
-    const sessionDir = await mkdtemp(join(tmpdir(), 'kimi-bg-agent-marker-'));
+    const sessionDir = await mkdtemp(join(tmpdir(), 'floyd-bg-agent-marker-'));
     let fixture: TaskServiceFixture | undefined;
     try {
       const persistence = createAgentTaskPersistence(sessionDir);

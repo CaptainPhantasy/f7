@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { readTodoItems } from '@moonshot-ai/agent-core-v2/features/todo/todoItem';
+import { readTodoItems } from '@legacy-ai/agent-core-v2/features/todo/todoItem';
 
 import { closeDanglingToolCalls } from './close-tool-calls.js';
 import { extractToolCallDisplays } from './tool-call-display.js';

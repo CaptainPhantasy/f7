@@ -101,7 +101,7 @@ describe('facade routing', () => {
 
     channel.results.set('oauthService.startLogin', {
       flow_id: 'f1',
-      provider: 'managed:kimi-code',
+      provider: 'managed:floyd-code',
       status: 'pending',
       verification_uri: 'https://example.com/device',
       verification_uri_complete: 'https://example.com/device?user_code=ABCD',
@@ -110,11 +110,11 @@ describe('facade routing', () => {
       expires_at: '2026-08-19T15:00:00.000Z',
       interval: 5,
     });
-    await klient.global.auth.startLogin('managed:kimi-code', { region: 'global' });
+    await klient.global.auth.startLogin('managed:floyd-code', { region: 'global' });
     expect(channel.calls[0]).toMatchObject({
       service: 'oauthService',
       method: 'startLogin',
-      args: ['managed:kimi-code', { region: 'global' }],
+      args: ['managed:floyd-code', { region: 'global' }],
     });
   });
 
@@ -122,8 +122,8 @@ describe('facade routing', () => {
     const channel = new FakeChannel();
     const klient = createKlientFromChannel(channel);
     const status = {
-      id: 'kimi-cu',
-      displayName: 'Kimi Computer Use',
+      id: 'floyd-cu',
+      displayName: 'Floyd Computer Use',
       description: 'Background GUI automation',
       supported: true,
       state: 'partial',
@@ -135,13 +135,13 @@ describe('facade routing', () => {
 
     await expect(klient.global.capabilities.list()).resolves.toEqual([status]);
     channel.result = status;
-    await expect(klient.global.capabilities.get('kimi-cu')).resolves.toEqual(status);
-    await expect(klient.global.capabilities.install('kimi-cu')).resolves.toEqual(status);
+    await expect(klient.global.capabilities.get('floyd-cu')).resolves.toEqual(status);
+    await expect(klient.global.capabilities.install('floyd-cu')).resolves.toEqual(status);
 
     expect(channel.calls).toEqual([
       { scope: {}, service: 'capabilityService', method: 'listCapabilities', args: [] },
-      { scope: {}, service: 'capabilityService', method: 'getCapability', args: ['kimi-cu'] },
-      { scope: {}, service: 'capabilityService', method: 'installCapability', args: ['kimi-cu'] },
+      { scope: {}, service: 'capabilityService', method: 'getCapability', args: ['floyd-cu'] },
+      { scope: {}, service: 'capabilityService', method: 'installCapability', args: ['floyd-cu'] },
     ]);
   });
 

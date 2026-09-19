@@ -34,7 +34,7 @@ describe('cron-fired steer turn context', () => {
       manualTick: true,
       clock: `file:${clockFile}`,
     };
-    ctx.kimiConfig = { ...ctx.kimiConfig, cron: cronConfig };
+    ctx.floydConfig = { ...ctx.floydConfig, cron: cronConfig };
     await ctx.restorePersisted();
 
     await ctx.rpc.setPermission({ mode: 'yolo' });

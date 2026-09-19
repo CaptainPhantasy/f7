@@ -1,8 +1,8 @@
-# @moonshot-ai/kimi-code-oauth
+# @legacy-ai/floyd-code-oauth
 
-OAuth toolkit for Kimi Code managed authentication.
+OAuth toolkit for Floyd Code managed authentication.
 
-Part of the [Kimi Code](https://github.com/MoonshotAI/kimi-code) monorepo.
+Part of the [Floyd Code](https://github.com/LegacyAI/floyd-code) monorepo.
 
 See the main repository for documentation, issues, and contribution guidelines.
 

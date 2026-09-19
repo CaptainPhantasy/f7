@@ -36,8 +36,8 @@ describe('WorkspaceTrustService', () => {
   let disposables: DisposableStore;
 
   beforeEach(() => {
-    homeDir = mkdtempSync(join(tmpdir(), 'kimi-workspace-trust-home-'));
-    cwd = mkdtempSync(join(tmpdir(), 'kimi-workspace-trust-cwd-'));
+    homeDir = mkdtempSync(join(tmpdir(), 'floyd-workspace-trust-home-'));
+    cwd = mkdtempSync(join(tmpdir(), 'floyd-workspace-trust-cwd-'));
     disposables = new DisposableStore();
   });
 
@@ -155,7 +155,7 @@ describe('WorkspaceTrustService', () => {
   });
 
   it('tracks different roots independently', async () => {
-    const other = mkdtempSync(join(tmpdir(), 'kimi-workspace-trust-other-'));
+    const other = mkdtempSync(join(tmpdir(), 'floyd-workspace-trust-other-'));
     try {
       const { service: first } = createService(cwd);
       await first.ready;

@@ -995,12 +995,12 @@ describe('WireService journal location', () => {
 
   it('reports the on-disk journal path resolved by the storage layer', () => {
     const locatedStorage: IFileSystemStorageService = Object.assign(Object.create(storage), {
-      pathFor: (scope: string, key: string) => `/home/user/.kimi-code/${scope}/${key}`,
+      pathFor: (scope: string, key: string) => `/home/user/.floyd-code/${scope}/${key}`,
     }) as IFileSystemStorageService;
     const located = wireOverLog(log, 'located', { storage: locatedStorage });
 
     expect(located.journalPath()).toBe(
-      `/home/user/.kimi-code/${testWireScope(SCOPE, 'located')}/${AGENT_WIRE_RECORD_KEY}`,
+      `/home/user/.floyd-code/${testWireScope(SCOPE, 'located')}/${AGENT_WIRE_RECORD_KEY}`,
     );
   });
 });

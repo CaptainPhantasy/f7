@@ -5,9 +5,9 @@ import { fileURLToPath } from 'node:url';
 
 import { gt, valid } from 'semver';
 
-export const KIMI_CODE_PLUGIN_MARKETPLACE_URL =
-  'https://code.kimi.com/kimi-code/plugins/marketplace.json';
-export const KIMI_CODE_PLUGIN_MARKETPLACE_URL_ENV = 'KIMI_CODE_PLUGIN_MARKETPLACE_URL';
+export const FLOYD_CODE_PLUGIN_MARKETPLACE_URL =
+  'https://code.floyd.com/floyd-code/plugins/marketplace.json';
+export const FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV = 'FLOYD_CODE_PLUGIN_MARKETPLACE_URL';
 
 export const PLUGIN_MARKETPLACE_TIERS = ['official', 'curated'] as const;
 
@@ -70,7 +70,7 @@ export function computeUpdateStatus(
 export function resolveMarketplaceLocation(source: string, workDir: string): MarketplaceLocation {
   const trimmed = source.trim();
   if (trimmed.length === 0) {
-    throw new Error(`${KIMI_CODE_PLUGIN_MARKETPLACE_URL_ENV} cannot be empty.`);
+    throw new Error(`${FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV} cannot be empty.`);
   }
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return { raw: trimmed, kind: 'remote', resolved: trimmed };

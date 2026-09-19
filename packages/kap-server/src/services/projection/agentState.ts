@@ -1,4 +1,4 @@
-import type { AgentActivitySnapshot, AgentTaskInfo } from '@moonshot-ai/agent-core-v2';
+import type { AgentActivitySnapshot, AgentTaskInfo } from '@legacy-ai/agent-core-v2';
 
 import type {
   AgentStateMessage,

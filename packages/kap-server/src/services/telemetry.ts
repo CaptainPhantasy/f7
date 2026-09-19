@@ -7,12 +7,12 @@ import {
   IOAuthToolkit,
   ITelemetryService,
   type Scope,
-} from '@moonshot-ai/agent-core-v2';
-import { createKimiDeviceId } from '@moonshot-ai/kimi-code-oauth';
+} from '@legacy-ai/agent-core-v2';
+import { createFloydDeviceId } from '@legacy-ai/floyd-code-oauth';
 
-const SERVER_TELEMETRY_APP_NAME = 'kimi-code-cli';
+const SERVER_TELEMETRY_APP_NAME = 'floyd-code-cli';
 const SERVER_TELEMETRY_UI_MODE = 'web';
-const TELEMETRY_DISABLE_ENV = 'KIMI_DISABLE_TELEMETRY';
+const TELEMETRY_DISABLE_ENV = 'FLOYD_DISABLE_TELEMETRY';
 const TELEMETRY_DISABLE_ENV_VALUES = new Set(['1', 'true', 't', 'yes', 'y']);
 
 const TELEMETRY_SHUTDOWN_TIMEOUT_MS = 3_000;
@@ -39,7 +39,7 @@ export async function initializeServerTelemetry(
 
   const auth = core.accessor.get(IOAuthToolkit);
   const appender = createCloudAppender(core.accessor, {
-    deviceId: createKimiDeviceId(homeDir),
+    deviceId: createFloydDeviceId(homeDir),
     appName: SERVER_TELEMETRY_APP_NAME,
     uiMode: SERVER_TELEMETRY_UI_MODE,
     model: config.get<string>('defaultModel') ?? undefined,

@@ -17,7 +17,7 @@ import {
 import type { OpenAITrait } from '#human/llm/requester/bases/openai/trait';
 import { openAIBase } from '#human/llm/requester/bases/openai/requester';
 import { openAIResponsesBase } from '#human/llm/requester/bases/openai-responses/requester';
-import { KimiFiles, kimiFilesBaseUrl } from '#human/llm-kimi/files';
+import { FloydFiles, floydFilesBaseUrl } from '#human/llm-floyd/files';
 
 import type { Model } from '../model/catalog';
 import type { ResolvedLlmModel } from '../model/model-requester-impl';
@@ -34,17 +34,17 @@ import { getProtocolBase, listProtocolBases, type ProtocolBaseId } from './proto
 
 const vertexGenAIBase = createGoogleGenAIBase({ vertexai: true });
 
-const kimiMedia: ProviderMediaContribution = {
+const floydMedia: ProviderMediaContribution = {
   uploadVideo: (video, { model, signal }) =>
-    new KimiFiles({
+    new FloydFiles({
       apiKey: model.apiKey,
-      baseUrl: kimiFilesBaseUrl(model),
+      baseUrl: floydFilesBaseUrl(model),
       defaultHeaders: model.defaultHeaders === undefined ? undefined : { ...model.defaultHeaders },
     }).uploadVideo(video, { signal }),
   uploadImage: (image, { model, signal }) =>
-    new KimiFiles({
+    new FloydFiles({
       apiKey: model.apiKey,
-      baseUrl: kimiFilesBaseUrl(model),
+      baseUrl: floydFilesBaseUrl(model),
       defaultHeaders: model.defaultHeaders === undefined ? undefined : { ...model.defaultHeaders },
     }).uploadImage(image, { signal }),
 };
@@ -68,7 +68,7 @@ function routeFor(model: Model): AdapterRoute {
     model.providerType === undefined
       ? undefined
       : getProviderDefinition(model.providerType, model.protocol);
-  const routeMedia = definition?.modelSource === 'oauth-catalog' ? kimiMedia : undefined;
+  const routeMedia = definition?.modelSource === 'oauth-catalog' ? floydMedia : undefined;
   const custom =
     definition !== undefined &&
     (definition.trait !== undefined ||

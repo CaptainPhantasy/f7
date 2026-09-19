@@ -1,4 +1,4 @@
-import { replaceUserAgentProduct } from '@moonshot-ai/kimi-code-oauth';
+import { replaceUserAgentProduct } from '@legacy-ai/floyd-code-oauth';
 
 import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
 

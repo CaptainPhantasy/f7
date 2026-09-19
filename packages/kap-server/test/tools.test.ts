@@ -9,7 +9,7 @@ import {
   ISessionToolPolicy,
   IModelCatalog,
   type ExecutableTool,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import {
   listMcpServersResponseSchema,
   listToolsResponseSchema,
@@ -42,7 +42,7 @@ describe('server-v2 /api/v1 tools + mcp', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-tools-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-tools-'));
     const modelCatalog: IModelCatalog = {
       _serviceBrand: undefined,
       get: () => {

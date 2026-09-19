@@ -1,21 +1,21 @@
 {
-  "name": "@moonshot-ai/minidb",
+  "name": "@legacy-ai/minidb",
   "version": "0.2.0",
   "private": true,
   "description": "A pure-Node.js embedded key-value database mixing Redis-style in-memory KV with SQLite-style durable persistence (WAL + snapshot).",
   "license": "MIT",
-  "author": "Moonshot AI",
-  "homepage": "https://github.com/MoonshotAI/kimi-code/tree/main/packages/minidb#readme",
+  "author": "Legacy AI",
+  "homepage": "https://github.com/LegacyAI/floyd-code/tree/main/packages/minidb#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MoonshotAI/kimi-code.git",
+    "url": "git+https://github.com/LegacyAI/floyd-code.git",
     "directory": "packages/minidb"
   },
   "bugs": {
-    "url": "https://github.com/MoonshotAI/kimi-code/issues"
+    "url": "https://github.com/LegacyAI/floyd-code/issues"
   },
   "keywords": [
-    "kimi",
+    "floyd",
     "database",
     "key-value",
     "embedded",

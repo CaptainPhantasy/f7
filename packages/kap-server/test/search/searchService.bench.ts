@@ -9,8 +9,8 @@ import type {
   ILogService,
   ISessionIndex,
   SessionSummary,
-} from '@moonshot-ai/agent-core-v2';
-import { DATABASE_SECTION } from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
+import { DATABASE_SECTION } from '@legacy-ai/agent-core-v2';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -107,7 +107,7 @@ describe('baseline: synthetic corpus', () => {
   const services: GlobalSearchService[] = [];
 
   beforeEach(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-kap-search-baseline-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-kap-search-baseline-'));
   });
 
   afterEach(async () => {

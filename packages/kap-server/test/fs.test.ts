@@ -2,9 +2,9 @@ import { chmod, mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 
-import { IModelCatalog, IWorkspaceInstanceManager } from '@moonshot-ai/agent-core-v2';
-import { HostFileSystem } from '@moonshot-ai/agent-core-v2/os/backends/node-local/hostFsService';
-import { FakeRuntime } from '@moonshot-ai/agent-core-v2/runtime/fakeRuntime';
+import { IModelCatalog, IWorkspaceInstanceManager } from '@legacy-ai/agent-core-v2';
+import { HostFileSystem } from '@legacy-ai/agent-core-v2/os/backends/node-local/hostFsService';
+import { FakeRuntime } from '@legacy-ai/agent-core-v2/runtime/fakeRuntime';
 import { ErrorCode } from '../src/protocol/error-codes';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
@@ -38,7 +38,7 @@ describe('server-v2 /api/v1 fs routes', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fs-home-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fs-home-'));
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',
@@ -51,7 +51,7 @@ describe('server-v2 /api/v1 fs routes', () => {
   });
 
   beforeEach(async () => {
-    work = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fs-work-'));
+    work = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fs-work-'));
   });
 
   afterEach(async () => {
@@ -139,7 +139,7 @@ describe('server-v2 /api/v1 fs routes', () => {
 
   it('fs:read uses the selected non-local runtime and mapped workspace root', async () => {
     await writeFile(join(work!, 'selected.txt'), 'local');
-    const remote = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fs-remote-'));
+    const remote = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fs-remote-'));
     await writeFile(join(remote, 'selected.txt'), 'remote');
     const id = await createSession();
     const provider = await server!.core.accessor.get(IWorkspaceInstanceManager).addProvider({
@@ -312,7 +312,7 @@ describe('server-v2 /api/v1 fs routes', () => {
   });
 
   it('rejects reads and downloads that escape the workspace through a symlink', async () => {
-    const outside = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fs-outside-'));
+    const outside = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fs-outside-'));
     try {
       await writeFile(join(outside, 'secret.txt'), 'top-secret');
       await symlink(outside, join(work!, 'docs'), 'dir');
@@ -332,7 +332,7 @@ describe('server-v2 /api/v1 fs routes', () => {
   });
 
   it('serves fs actions when the session cwd itself goes through a symlink', async () => {
-    const link = join(tmpdir(), `kimi-server-v2-fs-cwd-link-${process.pid}`);
+    const link = join(tmpdir(), `floyd-server-v2-fs-cwd-link-${process.pid}`);
     await symlink(work!, link, 'dir');
     try {
       const res = await fetch(`${base}/api/v1/sessions`, {
@@ -616,7 +616,7 @@ describe('server-v2 /api/v1 fs routes', () => {
   });
 
   it('fs:suggest merges candidates across roots with relative paths for the primary root only', async () => {
-    const extra = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fs-extra-'));
+    const extra = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fs-extra-'));
     try {
       await writeFile(join(work!, 'shared-name.ts'), '');
       await mkdir(join(extra, 'lib'));
@@ -638,7 +638,7 @@ describe('server-v2 /api/v1 fs routes', () => {
   });
 
   it('fs:suggest lists top-level entries of every root for an empty query', async () => {
-    const extra = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fs-extra-'));
+    const extra = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fs-extra-'));
     try {
       await writeFile(join(work!, 'top-work.ts'), '');
       await writeFile(join(extra, 'top-extra.ts'), '');
@@ -680,7 +680,7 @@ describe('server-v2 /api/v1 fs routes', () => {
   });
 
   it('fs:suggest applies the limit to the merged ranking across roots', async () => {
-    const extra = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fs-extra-'));
+    const extra = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fs-extra-'));
     try {
       await writeFile(join(work!, 'a1.ts'), '');
       await writeFile(join(extra, 'a2.ts'), '');
@@ -699,7 +699,7 @@ describe('server-v2 /api/v1 fs routes', () => {
   });
 
   it('fs:suggest honors follow_gitignore on each root', async () => {
-    const extra = await mkdtemp(join(tmpdir(), 'kimi-server-v2-fs-extra-'));
+    const extra = await mkdtemp(join(tmpdir(), 'floyd-server-v2-fs-extra-'));
     try {
       await writeFile(join(extra, '.gitignore'), 'ignored-extra.ts\n');
       await writeFile(join(extra, 'ignored-extra.ts'), '');

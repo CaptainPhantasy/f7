@@ -63,10 +63,10 @@ function testAgent(
 }
 
 const CATALOGUED_PROVIDER = {
-  type: 'kimi',
+  type: 'floyd',
   apiKey: 'test-key',
   baseUrl: 'https://api.example/v1',
-  model: 'kimi-code',
+  model: 'floyd-code',
 } as const;
 const CATALOGUED_MODEL_CAPABILITIES = {
   image_in: true,
@@ -361,8 +361,8 @@ describe('FullCompaction', () => {
   });
 
   it('keeps the active profile system prompt frozen after compaction without resetting active tools', async () => {
-    const homeDir = mkdtempSync(join(tmpdir(), 'kimi-compact-refresh-home-'));
-    const workDir = mkdtempSync(join(tmpdir(), 'kimi-compact-refresh-work-'));
+    const homeDir = mkdtempSync(join(tmpdir(), 'floyd-compact-refresh-home-'));
+    const workDir = mkdtempSync(join(tmpdir(), 'floyd-compact-refresh-work-'));
     try {
       writeFileSync(join(workDir, 'AGENTS.md'), 'old project instructions', 'utf-8');
       const ctx = testAgent(
@@ -492,7 +492,7 @@ describe('FullCompaction', () => {
       generate,
     });
     ctx.configure();
-    await ctx.rpc.setModel({ model: 'kimi-code' });
+    await ctx.rpc.setModel({ model: 'floyd-code' });
     ctx.newEvents();
     ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
     ctx.appendExchange(2, 'recent user two', 'recent assistant two', 80);
@@ -544,7 +544,7 @@ describe('FullCompaction', () => {
   });
 
   it('fires PreCompact and PostCompact hooks from the compaction module', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'kimi-compact-hooks-'));
+    const dir = mkdtempSync(join(tmpdir(), 'floyd-compact-hooks-'));
     const hookLog = join(dir, 'hooks.jsonl');
     const hookCommand = hookPayloadLoggerCommand(hookLog);
     const ctx = testAgent({
@@ -676,8 +676,8 @@ describe('FullCompaction', () => {
     await ctx.expectResumeMatches();
   });
 
-  it('retries any compaction request error indefinitely when KIMI_CODE_INFINITE_RETRY is set', async () => {
-    vi.stubEnv('KIMI_CODE_INFINITE_RETRY', '1');
+  it('retries any compaction request error indefinitely when FLOYD_CODE_INFINITE_RETRY is set', async () => {
+    vi.stubEnv('FLOYD_CODE_INFINITE_RETRY', '1');
     let attempts = 0;
     const generate: GenerateFn = requesterFromGenerateFn(async () => {
       attempts += 1;
@@ -703,8 +703,8 @@ describe('FullCompaction', () => {
     await ctx.expectResumeMatches();
   });
 
-  it('lets context overflow reach compaction shrink instead of retrying when KIMI_CODE_INFINITE_RETRY is set', async () => {
-    vi.stubEnv('KIMI_CODE_INFINITE_RETRY', '1');
+  it('lets context overflow reach compaction shrink instead of retrying when FLOYD_CODE_INFINITE_RETRY is set', async () => {
+    vi.stubEnv('FLOYD_CODE_INFINITE_RETRY', '1');
     let attempts = 0;
     const generate: GenerateFn = requesterFromGenerateFn(async () => {
       attempts += 1;
@@ -1124,9 +1124,9 @@ describe('FullCompaction', () => {
         from: 'compacting',
         trace_id: 'trace-compact-retry',
         mode: 'agent',
-        model: 'kimi-code',
+        model: 'floyd-code',
         protocol: 'openai',
-        provider_type: 'kimi',
+        provider_type: 'floyd',
       },
     });
     vi.useRealTimers();
@@ -3042,7 +3042,7 @@ describe('FullCompaction', () => {
   });
 
   it('honors completion budget env hard caps during compaction', async () => {
-    vi.stubEnv('KIMI_MODEL_MAX_COMPLETION_TOKENS', '8192');
+    vi.stubEnv('FLOYD_MODEL_MAX_COMPLETION_TOKENS', '8192');
     let callCount = 0;
     const compactionMaxCompletionTokens: unknown[] = [];
     const generate: GenerateFn = requesterFromGenerateFn(async (_provider, _system, _tools, _history, callbacks, options) => {
@@ -3078,7 +3078,7 @@ describe('FullCompaction', () => {
   it.each(['0', '-1'])(
     'honors completion budget env opt-out (%s) during compaction',
     async (maxCompletionTokens) => {
-      vi.stubEnv('KIMI_MODEL_MAX_COMPLETION_TOKENS', maxCompletionTokens);
+      vi.stubEnv('FLOYD_MODEL_MAX_COMPLETION_TOKENS', maxCompletionTokens);
       let callCount = 0;
       const compactionMaxCompletionTokens: unknown[] = [];
       const generate: GenerateFn = requesterFromGenerateFn(async (_provider, _system, _tools, _history, callbacks, options) => {
@@ -3135,7 +3135,7 @@ describe('FullCompaction', () => {
       provider: CATALOGUED_PROVIDER,
       modelCapabilities: CATALOGUED_MODEL_CAPABILITIES,
     });
-    const models = (ctx as unknown as MutableKimiConfig).kimiConfig.models;
+    const models = (ctx as unknown as MutableFloydConfig).floydConfig.models;
     models![CATALOGUED_PROVIDER.model] = {
       ...models![CATALOGUED_PROVIDER.model]!,
       maxOutputSize: 64_000,
@@ -3493,7 +3493,7 @@ describe('FullCompaction', () => {
 });
 
 describe('FullCompaction context recovery pointer', () => {
-  const JOURNAL_HOME = '/home/user/.kimi-code';
+  const JOURNAL_HOME = '/home/user/.floyd-code';
 
   interface ApplyCompactionArgs {
     readonly summary?: string;
@@ -3732,18 +3732,18 @@ function oauthTestAgentOptions(
 } {
   return {
     initialConfig: {
-      defaultModel: 'kimi-code',
+      defaultModel: 'floyd-code',
       providers: {
-        'managed:kimi-code': {
+        'managed:floyd-code': {
           type: 'google-genai',
           baseUrl: 'https://api.example/v1',
-          oauth: { storage: 'file', key: 'oauth/kimi-code' },
+          oauth: { storage: 'file', key: 'oauth/floyd-code' },
         },
       },
       models: {
-        'kimi-code': {
-          provider: 'managed:kimi-code',
-          model: 'kimi-for-coding',
+        'floyd-code': {
+          provider: 'managed:floyd-code',
+          model: 'floyd-for-coding',
           maxContextSize: 1_000_000,
         },
       },
@@ -3759,8 +3759,8 @@ function oauthTestAgentOptions(
   };
 }
 
-type MutableKimiConfig = {
-  kimiConfig: {
+type MutableFloydConfig = {
+  floydConfig: {
     models?: Record<string, { maxOutputSize?: number }>;
   };
 };

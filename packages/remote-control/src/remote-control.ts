@@ -7,18 +7,18 @@ import { promisify } from 'node:util';
 import { gzip } from 'node:zlib';
 
 import {
-  createKimiDeviceId,
+  createFloydDeviceId,
   FileTokenStorage,
-  KIMI_CODE_PROVIDER_NAME,
-  resolveKimiTokenStorageName,
-} from '@moonshot-ai/kimi-code-oauth';
+  FLOYD_CODE_PROVIDER_NAME,
+  resolveFloydTokenStorageName,
+} from '@legacy-ai/floyd-code-oauth';
 import { WebSocket, type RawData } from 'ws';
 
 import { acquireRemoteControlLock } from './lock';
 
-export const REMOTE_CONTROL_RELAY_ORIGIN = 'https://code-rc.kimi.com';
+export const REMOTE_CONTROL_RELAY_ORIGIN = 'https://code-rc.floyd.com';
 
-export const REMOTE_CONTROL_RELAY_URL_ENV = 'KIMI_CODE_REMOTE_CONTROL_RELAY_URL';
+export const REMOTE_CONTROL_RELAY_URL_ENV = 'FLOYD_CODE_REMOTE_CONTROL_RELAY_URL';
 
 export function resolveRemoteControlRelayOrigin(
   env: Readonly<Record<string, string | undefined>> = process.env,
@@ -133,7 +133,7 @@ export function buildRemoteControlUrl(
     sessionId === undefined
       ? `${devicePath}/`
       : `${devicePath}/sessions/${encodeURIComponent(sessionId)}`;
-  url.search = new URLSearchParams({ rc: '1', from: 'kimi_code_cli' }).toString();
+  url.search = new URLSearchParams({ rc: '1', from: 'floyd_code_cli' }).toString();
   url.hash = '';
   return url.toString();
 }
@@ -202,7 +202,7 @@ export function rewriteRemoteControlResponse(
   const normalizedPrefix = publicPrefix.replace(/\/+$/, '');
   if (contentType.toLowerCase().includes('text/html')) {
     const prefixLiteral = JSON.stringify(normalizedPrefix);
-    const injected = `<script>(function(){var p=${prefixLiteral};try{sessionStorage.setItem('kimi-desktop-server-origin',location.origin+p)}catch(e){}var w=function(f){return function(s,t,u){if(typeof u==='string'&&u.charAt(0)==='/'&&u.indexOf(p)!==0)u=p+u;return f.apply(this,[s,t,u])}};history.pushState=w(history.pushState);history.replaceState=w(history.replaceState)})();</script>`;
+    const injected = `<script>(function(){var p=${prefixLiteral};try{sessionStorage.setItem('floyd-desktop-server-origin',location.origin+p)}catch(e){}var w=function(f){return function(s,t,u){if(typeof u==='string'&&u.charAt(0)==='/'&&u.indexOf(p)!==0)u=p+u;return f.apply(this,[s,t,u])}};history.pushState=w(history.pushState);history.replaceState=w(history.replaceState)})();</script>`;
     let text = body.toString('utf8');
     const headMatch = /<head(?:\s[^>]*)?>/i.exec(text);
     text =
@@ -281,13 +281,13 @@ export async function startRemoteControl(
   }
   const storage = new FileTokenStorage(join(options.homeDir, 'credentials'));
   const token = await storage.load(
-    resolveKimiTokenStorageName({ providerName: KIMI_CODE_PROVIDER_NAME }),
+    resolveFloydTokenStorageName({ providerName: FLOYD_CODE_PROVIDER_NAME }),
   );
   if (token?.refreshToken === undefined || token.refreshToken.length === 0) {
-    throw new Error('Remote Control requires a Kimi login. Run `kimi login` first.');
+    throw new Error('Remote Control requires a Floyd login. Run `floyd login` first.');
   }
   const relayOrigin = options.relayOrigin ?? resolveRemoteControlRelayOrigin();
-  const deviceId = createKimiDeviceId(options.homeDir);
+  const deviceId = createFloydDeviceId(options.homeDir);
   const deviceName = hostname();
   const url = buildRemoteControlUrl(deviceId, undefined, relayOrigin);
   const lock = await acquireRemoteControlLock(options.homeDir, {
@@ -744,7 +744,7 @@ async function connectWebSocket(
   headers: Record<string, string> = {},
   earlyFrames?: [RawData, boolean][],
 ): Promise<WebSocket> {
-  const protocol = `kimi-code.bearer.${token}`;
+  const protocol = `floyd-code.bearer.${token}`;
   if (isWebSocketProtocolToken(protocol)) {
     try {
       return await connectWebSocketAttempt(url, [protocol], headers, earlyFrames);

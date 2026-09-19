@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { randomUUID } from 'node:crypto';
 
-import { ensureMainAgent, getLiveSessionById, interactions } from '@moonshot-ai/agent-core-v2';
+import { ensureMainAgent, getLiveSessionById, interactions } from '@legacy-ai/agent-core-v2';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { type RunningServer, startServer } from '../src/start';
@@ -46,7 +46,7 @@ describe('server-v2 /api/v1/sessions/{sid}/approvals', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-server-v2-approvals-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-approvals-'));
     server = await startServer({
       hostIdentity: TEST_HOST_IDENTITY,
       host: '127.0.0.1',

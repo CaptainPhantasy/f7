@@ -607,7 +607,7 @@ describe('AgentConversationUndoService', () => {
         mode: 'agent',
         model: 'mock-model',
         protocol: 'openai',
-        provider_type: 'kimi',
+        provider_type: 'floyd',
       },
     });
     expect(ctx.context.get().map((m) => m.role)).toEqual(['user', 'assistant']);
@@ -691,7 +691,7 @@ describe('AgentConversationUndoService', () => {
           mode: 'agent',
           model: 'mock-model',
           protocol: 'openai',
-          provider_type: 'kimi',
+          provider_type: 'floyd',
         },
       });
     } finally {

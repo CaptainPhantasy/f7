@@ -1,25 +1,25 @@
 import * as vscode from "vscode";
 
 import {
-  createKimiDeviceId,
-  KIMI_CODE_PROVIDER_NAME,
-  KIMI_REGION_PROFILES,
-  resolveKimiRegion,
-} from "@moonshot-ai/kimi-code-oauth";
+  createFloydDeviceId,
+  FLOYD_CODE_PROVIDER_NAME,
+  FLOYD_REGION_PROFILES,
+  resolveFloydRegion,
+} from "@legacy-ai/floyd-code-oauth";
 import {
-  KimiAuthFacade,
+  FloydAuthFacade,
   loadRuntimeConfigSafe,
   resolveConfigPath,
-  resolveKimiHome,
-  type KimiConfig,
-} from "@moonshot-ai/kimi-code-sdk";
+  resolveFloydHome,
+  type FloydConfig,
+} from "@legacy-ai/floyd-code-sdk";
 import {
   initializeTelemetry,
   setTelemetryEnabled,
   shouldEnableTelemetry,
   shutdownTelemetry,
   track,
-} from "@moonshot-ai/kimi-telemetry";
+} from "@legacy-ai/floyd-telemetry";
 
 const SHUTDOWN_TIMEOUT_MS = 2000;
 
@@ -29,28 +29,28 @@ export interface ExtensionTelemetryOptions {
 }
 
 export function activateExtensionTelemetry(options: ExtensionTelemetryOptions): vscode.Disposable {
-  const homeDir = resolveKimiHome();
+  const homeDir = resolveFloydHome();
   let firstLaunch = false;
-  const deviceId = createKimiDeviceId(homeDir, {
+  const deviceId = createFloydDeviceId(homeDir, {
     onFirstLaunch: () => {
       firstLaunch = true;
     },
   });
   const configPath = resolveConfigPath({ homeDir });
   const config = readTelemetryConfig(configPath);
-  const auth = new KimiAuthFacade({ homeDir, configPath });
+  const auth = new FloydAuthFacade({ homeDir, configPath });
 
   initializeTelemetry({
     homeDir,
     deviceId,
     enabled: config.telemetry !== false,
     initiallyEnabled: vscode.env.isTelemetryEnabled,
-    appName: "kimi-code-vscode",
+    appName: "floyd-code-vscode",
     version: options.version,
     uiMode: "vscode",
     model: config.defaultModel,
     endpoint: () => telemetryEndpoint(homeDir),
-    getAccessToken: async () => (await auth.getCachedAccessToken(KIMI_CODE_PROVIDER_NAME)) ?? null,
+    getAccessToken: async () => (await auth.getCachedAccessToken(FLOYD_CODE_PROVIDER_NAME)) ?? null,
     onUnexpectedError: (error) => options.log(`Telemetry dropped a property: ${error.message}`),
   });
 
@@ -68,7 +68,7 @@ export async function deactivateExtensionTelemetry(): Promise<void> {
 
 function readTelemetryConfig(
   configPath: string,
-): Pick<KimiConfig, "telemetry" | "defaultModel"> {
+): Pick<FloydConfig, "telemetry" | "defaultModel"> {
   try {
     const { config, fileError } = loadRuntimeConfigSafe(configPath);
     if (fileError !== undefined) return {};
@@ -80,13 +80,13 @@ function readTelemetryConfig(
 
 function telemetryEndpoint(homeDir: string): string {
   const oauth = loadRuntimeConfigSafe(resolveConfigPath({ homeDir })).config.providers?.[
-    KIMI_CODE_PROVIDER_NAME
+    FLOYD_CODE_PROVIDER_NAME
   ]?.oauth;
-  const region = resolveKimiRegion({
+  const region = resolveFloydRegion({
     configuredOAuthHost: oauth?.oauthHost,
     configuredOAuthKey: oauth?.key,
     homeDir,
-    readMarker: process.env["KIMI_CODE_REGION_MARKER"] !== "off",
+    readMarker: process.env["FLOYD_CODE_REGION_MARKER"] !== "off",
   });
-  return KIMI_REGION_PROFILES[region].telemetryEndpoint;
+  return FLOYD_REGION_PROFILES[region].telemetryEndpoint;
 }

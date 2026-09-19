@@ -3,7 +3,7 @@ import {
   interactions,
   type AgentActivitySnapshot,
   type IAgentScopeHandle,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 
 import {
   toLegacyPhase,

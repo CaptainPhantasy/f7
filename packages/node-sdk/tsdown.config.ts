@@ -20,15 +20,15 @@ export default defineConfig({
     ].join('\n'),
   },
   alias: {
-    '@moonshot-ai/kaos': fileURLToPath(new URL('../kaos/src/index.ts', import.meta.url)),
-    '@moonshot-ai/kimi-code-oauth/provider-credential': fileURLToPath(
+    '@legacy-ai/kaos': fileURLToPath(new URL('../kaos/src/index.ts', import.meta.url)),
+    '@legacy-ai/floyd-code-oauth/provider-credential': fileURLToPath(
       new URL('../oauth/src/provider-credential.ts', import.meta.url),
     ),
-    '@moonshot-ai/kimi-code-oauth': fileURLToPath(new URL('../oauth/src/index.ts', import.meta.url)),
-    '@moonshot-ai/kosong': fileURLToPath(new URL('../kosong/src/index.ts', import.meta.url)),
+    '@legacy-ai/floyd-code-oauth': fileURLToPath(new URL('../oauth/src/index.ts', import.meta.url)),
+    '@legacy-ai/kosong': fileURLToPath(new URL('../kosong/src/index.ts', import.meta.url)),
   },
   deps: {
-    alwaysBundle: [/^@moonshot-ai\//],
+    alwaysBundle: [/^@legacy-ai\//],
     neverBundle: [],
   },
 });

@@ -1,4 +1,4 @@
-import type { Scope } from '@moonshot-ai/agent-core-v2';
+import type { Scope } from '@legacy-ai/agent-core-v2';
 
 import { registerBusinessSnapshotRoutes } from './businessSnapshotRoutes';
 import { describeAllChannels, resolveAnyScopedServiceId } from './channelRegistry';

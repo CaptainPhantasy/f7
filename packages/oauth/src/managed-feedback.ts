@@ -1,13 +1,13 @@
 /**
- * Submit user feedback to the managed Kimi Code platform.
+ * Submit user feedback to the managed Floyd Code platform.
  *
- * POSTs a JSON body to `{kimiCodeBaseUrl}/feedback` with a Bearer access
- * token. The client tags `version` with a `kimi-code-` prefix so the
+ * POSTs a JSON body to `{floydCodeBaseUrl}/feedback` with a Bearer access
+ * token. The client tags `version` with a `floyd-code-` prefix so the
  * backend can identify this client.
  */
 
 import { readApiErrorMessage } from './api-error';
-import { kimiCodeBaseUrl } from './managed-usage';
+import { floydCodeBaseUrl } from './managed-usage';
 
 export interface SubmitFeedbackBody {
   readonly session_id: string;
@@ -32,8 +32,8 @@ export interface FetchSubmitFeedbackError {
 
 export type FetchSubmitFeedbackResult = FetchSubmitFeedbackOk | FetchSubmitFeedbackError;
 
-export function kimiCodeFeedbackUrl(baseUrl?: string): string {
-  return `${(baseUrl ?? kimiCodeBaseUrl()).replace(/\/+$/, '')}/feedback`;
+export function floydCodeFeedbackUrl(baseUrl?: string): string {
+  return `${(baseUrl ?? floydCodeBaseUrl()).replace(/\/+$/, '')}/feedback`;
 }
 
 export async function fetchSubmitFeedback(

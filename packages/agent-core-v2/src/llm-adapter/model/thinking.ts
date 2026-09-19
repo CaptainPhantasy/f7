@@ -43,7 +43,7 @@ export function requiresStrictThinkingValidation(
 }
 
 export function wireHasProtocolThinkingDisable(protocol: string | undefined): boolean {
-  return protocol === 'anthropic' || protocol === 'kimi';
+  return protocol === 'anthropic' || protocol === 'floyd';
 }
 
 function nonEmpty(value: string | undefined): string | undefined {

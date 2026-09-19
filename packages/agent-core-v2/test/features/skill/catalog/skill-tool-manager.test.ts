@@ -343,9 +343,9 @@ describe('ToolManager SkillTool workspace refresh', () => {
   let tools: IAgentToolRegistryService;
 
   beforeEach(async () => {
-    tmp = await mkdtemp(join(tmpdir(), 'kimi-core-skill-tool-refresh-'));
+    tmp = await mkdtemp(join(tmpdir(), 'floyd-core-skill-tool-refresh-'));
     const workDir = join(tmp, 'work');
-    const skillDir = join(workDir, '.kimi-code', 'skills', 'review');
+    const skillDir = join(workDir, '.floyd-code', 'skills', 'review');
     await mkdir(skillDir, { recursive: true });
     await writeFile(
       join(skillDir, 'SKILL.md'),

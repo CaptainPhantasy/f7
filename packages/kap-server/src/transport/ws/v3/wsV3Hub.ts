@@ -1,4 +1,4 @@
-import type { IDisposable } from '@moonshot-ai/agent-core-v2';
+import type { IDisposable } from '@legacy-ai/agent-core-v2';
 
 import { ErrorCode } from '../../../protocol/error-codes';
 import type { ServerMessage, SubscribeMessage } from '../../../protocol/messages';

@@ -65,24 +65,24 @@ describe('resolveSwarmMaxConcurrency', () => {
 
   it('returns undefined for empty or whitespace-only values', () => {
     expect(
-      resolveSwarmMaxConcurrency({ KIMI_CODE_AGENT_SWARM_MAX_CONCURRENCY: '' }),
+      resolveSwarmMaxConcurrency({ FLOYD_CODE_AGENT_SWARM_MAX_CONCURRENCY: '' }),
     ).toBeUndefined();
     expect(
-      resolveSwarmMaxConcurrency({ KIMI_CODE_AGENT_SWARM_MAX_CONCURRENCY: '   ' }),
+      resolveSwarmMaxConcurrency({ FLOYD_CODE_AGENT_SWARM_MAX_CONCURRENCY: '   ' }),
     ).toBeUndefined();
   });
 
   it('throws for non-positive, non-integer, or non-numeric values', () => {
     for (const raw of ['0', '-1', '2.5', 'abc']) {
       expect(() =>
-        resolveSwarmMaxConcurrency({ KIMI_CODE_AGENT_SWARM_MAX_CONCURRENCY: raw }),
-      ).toThrow(/KIMI_CODE_AGENT_SWARM_MAX_CONCURRENCY.*positive integer/);
+        resolveSwarmMaxConcurrency({ FLOYD_CODE_AGENT_SWARM_MAX_CONCURRENCY: raw }),
+      ).toThrow(/FLOYD_CODE_AGENT_SWARM_MAX_CONCURRENCY.*positive integer/);
     }
   });
 
   it('returns the integer for a positive integer value', () => {
-    expect(resolveSwarmMaxConcurrency({ KIMI_CODE_AGENT_SWARM_MAX_CONCURRENCY: '3' })).toBe(3);
-    expect(resolveSwarmMaxConcurrency({ KIMI_CODE_AGENT_SWARM_MAX_CONCURRENCY: ' 8 ' })).toBe(8);
+    expect(resolveSwarmMaxConcurrency({ FLOYD_CODE_AGENT_SWARM_MAX_CONCURRENCY: '3' })).toBe(3);
+    expect(resolveSwarmMaxConcurrency({ FLOYD_CODE_AGENT_SWARM_MAX_CONCURRENCY: ' 8 ' })).toBe(8);
   });
 });
 
@@ -1204,7 +1204,7 @@ describe('SessionSwarmService metadata compatibility', () => {
 
     expect(spawnAgent).toHaveBeenCalledWith({
       callerAgentId: 'main',
-      plan: { profileName: 'coder', model: 'kimi-test', thinking: 'medium', fork: false },
+      plan: { profileName: 'coder', model: 'floyd-test', thinking: 'medium', fork: false },
       labels: { parentAgentId: 'main', swarmItem: 'src/a.ts' },
       prompt: 'Review the file',
     });
@@ -1805,7 +1805,7 @@ describe('SessionSwarmService metadata compatibility', () => {
         'agent-new',
         agentHandle('agent-new', lifecycle, eventBus, {
           profileName: 'coder',
-          modelAlias: 'kimi-test',
+          modelAlias: 'floyd-test',
         }),
       );
       spawnAgent.mockReturnValueOnce(spawnDeferred);
@@ -1838,7 +1838,7 @@ describe('SessionSwarmService metadata compatibility', () => {
       spawnDeferred.resolve({
         agentId: 'agent-new',
         profileName: 'coder',
-        model: 'kimi-test',
+        model: 'floyd-test',
         promptText: 'Review the file',
       });
       await vi.advanceTimersByTimeAsync(0);
@@ -2105,7 +2105,7 @@ function spawnSessionTask(swarmItem?: string): SessionSwarmSpawnTask {
     swarmIndex: 1,
     swarmItem,
     runInBackground: false,
-    plan: { profileName: 'coder', model: 'kimi-test', thinking: 'medium', fork: false },
+    plan: { profileName: 'coder', model: 'floyd-test', thinking: 'medium', fork: false },
   };
 }
 
@@ -2141,7 +2141,7 @@ function lifecycleStub(
       const id = opts.agentId ?? 'agent-new';
       const handle = agentHandle(id, lifecycle as IAgentLifecycleService, eventBus, {
         profileName: opts.binding?.profile ?? 'coder',
-        modelAlias: opts.binding?.model ?? 'kimi-test',
+        modelAlias: opts.binding?.model ?? 'floyd-test',
         thinkingLevel: opts.binding?.thinking ?? 'medium',
       });
       handles.set(id, handle);
@@ -2176,7 +2176,7 @@ function subagentStub(
     })),
     planSpawn: vi.fn(async (input: SubagentSpawnPlanInput) => ({
       profileName: input.profileName ?? 'coder',
-      model: input.model ?? 'kimi-test',
+      model: input.model ?? 'floyd-test',
       fork: input.fork === true,
     })),
     spawn: vi.fn(async (opts: SpawnSubagentOptions) => {
@@ -2204,7 +2204,7 @@ function agentHandle(
   services: ReadonlyMap<unknown, unknown> = new Map(),
 ): IAgentScopeHandle {
   const profile = profileService({
-    modelAlias: 'kimi-test',
+    modelAlias: 'floyd-test',
     modelCapabilities: {} as never,
     profileName: 'agent',
     thinkingLevel: 'medium',

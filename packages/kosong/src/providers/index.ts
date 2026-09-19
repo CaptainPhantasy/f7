@@ -8,14 +8,14 @@ import {
   getOpenAIResponsesModelCapability,
 } from './capability-registry';
 import { GoogleGenAIChatProvider, type GoogleGenAIOptions } from './google-genai';
-import { KimiChatProvider, type KimiOptions } from './kimi';
+import { FloydChatProvider, type FloydOptions } from './floyd';
 import { OpenAILegacyChatProvider, type OpenAILegacyOptions } from './openai-legacy';
 import { OpenAIResponsesChatProvider, type OpenAIResponsesOptions } from './openai-responses';
 
 export type ProviderConfig =
   | ({ type: 'anthropic' } & AnthropicOptions)
   | ({ type: 'openai' } & OpenAILegacyOptions)
-  | ({ type: 'kimi' } & KimiOptions)
+  | ({ type: 'floyd' } & FloydOptions)
   | ({ type: 'google-genai' } & GoogleGenAIOptions)
   | ({ type: 'openai_responses' } & OpenAIResponsesOptions)
   | ({ type: 'vertexai' } & GoogleGenAIOptions);
@@ -28,8 +28,8 @@ export function createProvider(config: ProviderConfig): ChatProvider {
       return new AnthropicChatProvider(config);
     case 'openai':
       return new OpenAILegacyChatProvider(config);
-    case 'kimi':
-      return new KimiChatProvider(config);
+    case 'floyd':
+      return new FloydChatProvider(config);
     case 'google-genai':
       return new GoogleGenAIChatProvider(config);
     case 'openai_responses':
@@ -47,7 +47,7 @@ export function createProvider(config: ProviderConfig): ChatProvider {
  * Look up the declared {@link ModelCapability} for a `(wire, model)` pair.
  *
  * This is a pure static table lookup — it does not instantiate a provider.
- * Unknown / uncatalogued models (and the Kimi wire, whose capabilities come
+ * Unknown / uncatalogued models (and the Floyd wire, whose capabilities come
  * from the host's catalog/config rather than the model name) return
  * {@link UNKNOWN_CAPABILITY} so capability checks stay non-fatal.
  */
@@ -62,7 +62,7 @@ export function getModelCapability(wire: ProviderType, modelName: string): Model
     case 'google-genai':
     case 'vertexai':
       return getGoogleGenAIModelCapability(modelName);
-    case 'kimi':
+    case 'floyd':
       return UNKNOWN_CAPABILITY;
     default: {
       const exhaustive: never = wire;

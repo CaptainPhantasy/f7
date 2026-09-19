@@ -82,8 +82,8 @@ describe('McpManagementService', () => {
   let management: IMcpManagementService;
 
   beforeEach(() => {
-    home = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-home-'));
-    vi.stubEnv('KIMI_CODE_HOME', home);
+    home = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-home-'));
+    vi.stubEnv('FLOYD_CODE_HOME', home);
     disposables = new DisposableStore();
     tempDirs = [home];
     httpServers = [];
@@ -412,18 +412,18 @@ describe('McpManagementService', () => {
       ['update', (cwd: string) => management.updateServer(stdioServer('local'), { cwd })],
       ['remove', (cwd: string) => management.removeServer('local', { cwd })],
     ])('rejects %s when a trusted project-layer entry is read-only', async (_operation, mutate) => {
-      const project = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-read-only-'));
+      const project = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-read-only-'));
       tempDirs.push(project);
-      await mkdir(join(project, '.kimi-code'), { recursive: true });
+      await mkdir(join(project, '.floyd-code'), { recursive: true });
       await writeFile(
-        join(project, '.kimi-code', 'mcp.json'),
+        join(project, '.floyd-code', 'mcp.json'),
         JSON.stringify({ mcpServers: { local: { command: process.execPath } } }),
         'utf8',
       );
 
       await expect(mutate(project)).rejects.toMatchObject({
         code: ErrorCodes.REQUEST_INVALID,
-        message: `MCP server "local" is read-only: it is defined in ${join(project, '.kimi-code', 'mcp.json')} — edit that file instead`,
+        message: `MCP server "local" is read-only: it is defined in ${join(project, '.floyd-code', 'mcp.json')} — edit that file instead`,
       });
       await expect(store.list()).resolves.toEqual([]);
     });
@@ -618,11 +618,11 @@ describe('McpManagementService', () => {
     });
 
     it('lists project-layer entries as read-only redacted views when a cwd is given', async () => {
-      const project = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-proj-'));
+      const project = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-proj-'));
       tempDirs.push(project);
-      await mkdir(join(project, '.kimi-code'), { recursive: true });
+      await mkdir(join(project, '.floyd-code'), { recursive: true });
       await writeFile(
-        join(project, '.kimi-code', 'mcp.json'),
+        join(project, '.floyd-code', 'mcp.json'),
         JSON.stringify({
           mcpServers: {
             local: {
@@ -641,7 +641,7 @@ describe('McpManagementService', () => {
       expect(local).toMatchObject({
         source: 'global',
         mutable: false,
-        origin: join(project, '.kimi-code', 'mcp.json'),
+        origin: join(project, '.floyd-code', 'mcp.json'),
       });
       expect(local?.config).toMatchObject({ headerKeys: ['X-Key'] });
       expect(local?.config).not.toHaveProperty('headers');
@@ -652,11 +652,11 @@ describe('McpManagementService', () => {
     });
 
     it('hides project-layer entries when the workspace is untrusted', async () => {
-      const project = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-untrusted-'));
+      const project = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-untrusted-'));
       tempDirs.push(project);
-      await mkdir(join(project, '.kimi-code'), { recursive: true });
+      await mkdir(join(project, '.floyd-code'), { recursive: true });
       await writeFile(
-        join(project, '.kimi-code', 'mcp.json'),
+        join(project, '.floyd-code', 'mcp.json'),
         JSON.stringify({ mcpServers: { local: { command: process.execPath } } }),
         'utf8',
       );
@@ -705,7 +705,7 @@ describe('McpManagementService', () => {
     }, 20000);
 
     it('probes an inline stdio config without retaining the probe cwd workspace', async () => {
-      const cwd = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-cwd-'));
+      const cwd = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-cwd-'));
       tempDirs.push(cwd);
 
       const result = await management.testServer({
@@ -726,7 +726,7 @@ describe('McpManagementService', () => {
     }, 20000);
 
     it('probes a nested cwd against the containing workspace runtimes', async () => {
-      const cwd = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-nested-'));
+      const cwd = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-nested-'));
       tempDirs.push(cwd);
       findContaining.mockReturnValue({ id: 'test-workspace' } as unknown as WorkspaceInstance);
 
@@ -747,7 +747,7 @@ describe('McpManagementService', () => {
     }, 20000);
 
     it('rejects a non-local runtime_id probe when no workspace contains the cwd', async () => {
-      const cwd = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-remote-miss-'));
+      const cwd = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-remote-miss-'));
       tempDirs.push(cwd);
 
       await expect(
@@ -770,7 +770,7 @@ describe('McpManagementService', () => {
     });
 
     it('probes a non-local runtime_id through the containing workspace', async () => {
-      const cwd = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-remote-hit-'));
+      const cwd = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-remote-hit-'));
       tempDirs.push(cwd);
       findContaining.mockReturnValue({ id: 'test-workspace' } as unknown as WorkspaceInstance);
 
@@ -791,7 +791,7 @@ describe('McpManagementService', () => {
     }, 20000);
 
     it('keeps the transient local probe for an explicit local runtime_id', async () => {
-      const cwd = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-local-explicit-'));
+      const cwd = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-local-explicit-'));
       tempDirs.push(cwd);
 
       const result = await management.testServer({
@@ -831,11 +831,11 @@ describe('McpManagementService', () => {
     });
 
     it('does not execute a project server while the workspace is untrusted', async () => {
-      const project = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-untrusted-probe-'));
+      const project = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-untrusted-probe-'));
       tempDirs.push(project);
-      await mkdir(join(project, '.kimi-code'), { recursive: true });
+      await mkdir(join(project, '.floyd-code'), { recursive: true });
       await writeFile(
-        join(project, '.kimi-code', 'mcp.json'),
+        join(project, '.floyd-code', 'mcp.json'),
         JSON.stringify({
           mcpServers: {
             local: { command: process.execPath, args: [stdioFixture] },
@@ -859,7 +859,7 @@ describe('McpManagementService', () => {
       identityReady = new Promise<AgentIdentitySnapshot>((resolve) => {
         releaseIdentity = () => resolve(identitySnapshot);
       });
-      const cwd = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-ready-'));
+      const cwd = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-ready-'));
       tempDirs.push(cwd);
 
       const probe = management.testServer({
@@ -1060,11 +1060,11 @@ describe('McpManagementService', () => {
 
   describe('inspectServers', () => {
     it('includes trusted project-layer entries when cwd is provided', async () => {
-      const project = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-inspect-project-'));
+      const project = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-inspect-project-'));
       tempDirs.push(project);
-      await mkdir(join(project, '.kimi-code'), { recursive: true });
+      await mkdir(join(project, '.floyd-code'), { recursive: true });
       await writeFile(
-        join(project, '.kimi-code', 'mcp.json'),
+        join(project, '.floyd-code', 'mcp.json'),
         JSON.stringify({
           mcpServers: {
             local: {
@@ -1232,11 +1232,11 @@ describe('McpManagementService', () => {
 
   describe('resolveServerByName', () => {
     it('resolves a project-layer-only name when cwd is provided', async () => {
-      const project = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-resolve-project-'));
+      const project = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-resolve-project-'));
       tempDirs.push(project);
-      await mkdir(join(project, '.kimi-code'), { recursive: true });
+      await mkdir(join(project, '.floyd-code'), { recursive: true });
       await writeFile(
-        join(project, '.kimi-code', 'mcp.json'),
+        join(project, '.floyd-code', 'mcp.json'),
         JSON.stringify({ mcpServers: { local: { command: process.execPath } } }),
         'utf8',
       );
@@ -1311,11 +1311,11 @@ describe('McpManagementService', () => {
 
   describe('OAuth operations', () => {
     it('begins authorization against the project-layer URL when cwd is provided', async () => {
-      const project = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-begin-project-'));
+      const project = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-begin-project-'));
       tempDirs.push(project);
-      await mkdir(join(project, '.kimi-code'), { recursive: true });
+      await mkdir(join(project, '.floyd-code'), { recursive: true });
       await writeFile(
-        join(project, '.kimi-code', 'mcp.json'),
+        join(project, '.floyd-code', 'mcp.json'),
         JSON.stringify({
           mcpServers: {
             oauthable: {
@@ -1346,11 +1346,11 @@ describe('McpManagementService', () => {
     });
 
     it('resets credentials for the project-layer URL when cwd is provided', async () => {
-      const project = mkdtempSync(join(tmpdir(), 'kimi-mcp-management-reset-project-'));
+      const project = mkdtempSync(join(tmpdir(), 'floyd-mcp-management-reset-project-'));
       tempDirs.push(project);
-      await mkdir(join(project, '.kimi-code'), { recursive: true });
+      await mkdir(join(project, '.floyd-code'), { recursive: true });
       await writeFile(
-        join(project, '.kimi-code', 'mcp.json'),
+        join(project, '.floyd-code', 'mcp.json'),
         JSON.stringify({
           mcpServers: {
             oauthable: {

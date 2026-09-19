@@ -99,17 +99,17 @@ export function useAppInit(): AppInitState {
         setExtensionConfig(extensionConfig);
         setWireSlashCommands(slashCommands);
 
-        const [loginStatus, kimiConfig] = await Promise.all([bridge.checkLoginStatus(), bridge.getModels()]);
+        const [loginStatus, floydConfig] = await Promise.all([bridge.checkLoginStatus(), bridge.getModels()]);
         if (cancelled) {
           return;
         }
 
-        console.log("[AppInit] Login status:", loginStatus, "kimiConfig:", kimiConfig);
+        console.log("[AppInit] Login status:", loginStatus, "floydConfig:", floydConfig);
 
         setIsLoggedIn(loginStatus.loggedIn);
-        initModels(kimiConfig.models, kimiConfig.defaultModel, kimiConfig.defaultThinking, kimiConfig.defaultThinkingEffort);
+        initModels(floydConfig.models, floydConfig.defaultModel, floydConfig.defaultThinking, floydConfig.defaultThinkingEffort);
 
-        const modelsCount = kimiConfig.models?.length ?? 0;
+        const modelsCount = floydConfig.models?.length ?? 0;
 
         if (modelsCount === 0 && !loginStatus.loggedIn) {
           setState({ status: "not-logged-in", errorMessage: null, modelsCount });
@@ -121,7 +121,7 @@ export function useAppInit(): AppInitState {
           return;
         }
 
-        if (requiresManagedProviderLogin(kimiConfig.models, kimiConfig.defaultModel, loginStatus.loggedIn)) {
+        if (requiresManagedProviderLogin(floydConfig.models, floydConfig.defaultModel, loginStatus.loggedIn)) {
           setState({ status: "not-logged-in", errorMessage: null, modelsCount });
           return;
         }

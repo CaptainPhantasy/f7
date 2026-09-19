@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { encodeWorkDirKey } from '@moonshot-ai/agent-core-v2/_base/utils/workdir-slug';
-import { reduceContextTranscript } from '@moonshot-ai/agent-core-v2';
-import { groupMessagesIntoSnapshot } from '@moonshot-ai/transcript';
+import { encodeWorkDirKey } from '@legacy-ai/agent-core-v2/_base/utils/workdir-slug';
+import { reduceContextTranscript } from '@legacy-ai/agent-core-v2';
+import { groupMessagesIntoSnapshot } from '@legacy-ai/transcript';
 
 import { migrateOneSession, type MigrateOneResult } from '../src/sessions/migrate-one.js';
 import { computeWorkdirBucket } from '../src/sessions/workdir-bucket.js';
@@ -51,7 +51,7 @@ describe('migrated session is discoverable by agent-core-v2', () => {
     const sessions = await listSessionsV2(targetHome);
     const migrated = sessions.find((s) => s.id === 'ses_integ-uuid');
     expect(migrated).toBeDefined();
-    expect(migrated?.custom?.['imported_from_kimi_cli']).toBe(true);
+    expect(migrated?.custom?.['imported_from_floyd_cli']).toBe(true);
     expect(migrated?.cwd).toBe(WORK_DIR);
   });
 

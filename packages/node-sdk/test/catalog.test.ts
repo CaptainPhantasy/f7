@@ -1,4 +1,4 @@
-import type { KimiConfig } from '#/index';
+import type { FloydConfig } from '#/index';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -63,12 +63,12 @@ describe('fetchCatalog', () => {
       'https://x/api.json',
       {
         fetchImpl: fetchMock as unknown as typeof fetch,
-        userAgent: 'kimi-code-cli/1.2.3',
+        userAgent: 'floyd-code-cli/1.2.3',
       },
     );
     const withUa = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     const withUaHeaders = withUa[1].headers as Record<string, string>;
-    expect(withUaHeaders['User-Agent']).toBe('kimi-code-cli/1.2.3');
+    expect(withUaHeaders['User-Agent']).toBe('floyd-code-cli/1.2.3');
     expect(withUaHeaders['Accept']).toBe('application/json');
 
     fetchMock.mockClear();
@@ -108,7 +108,7 @@ describe('catalogModelToAlias', () => {
 
 describe('applyCatalogProvider', () => {
   it('writes provider, model aliases, and defaults', () => {
-    const config = { providers: {} } as KimiConfig;
+    const config = { providers: {} } as FloydConfig;
     const result = applyCatalogProvider(config, {
       providerId: 'anthropic',
       wire: 'anthropic',
@@ -145,7 +145,7 @@ describe('applyCatalogProvider', () => {
         },
       },
     });
-    const config = { providers: {} } as KimiConfig;
+    const config = { providers: {} } as FloydConfig;
 
     applyCatalogProvider(config, {
       providerId: 'deepseek',
@@ -165,13 +165,13 @@ describe('applyCatalogProvider', () => {
   });
 
   it('writes declared effort levels from reasoning_options into the model alias', () => {
-    // The models.dev `kimi-for-coding` provider shape for `k3`.
+    // The models.dev `floyd-for-coding` provider shape for `k3`.
     const models = catalogProviderModels({
-      id: 'kimi-for-coding',
+      id: 'floyd-for-coding',
       models: {
         k3: {
           id: 'k3',
-          name: 'Kimi K3',
+          name: 'Floyd K3',
           limit: { context: 1048576, output: 131072 },
           reasoning: true,
           reasoning_options: [
@@ -183,20 +183,20 @@ describe('applyCatalogProvider', () => {
         },
       },
     });
-    const config = { providers: {} } as KimiConfig;
+    const config = { providers: {} } as FloydConfig;
 
     applyCatalogProvider(config, {
-      providerId: 'kimi-for-coding',
+      providerId: 'floyd-for-coding',
       wire: 'anthropic',
-      baseUrl: 'https://api.kimi.com/coding',
+      baseUrl: 'https://api.floyd.com/coding',
       apiKey: 'sk',
       models,
       selectedModelId: 'k3',
       thinking: true,
     });
 
-    expect(config.models?.['kimi-for-coding/k3']).toMatchObject({
-      provider: 'kimi-for-coding',
+    expect(config.models?.['floyd-for-coding/k3']).toMatchObject({
+      provider: 'floyd-for-coding',
       model: 'k3',
       capabilities: ['image_in', 'video_in', 'thinking', 'tool_use'],
       supportEfforts: ['low', 'high', 'max'],
@@ -227,7 +227,7 @@ describe('applyCatalogProvider', () => {
         },
       },
     });
-    const config = { providers: {} } as KimiConfig;
+    const config = { providers: {} } as FloydConfig;
 
     applyCatalogProvider(config, {
       providerId: 'gateway',
@@ -269,7 +269,7 @@ describe('applyCatalogProvider', () => {
         },
       },
     });
-    const config = { providers: {} } as KimiConfig;
+    const config = { providers: {} } as FloydConfig;
 
     applyCatalogProvider(config, {
       providerId: 'gateway',
@@ -304,7 +304,7 @@ describe('applyCatalogProvider', () => {
         'anthropic/stale': { provider: 'anthropic', model: 'stale', maxContextSize: 1 },
         'other/keep': { provider: 'other', model: 'keep', maxContextSize: 1 },
       },
-    } as unknown as KimiConfig;
+    } as unknown as FloydConfig;
 
     applyCatalogProvider(config, {
       providerId: 'anthropic',

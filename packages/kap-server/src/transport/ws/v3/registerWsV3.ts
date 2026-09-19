@@ -5,7 +5,7 @@ import {
   IWorkspaceService,
   type Scope,
   type Workspace,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import { WebSocketServer } from 'ws';
 
 import type { WorkspaceInfo } from '../../../protocol/messages';

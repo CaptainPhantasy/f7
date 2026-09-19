@@ -1,16 +1,16 @@
 import { readApiErrorMessage } from './api-error';
 import {
-  KIMI_CODE_PLATFORM_ID,
-  KIMI_CODE_PROVIDER_NAME,
-  type ManagedKimiConfigShape,
-  type ManagedKimiModelAlias,
-} from './managed-kimi-code';
+  FLOYD_CODE_PLATFORM_ID,
+  FLOYD_CODE_PROVIDER_NAME,
+  type ManagedFloydConfigShape,
+  type ManagedFloydModelAlias,
+} from './managed-floyd-code';
 import { CUSTOM_REGISTRY_MODEL_FIELDS, mergeRefreshedModelAlias } from './model-alias-merge';
 import { OPEN_PLATFORMS } from './open-platform';
 import { nonEmptyString } from './provider-credential';
 import { isRecord } from './utils';
 
-export type { ManagedKimiConfigShape };
+export type { ManagedFloydConfigShape };
 
 /**
  * Identifies where a custom-registry-managed provider came from. The same
@@ -57,14 +57,14 @@ export interface FetchCustomRegistryOptions {
 
 /**
  * The kosong `ProviderConfig` union (`packages/kosong/src/providers/index.ts`)
- * mirrors these literal values. `kimi` is included because the api.json schema
+ * mirrors these literal values. `floyd` is included because the api.json schema
  * permits it even though kokub itself only emits the other three.
  */
 export type CustomRegistryProviderType =
   | 'anthropic'
   | 'openai'
   | 'openai_responses'
-  | 'kimi';
+  | 'floyd';
 
 export interface CustomRegistryModelEntry {
   readonly id: string;
@@ -92,7 +92,7 @@ export interface CustomRegistryProviderEntry {
 /**
  * Tuned slightly below typical real values so the local compactor kicks in
  * before the upstream rejects with a context-overflow 4xx. Users can override
- * by editing `~/.kimi-code/config.toml`.
+ * by editing `~/.floyd-code/config.toml`.
  */
 export const CUSTOM_REGISTRY_DEFAULT_MAX_CONTEXT = 131072;
 export const CUSTOM_REGISTRY_DEFAULT_CAPABILITIES = ['tool_use'] as const;
@@ -101,17 +101,17 @@ const ALLOWED_PROVIDER_TYPES: ReadonlySet<CustomRegistryProviderType> = new Set(
   'anthropic',
   'openai',
   'openai_responses',
-  'kimi',
+  'floyd',
 ]);
 
 const RESERVED_PROVIDER_IDS: ReadonlySet<string> = new Set([
-  KIMI_CODE_PLATFORM_ID,
-  KIMI_CODE_PROVIDER_NAME,
+  FLOYD_CODE_PLATFORM_ID,
+  FLOYD_CODE_PROVIDER_NAME,
   ...OPEN_PLATFORMS.map((platform) => platform.id),
 ]);
 
 /**
- * Provider ids a custom registry may never claim: the managed Kimi Code slots
+ * Provider ids a custom registry may never claim: the managed Floyd Code slots
  * and the first-party open platforms. Shared by the import-time guard and the
  * refresh orchestrator so the rejection rule — and its message — lives in one
  * place.
@@ -121,7 +121,7 @@ export function isReservedProviderId(providerId: string): boolean {
 }
 
 export function reservedProviderIdMessage(providerId: string): string {
-  return `Custom registry provider id "${providerId}" is reserved by Kimi Code.`;
+  return `Custom registry provider id "${providerId}" is reserved by Floyd Code.`;
 }
 
 export function oauthManagedProviderMessage(providerId: string): string {
@@ -261,7 +261,7 @@ function toProviderEntry(value: unknown): CustomRegistryProviderEntry | undefine
  * the top-level provider key in the document (which may differ from
  * `entry.id`); callers should iterate `Object.values` to apply each entry.
  *
- * `userAgent` identifies the host product (e.g. `kimi-code-cli/1.2.3`); when
+ * `userAgent` identifies the host product (e.g. `floyd-code-cli/1.2.3`); when
  * omitted the request falls back to the runtime default (`User-Agent: node`).
  */
 export async function fetchCustomRegistry(
@@ -371,7 +371,7 @@ function resolveCapabilities(model: CustomRegistryModelEntry): string[] {
  * Mirrors `applyOpenPlatformConfig`'s shape: provider goes to `config.providers`
  * keyed by `entry.id`, each model in `entry.models` becomes an alias under
  * `config.models[\`${entry.id}/${modelId}\`]`. The `source` blob is parked on the
- * provider object via `ManagedKimiProviderConfig`'s index signature so the
+ * provider object via `ManagedFloydProviderConfig`'s index signature so the
  * refresh dispatcher can rediscover it later.
  *
  * The entry's `env` field is deliberately NOT consumed here: the registry
@@ -408,7 +408,7 @@ function retainedApiKeyEnv(
 }
 
 export function applyCustomRegistryProvider(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   entry: CustomRegistryProviderEntry,
   source: CustomRegistrySource,
   priorProviders?: Readonly<Record<string, unknown>>,
@@ -453,7 +453,7 @@ export function applyCustomRegistryProvider(
       typeof model.name === 'string' && model.name.length > 0 ? model.name : model.id;
     const existing = isRecord(existingModels[aliasKey]) ? existingModels[aliasKey] : {};
 
-    const remoteAlias: ManagedKimiModelAlias = {
+    const remoteAlias: ManagedFloydModelAlias = {
       provider: providerKey,
       model: model.id,
       maxContextSize,
@@ -478,7 +478,7 @@ export function applyCustomRegistryProvider(
  * `removeOpenPlatformConfig`.
  */
 export function removeCustomRegistryProvider(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   providerId: string,
 ): void {
   delete config.providers[providerId];
@@ -541,7 +541,7 @@ export interface CustomRegistryRemoval {
  * pre-removal `defaultModel`/`defaultProvider`.
  */
 export function removeCustomRegistryEntries(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   entries: Record<string, CustomRegistryProviderEntry>,
   source: CustomRegistrySource,
 ): CustomRegistryRemoval {
@@ -569,7 +569,7 @@ export function removeCustomRegistryEntries(
 export type CustomRegistryReplacementKeys = Readonly<Record<string, readonly string[]>>;
 
 export function customRegistryReplacementKeys(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   entries: Record<string, CustomRegistryProviderEntry>,
   source: CustomRegistrySource,
 ): CustomRegistryReplacementKeys {
@@ -618,7 +618,7 @@ export function customRegistryReplacementKeys(
  * dangling is cleared (with `thinking`, mirroring the refresh path).
  */
 export function applyCustomRegistryEntries(
-  config: ManagedKimiConfigShape,
+  config: ManagedFloydConfigShape,
   entries: Record<string, CustomRegistryProviderEntry>,
   source: CustomRegistrySource,
   removal?: CustomRegistryRemoval,

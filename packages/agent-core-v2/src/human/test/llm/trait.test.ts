@@ -18,18 +18,18 @@ import { createMediaRefResolver } from '#/llm/media/resolver';
 import { createMemoryMediaSource } from '#/llm/media/source';
 import type { LlmModel } from '#/llm/model';
 import { createProvider } from '#/llm/provider/definition';
-import { KimiFiles, kimiFilesBaseUrl } from '#/llm-kimi/files';
-import { kimiMediaContribution } from '#/llm-kimi/media';
-import { kimiProvider } from '#/llm-kimi/provider';
+import { FloydFiles, floydFilesBaseUrl } from '#/llm-floyd/files';
+import { floydMediaContribution } from '#/llm-floyd/media';
+import { floydProvider } from '#/llm-floyd/provider';
 import {
-  KIMI_API_KEY_ENV,
-  KIMI_BASE_URL_ENV,
-  KIMI_DEFAULT_BASE_URL,
-  kimiAnthropicTrait,
-  kimiConnection,
-  kimiOpenAITrait,
-} from '#/llm-kimi/trait';
-import { classifyKimiQuotaError } from '#/llm-kimi/errors';
+  FLOYD_API_KEY_ENV,
+  FLOYD_BASE_URL_ENV,
+  FLOYD_DEFAULT_BASE_URL,
+  floydAnthropicTrait,
+  floydConnection,
+  floydOpenAITrait,
+} from '#/llm-floyd/trait';
+import { classifyFloydQuotaError } from '#/llm-floyd/errors';
 import { anthropicProvider, googleGenAIConnection, openaiProvider } from '#/llm/provider/providers/standard';
 import type { LlmClientContext, LlmRequester, LlmRequestEvent } from '#/llm/requester/requester';
 import type { TokenUsage } from '#/llm/usage';
@@ -53,16 +53,16 @@ const model: LlmModel = {
 };
 const messages: readonly Message[] = [createUserMessage('hi')];
 
-const kimiOpenAI = {
-  connection: kimiConnection,
-  trait: kimiOpenAITrait,
-  classifyError: classifyKimiQuotaError,
+const floydOpenAI = {
+  connection: floydConnection,
+  trait: floydOpenAITrait,
+  classifyError: classifyFloydQuotaError,
 } as const;
 
-const kimiAnthropic = {
-  connection: kimiConnection,
-  trait: kimiAnthropicTrait,
-  classifyError: classifyKimiQuotaError,
+const floydAnthropic = {
+  connection: floydConnection,
+  trait: floydAnthropicTrait,
+  classifyError: classifyFloydQuotaError,
 } as const;
 
 async function generateAndCollectUsage(
@@ -371,7 +371,7 @@ describe('media', () => {
 
   it('rejects a non-video mime type', async () => {
     await expect(
-      kimiMediaContribution.uploadVideo!(
+      floydMediaContribution.uploadVideo!(
         { data: new Uint8Array([1]), mimeType: 'image/png' },
         { model },
       ),
@@ -379,40 +379,40 @@ describe('media', () => {
   });
 
   it('rejects a non-image mime type', async () => {
-    const files = new KimiFiles({ apiKey: 'sk-test', baseUrl: 'https://example.test/v1' });
+    const files = new FloydFiles({ apiKey: 'sk-test', baseUrl: 'https://example.test/v1' });
     await expect(
       files.uploadImage({ data: new Uint8Array([1]), mimeType: 'video/mp4' }),
     ).rejects.toThrow('Expected an image mime type');
   });
 
   it('requires an api key', async () => {
-    const files = new KimiFiles({ baseUrl: 'https://example.test/v1' });
+    const files = new FloydFiles({ baseUrl: 'https://example.test/v1' });
     await expect(
       files.uploadVideo({ data: new Uint8Array([1]), mimeType: 'video/mp4' }),
     ).rejects.toThrow('apiKey is required');
   });
 
   it('requires an api key for image uploads', async () => {
-    const files = new KimiFiles({ baseUrl: 'https://example.test/v1' });
+    const files = new FloydFiles({ baseUrl: 'https://example.test/v1' });
     await expect(
       files.uploadImage({ data: new Uint8Array([1]), mimeType: 'image/png' }),
     ).rejects.toThrow('apiKey is required');
   });
 
-  it('restores the stripped /v1 for anthropic-routed kimi models', () => {
+  it('restores the stripped /v1 for anthropic-routed floyd models', () => {
     const anthropic: LlmModel = { ...mediaModel, provider: 'anthropic' };
-    expect(kimiFilesBaseUrl({ ...anthropic, baseUrl: 'https://api.example.test' })).toBe(
+    expect(floydFilesBaseUrl({ ...anthropic, baseUrl: 'https://api.example.test' })).toBe(
       'https://api.example.test/v1',
     );
-    expect(kimiFilesBaseUrl({ ...anthropic, baseUrl: 'https://api.example.test/v1' })).toBe(
+    expect(floydFilesBaseUrl({ ...anthropic, baseUrl: 'https://api.example.test/v1' })).toBe(
       'https://api.example.test/v1',
     );
-    expect(kimiFilesBaseUrl({ ...anthropic, baseUrl: 'https://api.example.test/' })).toBe(
+    expect(floydFilesBaseUrl({ ...anthropic, baseUrl: 'https://api.example.test/' })).toBe(
       'https://api.example.test/v1',
     );
-    expect(kimiFilesBaseUrl(anthropic)).toBe(KIMI_DEFAULT_BASE_URL);
+    expect(floydFilesBaseUrl(anthropic)).toBe(FLOYD_DEFAULT_BASE_URL);
     const openai: LlmModel = { ...mediaModel, provider: 'openai', baseUrl: 'https://api.example.test' };
-    expect(kimiFilesBaseUrl(openai)).toBe('https://api.example.test');
+    expect(floydFilesBaseUrl(openai)).toBe('https://api.example.test');
   });
 
   it('uploads a video ref once and serves later requests from the cache', async () => {
@@ -493,8 +493,8 @@ describe('endpoint', () => {
   });
 
   it('injects the endpoint from env and connection defaults at request time', async () => {
-    vi.stubEnv(KIMI_BASE_URL_ENV, '');
-    vi.stubEnv(KIMI_API_KEY_ENV, 'env-key');
+    vi.stubEnv(FLOYD_BASE_URL_ENV, '');
+    vi.stubEnv(FLOYD_API_KEY_ENV, 'env-key');
     const seen: LlmModel[] = [];
     const client = createClientStub((captured, request) => {
       seen.push(request.model);
@@ -510,30 +510,30 @@ describe('endpoint', () => {
       };
     });
     const requester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: client.clientFactory,
     });
     const signal = new AbortController().signal;
 
     await requester.generate(
-      { model: kimiProvider.resolveModel('kimi-k3') },
+      { model: floydProvider.resolveModel('floyd-k3') },
       { messages },
       { signal },
     );
-    vi.stubEnv(KIMI_BASE_URL_ENV, 'https://example.test/v9');
+    vi.stubEnv(FLOYD_BASE_URL_ENV, 'https://example.test/v9');
     await requester.generate(
-      { model: kimiProvider.resolveModel('kimi-k3') },
+      { model: floydProvider.resolveModel('floyd-k3') },
       { messages },
       { signal },
     );
     await requester.generate(
-      { model: kimiProvider.resolveModel('kimi-k3', { baseUrl: 'https://explicit.test/v1' }) },
+      { model: floydProvider.resolveModel('floyd-k3', { baseUrl: 'https://explicit.test/v1' }) },
       { messages },
       { signal },
     );
 
     expect(seen.map((entry) => entry.baseUrl)).toEqual([
-      KIMI_DEFAULT_BASE_URL,
+      FLOYD_DEFAULT_BASE_URL,
       'https://example.test/v9',
       'https://explicit.test/v1',
     ]);
@@ -541,12 +541,12 @@ describe('endpoint', () => {
   });
 
   it('selects protocols by name and rejects undeclared ones', () => {
-    expect(kimiProvider.protocols).toEqual(['openai', 'anthropic', 'openai_responses']);
-    expect(() => kimiProvider.createRequester('google-genai')).toThrow(
-      "provider 'kimi' has no protocol 'google-genai'",
+    expect(floydProvider.protocols).toEqual(['openai', 'anthropic', 'openai_responses']);
+    expect(() => floydProvider.createRequester('google-genai')).toThrow(
+      "provider 'floyd' has no protocol 'google-genai'",
     );
-    expect(() => kimiProvider.resolveModel('kimi-k3', { protocol: 'google-genai' })).toThrow(
-      "provider 'kimi' has no protocol 'google-genai'",
+    expect(() => floydProvider.resolveModel('floyd-k3', { protocol: 'google-genai' })).toThrow(
+      "provider 'floyd' has no protocol 'google-genai'",
     );
 
     const requester: LlmRequester = { generate: () => Promise.resolve() };
@@ -557,14 +557,14 @@ describe('endpoint', () => {
     expect(passthrough.createRequester()).toBe(requester);
     expect(passthrough.createRequester('openai')).toBe(requester);
 
-    const resolved = kimiProvider.resolveModel('kimi-k3', {
+    const resolved = floydProvider.resolveModel('floyd-k3', {
       baseUrl: 'https://example.test/v1',
       apiKey: 'k',
       defaultHeaders: { 'x-h': 'v' },
     });
     expect(resolved).toEqual({
-      provider: 'kimi',
-      model: 'kimi-k3',
+      provider: 'floyd',
+      model: 'floyd-k3',
       capability: resolved.capability,
       baseUrl: 'https://example.test/v1',
       apiKey: 'k',
@@ -664,7 +664,7 @@ describe('convertTool', () => {
   it('maps $-prefixed tools to builtin_function', async () => {
     const client = stubOpenAIClient(chatCompletionChunks);
     const requester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: client.clientFactory,
     });
     await requester.generate(
@@ -679,10 +679,10 @@ describe('convertTool', () => {
     });
   });
 
-  it('normalizes tool schemas for kimi', async () => {
+  it('normalizes tool schemas for floyd', async () => {
     const client = stubOpenAIClient(chatCompletionChunks);
     const requester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: client.clientFactory,
     });
     await requester.generate(
@@ -722,10 +722,10 @@ describe('message-level tools', () => {
     { name: 'get_weather', description: 'get weather', parameters: { type: 'object' } },
   ];
 
-  it('serializes system message tools for kimi', async () => {
+  it('serializes system message tools for floyd', async () => {
     const client = stubOpenAIClient(chatCompletionChunks);
     const requester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: client.clientFactory,
     });
     await requester.generate(
@@ -756,10 +756,10 @@ describe('message-level tools', () => {
 });
 
 describe('withMaxCompletionTokens', () => {
-  it('encodes max completion tokens via the kimi trait', async () => {
+  it('encodes max completion tokens via the floyd trait', async () => {
     const client = stubOpenAIClient(chatCompletionChunks);
     const requester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: client.clientFactory,
     });
     await requester.generate(
@@ -879,7 +879,7 @@ describe('extractUsage', () => {
       },
     ]);
     const requester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: client.clientFactory,
     });
     const usage = await generateAndCollectUsage(requester);
@@ -893,7 +893,7 @@ describe('extractUsage', () => {
       { id: 'c1', object: 'chat.completion.chunk', created: 0, model: 'test-model', choices: [{ index: 0, delta: {}, finish_reason: 'stop', usage: { prompt_tokens: 4, completion_tokens: 6 } }] },
     ]);
     const requester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: client.clientFactory,
     });
     const usage = await generateAndCollectUsage(requester);
@@ -1235,7 +1235,7 @@ describe('toolMessageConversion request config', () => {
   it('lets the request config override the trait default', async () => {
     const client = stubOpenAIClient(chatCompletionChunks);
     const requester = createOpenAIRequester({
-      ...kimiOpenAI,
+      ...floydOpenAI,
       clientFactory: client.clientFactory,
     });
     await requester.generate(
@@ -1445,7 +1445,7 @@ describe('anthropic cache control', () => {
 
 
 describe('anthropic thinking kwargs', () => {
-  it('applies the kimi thinking trait, the anthropic-beta protocol, and thinking echo rules', async () => {
+  it('applies the floyd thinking trait, the anthropic-beta protocol, and thinking echo rules', async () => {
     const client = stubAnthropicClient([
       { type: 'message_start', message: { usage: { input_tokens: 10, output_tokens: 1 } } },
       {
@@ -1461,7 +1461,7 @@ describe('anthropic thinking kwargs', () => {
       { type: 'message_stop' },
     ]);
     const requester = createAnthropicRequester({
-      ...kimiAnthropic,
+      ...floydAnthropic,
       betaApi: true,
       clientFactory: client.clientFactory,
     });

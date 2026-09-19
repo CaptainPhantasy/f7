@@ -694,15 +694,15 @@ describe('projector tool-exchange normalization', () => {
     it('replaces older media with path tags when display paths are provided', () => {
       const projected = projector.project(
         [
-          imageMessage('kimi-file://f_old1'),
-          imageMessage('kimi-file://f_old2'),
-          imageMessage('kimi-file://f_keep1'),
-          imageMessage('kimi-file://f_keep2'),
+          imageMessage('floyd-file://f_old1'),
+          imageMessage('floyd-file://f_old2'),
+          imageMessage('floyd-file://f_keep1'),
+          imageMessage('floyd-file://f_keep2'),
         ],
         { media: 'degraded' },
         new Map([
-          ['kimi-file://f_old1', '/session/media/f_old1.png'],
-          ['kimi-file://f_old2', '/session/media/f_old2.png'],
+          ['floyd-file://f_old1', '/session/media/f_old1.png'],
+          ['floyd-file://f_old2', '/session/media/f_old2.png'],
         ]),
       );
 
@@ -710,7 +710,7 @@ describe('projector tool-exchange normalization', () => {
       const urls = parts
         .filter((part) => part.type === 'image_url')
         .map((part) => part.imageUrl.url);
-      expect(urls).toEqual(['kimi-file://f_keep1', 'kimi-file://f_keep2']);
+      expect(urls).toEqual(['floyd-file://f_keep1', 'floyd-file://f_keep2']);
       const texts = parts.filter((part) => part.type === 'text').map((part) => part.text);
       expect(texts).toContain('<image path="/session/media/f_old1.png"></image>');
       expect(texts).toContain('<image path="/session/media/f_old2.png"></image>');
@@ -722,13 +722,13 @@ describe('projector tool-exchange normalization', () => {
     it('falls back to the sentence marker for media without a display path', () => {
       const projected = projector.project(
         [
-          imageMessage('kimi-file://f_old1'),
-          imageMessage('kimi-file://f_old2'),
-          imageMessage('kimi-file://f_keep1'),
-          imageMessage('kimi-file://f_keep2'),
+          imageMessage('floyd-file://f_old1'),
+          imageMessage('floyd-file://f_old2'),
+          imageMessage('floyd-file://f_keep1'),
+          imageMessage('floyd-file://f_keep2'),
         ],
         { media: 'degraded' },
-        new Map([['kimi-file://f_old1', '/session/media/f_old1.png']]),
+        new Map([['floyd-file://f_old1', '/session/media/f_old1.png']]),
       );
 
       const texts = projected
@@ -797,13 +797,13 @@ describe('projector tool-exchange normalization', () => {
     });
 
     it('replaces stripped media with path tags when display paths are provided', () => {
-      const history = [imageMessage('kimi-file://f_old', 'old-id')];
+      const history = [imageMessage('floyd-file://f_old', 'old-id')];
       const snapshot = projector.captureMediaStripSnapshot(history);
 
       const projected = projector.project(
         history,
         { media: { strip: snapshot } },
-        new Map([['kimi-file://f_old', '/session/media/f_old.png']]),
+        new Map([['floyd-file://f_old', '/session/media/f_old.png']]),
       );
 
       const texts = projected

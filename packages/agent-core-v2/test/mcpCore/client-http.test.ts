@@ -34,10 +34,10 @@ describe('buildMcpHttpHeaders', () => {
   it('passes through configured static headers', () => {
     expect(
       buildMcpHttpHeaders(
-        { transport: 'http', url: 'https://x.example.com', headers: { 'X-Tenant': 'kimi' } },
+        { transport: 'http', url: 'https://x.example.com', headers: { 'X-Tenant': 'floyd' } },
         () => undefined,
       ),
-    ).toEqual({ 'X-Tenant': 'kimi' });
+    ).toEqual({ 'X-Tenant': 'floyd' });
   });
 
   it('injects Authorization Bearer when env lookup yields a token', () => {

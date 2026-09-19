@@ -16,21 +16,21 @@ import { UNKNOWN_CAPABILITY } from '#/capability';
 import { getModelCapability } from '#/providers/index';
 import { describe, expect, it } from 'vitest';
 
-describe('getModelCapability: kimi', () => {
-  it('does not infer capabilities from Kimi model names', () => {
+describe('getModelCapability: floyd', () => {
+  it('does not infer capabilities from Floyd model names', () => {
     for (const model of [
-      'kimi-for-coding',
-      'kimi-code',
-      'kimi-k2-turbo-preview',
-      'kimi-k2.5',
-      'kimi-thinking-preview',
+      'floyd-for-coding',
+      'floyd-code',
+      'floyd-k2-turbo-preview',
+      'floyd-k2.5',
+      'floyd-thinking-preview',
     ]) {
-      expect(getModelCapability('kimi', model)).toEqual(UNKNOWN_CAPABILITY);
+      expect(getModelCapability('floyd', model)).toEqual(UNKNOWN_CAPABILITY);
     }
   });
 
-  it('unknown Kimi model → UNKNOWN_CAPABILITY (no throw)', () => {
-    expect(getModelCapability('kimi', 'some-fake-model')).toEqual(UNKNOWN_CAPABILITY);
+  it('unknown Floyd model → UNKNOWN_CAPABILITY (no throw)', () => {
+    expect(getModelCapability('floyd', 'some-fake-model')).toEqual(UNKNOWN_CAPABILITY);
   });
 });
 

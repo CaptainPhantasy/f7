@@ -175,7 +175,7 @@ describe('generate()', () => {
         id: 'tool-1',
         name: 'search', arguments: '{}',
         extras: {
-          metadata: { provider: 'kimi' },
+          metadata: { provider: 'floyd' },
           tags: ['a', 'b'],
         },
       },
@@ -198,7 +198,7 @@ describe('generate()', () => {
         id: 'tool-1',
         name: 'search', arguments: '{}',
         extras: {
-          metadata: { provider: 'kimi' },
+          metadata: { provider: 'floyd' },
           tags: ['a', 'b'],
         },
       },

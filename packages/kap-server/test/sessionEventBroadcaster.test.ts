@@ -9,7 +9,7 @@ import type {
   SessionActivityCause,
   SessionActivityChangedEvent,
   SessionActivityState,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 import {
   INTERACTION_TAG_SESSION_ID,
   LifecycleScope,
@@ -33,14 +33,14 @@ import {
   MAIN_AGENT_ID,
   interactions,
   makeAgentScopeContext,
-} from '@moonshot-ai/agent-core-v2';
-import { TurnStarted } from '@moonshot-ai/agent-core-v2/agent/loop/turnEvents';
-import { Event2 } from '@moonshot-ai/agent-core-v2/app/event/event2';
+} from '@legacy-ai/agent-core-v2';
+import { TurnStarted } from '@legacy-ai/agent-core-v2/agent/loop/turnEvents';
+import { Event2 } from '@legacy-ai/agent-core-v2/app/event/event2';
 import {
   AgentEventBusView,
   EventBusService,
-} from '@moonshot-ai/agent-core-v2/app/event/eventBusService';
-import type { AgentActivitySnapshot } from '@moonshot-ai/agent-core-v2/agent/loop/loop';
+} from '@legacy-ai/agent-core-v2/app/event/eventBusService';
+import type { AgentActivitySnapshot } from '@legacy-ai/agent-core-v2/agent/loop/loop';
 import type { AgentEvent } from '../src/transport/ws/v1/events';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -454,7 +454,7 @@ describe('SessionEventBroadcaster', () => {
   let bc: SessionEventBroadcaster;
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'kimi-broadcaster-test-'));
+    dir = await mkdtemp(join(tmpdir(), 'floyd-broadcaster-test-'));
     sessions = new Map();
     eventBus = new FakeEventBus();
     bc = new SessionEventBroadcaster({
@@ -908,7 +908,7 @@ describe('SessionEventBroadcaster', () => {
             { type: 'text', text: 'look at this' },
             {
               type: 'image_url',
-              imageUrl: { url: 'kimi-file://f_img1?path=%2Fabs%2Fsession%2Fmedia%2Ff_img1.png' },
+              imageUrl: { url: 'floyd-file://f_img1?path=%2Fabs%2Fsession%2Fmedia%2Ff_img1.png' },
             },
           ],
         }),
@@ -922,7 +922,7 @@ describe('SessionEventBroadcaster', () => {
       const live = envelopes.find((e) => e.type === type);
       expect(live).toBeDefined();
       expect((live!.payload as { content: unknown }).content).toEqual(expected);
-      expect(JSON.stringify(live!.payload)).not.toContain('kimi-file://');
+      expect(JSON.stringify(live!.payload)).not.toContain('floyd-file://');
       expect(JSON.stringify(live!.payload)).not.toContain('/abs/session');
 
       const replay = await bc.getBufferedSince('s1', { seq: 0 });
@@ -1089,7 +1089,7 @@ describe('SessionEventBroadcaster', () => {
     main.bus.emit(
       agentEvent('subagent.spawned', {
         subagentId: 'agent-1',
-        subagentName: 'kimi-subagent',
+        subagentName: 'floyd-subagent',
         parentToolCallId: 'tc_swarm_1',
         description: 'task agent-1',
         swarmIndex: 0,
@@ -1495,7 +1495,7 @@ describe('SessionEventBroadcaster', () => {
       eventBus.emit({
         type: 'event.capability.changed',
         payload: {
-          capability_id: 'kimi-webbridge',
+          capability_id: 'floyd-webbridge',
           install: { running: true, step: 'download', percent: 42 },
         },
       });
@@ -1509,7 +1509,7 @@ describe('SessionEventBroadcaster', () => {
         type: 'event.capability.changed',
         session_id: '__global__',
         payload: {
-          capability_id: 'kimi-webbridge',
+          capability_id: 'floyd-webbridge',
           install: { running: true, step: 'download', percent: 42 },
         },
       });
@@ -1528,18 +1528,18 @@ describe('SessionEventBroadcaster', () => {
       });
       eventBus.emit({
         type: 'event.capability.changed',
-        payload: { capability_id: 'kimi-cu' },
+        payload: { capability_id: 'floyd-cu' },
       });
 
       eventBus.emit({
         type: 'event.capability.changed',
-        payload: { capability_id: 'kimi-cu', install: { running: false } },
+        payload: { capability_id: 'floyd-cu', install: { running: false } },
       });
 
       await vi.waitFor(() => expect(globalView.envelopes).toHaveLength(1));
       expect(globalView.envelopes[0]).toMatchObject({
         type: 'event.capability.changed',
-        payload: { capability_id: 'kimi-cu', install: { running: false } },
+        payload: { capability_id: 'floyd-cu', install: { running: false } },
       });
     });
 
@@ -1638,9 +1638,9 @@ describe('SessionEventBroadcaster', () => {
       bc.addGlobalTarget(globalView.target);
 
       const changed = [
-        { provider_id: 'managed:kimi-code', provider_name: 'Kimi Code', added: 2, removed: 1 },
+        { provider_id: 'managed:floyd-code', provider_name: 'Floyd Code', added: 2, removed: 1 },
       ];
-      const failed = [{ provider: 'managed:kimi-code', reason: 'network disabled' }];
+      const failed = [{ provider: 'managed:floyd-code', reason: 'network disabled' }];
       eventBus.emit({
         type: 'event.model_catalog.changed',
         payload: { changed, unchanged: ['openai-main'], failed },
@@ -1711,7 +1711,7 @@ describe('SessionEventBroadcaster', () => {
       });
 
       const changed = [
-        { provider_id: 'managed:kimi-code', provider_name: 'Kimi Code', added: 1, removed: 0 },
+        { provider_id: 'managed:floyd-code', provider_name: 'Floyd Code', added: 1, removed: 0 },
       ];
       eventBus.emit({
         type: 'event.model_catalog.changed',
@@ -2275,7 +2275,7 @@ describe('SessionEventBroadcaster', () => {
     const sub = lc.addAgent('agent-0');
     sessions.set('s1', lc);
 
-    const dir2 = await mkdtemp(join(tmpdir(), 'kimi-broadcaster-test-'));
+    const dir2 = await mkdtemp(join(tmpdir(), 'floyd-broadcaster-test-'));
     const bc2 = new SessionEventBroadcaster({
       eventsDir: dir2,
       core: makeCore(sessions, eventBus),
@@ -3089,10 +3089,10 @@ describe('sessionEventMessageSchema', () => {
         envelope({
           type: 'event.model_catalog.changed',
           changed: [
-            { provider_id: 'managed:kimi-code', provider_name: 'Kimi Code', added: 2, removed: 1 },
+            { provider_id: 'managed:floyd-code', provider_name: 'Floyd Code', added: 2, removed: 1 },
           ],
           unchanged: ['openai-main'],
-          failed: [{ provider: 'managed:kimi-code', reason: 'network disabled' }],
+          failed: [{ provider: 'managed:floyd-code', reason: 'network disabled' }],
         }),
       ).success,
     ).toBe(true);
@@ -3133,7 +3133,7 @@ describe('sessionEventMessageSchema', () => {
           type: 'event.model_catalog.changed',
           changed: [],
           unchanged: [],
-          failed: [{ provider: 'managed:kimi-code', reason: 42 }],
+          failed: [{ provider: 'managed:floyd-code', reason: 42 }],
         }),
       ).success,
     ).toBe(false);

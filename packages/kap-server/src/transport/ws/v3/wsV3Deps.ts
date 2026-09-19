@@ -1,4 +1,4 @@
-import type { IDisposable, Workspace } from '@moonshot-ai/agent-core-v2';
+import type { IDisposable, Workspace } from '@legacy-ai/agent-core-v2';
 
 import type { ServerMessage, WorkspaceInfo } from '../../../protocol/messages';
 

@@ -19,8 +19,8 @@ import {
 } from '../../harness';
 import { recordingTelemetry, type TelemetryRecord } from '../../app/telemetry/stubs';
 
-type TestKimiConfig = ReturnType<Parameters<typeof configServices>[0]>;
-type TestProtocolModelConfig = NonNullable<TestKimiConfig['models']>[string] &
+type TestFloydConfig = ReturnType<Parameters<typeof configServices>[0]>;
+type TestProtocolModelConfig = NonNullable<TestFloydConfig['models']>[string] &
   Pick<ModelRecord, 'protocol'>;
 type GenerateFn = Parameters<typeof llmGenerateServices>[0];
 
@@ -34,18 +34,18 @@ describe('ConfigState model capabilities', () => {
   let ctx: TestAgentContext;
   let profile: IAgentProfileService;
   let requester: IAgentLLMRequesterService;
-  let kimiConfig: TestKimiConfig;
+  let floydConfig: TestFloydConfig;
   let generate: GenerateFn;
   let records: TelemetryRecord[];
 
   beforeEach(() => {
-    kimiConfig = {
+    floydConfig = {
       providers: {},
     };
     generate = defaultGenerate();
     records = [];
     ctx = createTestAgent(
-      configServices(() => kimiConfig),
+      configServices(() => floydConfig),
       llmGenerateServices({
         generate: (config, content, control) => generate.generate(config, content, control),
       }),
@@ -64,18 +64,18 @@ describe('ConfigState model capabilities', () => {
   });
 
   it('computes provider and model capabilities from config metadata', () => {
-    kimiConfig = {
+    floydConfig = {
       providers: {
-        kimi: {
-          type: 'kimi',
+        floyd: {
+          type: 'floyd',
           apiKey: 'test-key',
           baseUrl: 'https://api.example.test/v1',
         },
       },
       models: {
-        'kimi-code/kimi-for-coding': {
-          provider: 'kimi',
-          model: 'kimi-for-coding',
+        'floyd-code/floyd-for-coding': {
+          provider: 'floyd',
+          model: 'floyd-for-coding',
           maxContextSize: 1_000_000,
           supportEfforts: ['low', 'high'],
           capabilities: ['image_in', 'video_in', 'thinking', 'tool_use'],
@@ -83,10 +83,10 @@ describe('ConfigState model capabilities', () => {
       },
     };
 
-    profile.update({ modelAlias: 'kimi-code/kimi-for-coding' });
+    profile.update({ modelAlias: 'floyd-code/floyd-for-coding' });
 
-    expect(profile.getModel()).toBe('kimi-code/kimi-for-coding');
-    expect(ctx.modelResolver.get('kimi-code/kimi-for-coding').name).toBe('kimi-for-coding');
+    expect(profile.getModel()).toBe('floyd-code/floyd-for-coding');
+    expect(ctx.modelResolver.get('floyd-code/floyd-for-coding').name).toBe('floyd-for-coding');
     expect(profile.getModelCapabilities()).toMatchObject({
       image_in: true,
       video_in: true,
@@ -98,24 +98,24 @@ describe('ConfigState model capabilities', () => {
   });
 
   it('republishes the model status slice on demand', () => {
-    kimiConfig = {
+    floydConfig = {
       providers: {
-        kimi: {
-          type: 'kimi',
+        floyd: {
+          type: 'floyd',
           apiKey: 'test-key',
           baseUrl: 'https://api.example.test/v1',
         },
       },
       models: {
-        'kimi-code/kimi-for-coding': {
-          provider: 'kimi',
-          model: 'kimi-for-coding',
+        'floyd-code/floyd-for-coding': {
+          provider: 'floyd',
+          model: 'floyd-for-coding',
           maxContextSize: 1_000_000,
           supportEfforts: ['low', 'high'],
         },
       },
     };
-    profile.update({ modelAlias: 'kimi-code/kimi-for-coding' });
+    profile.update({ modelAlias: 'floyd-code/floyd-for-coding' });
     const before = ctx.allEvents.filter((entry) => entry.event === 'agent.status.updated').length;
 
     profile.republishStatus();
@@ -123,7 +123,7 @@ describe('ConfigState model capabilities', () => {
     const statuses = ctx.allEvents.filter((entry) => entry.event === 'agent.status.updated');
     expect(statuses).toHaveLength(before + 1);
     expect(statuses.at(-1)?.args).toMatchObject({
-      model: 'kimi-code/kimi-for-coding',
+      model: 'floyd-code/floyd-for-coding',
       maxContextTokens: 1_000_000,
     });
   });
@@ -139,25 +139,25 @@ describe('ConfigState model capabilities', () => {
   });
 
   it('tracks thinking_toggle with the effort payload when effort changes', () => {
-    kimiConfig = {
+    floydConfig = {
       providers: {
-        kimi: {
-          type: 'kimi',
+        floyd: {
+          type: 'floyd',
           apiKey: 'test-key',
           baseUrl: 'https://api.example.test/v1',
         },
       },
       models: {
-        'kimi-code/kimi-for-coding': {
-          provider: 'kimi',
-          model: 'kimi-for-coding',
+        'floyd-code/floyd-for-coding': {
+          provider: 'floyd',
+          model: 'floyd-for-coding',
           maxContextSize: 1_000_000,
           capabilities: ['thinking'],
           supportEfforts: ['low', 'high'],
         },
       },
     };
-    profile.update({ modelAlias: 'kimi-code/kimi-for-coding' });
+    profile.update({ modelAlias: 'floyd-code/floyd-for-coding' });
     profile.setThinking('off');
     records.length = 0;
 
@@ -171,36 +171,36 @@ describe('ConfigState model capabilities', () => {
         effort: 'low',
         from: 'off',
         mode: 'agent',
-        model: 'kimi-code/kimi-for-coding',
+        model: 'floyd-code/floyd-for-coding',
         protocol: 'openai',
-        provider_type: 'kimi',
+        provider_type: 'floyd',
       },
     });
   });
 
   it('writes the bound model into the ambient telemetry context', () => {
-    kimiConfig = {
+    floydConfig = {
       providers: {
-        kimi: {
-          type: 'kimi',
+        floyd: {
+          type: 'floyd',
           apiKey: 'test-key',
           baseUrl: 'https://api.example.test/v1',
         },
       },
       models: {
-        'kimi-code/kimi-for-coding': {
-          provider: 'kimi',
-          model: 'kimi-for-coding',
+        'floyd-code/floyd-for-coding': {
+          provider: 'floyd',
+          model: 'floyd-for-coding',
           maxContextSize: 1_000_000,
         },
       },
     };
 
-    profile.update({ modelAlias: 'kimi-code/kimi-for-coding' });
+    profile.update({ modelAlias: 'floyd-code/floyd-for-coding' });
 
     expect(ctx.get(ITelemetryService).getContext()).toMatchObject({
-      model: 'kimi-code/kimi-for-coding',
-      provider_type: 'kimi',
+      model: 'floyd-code/floyd-for-coding',
+      provider_type: 'floyd',
       protocol: 'openai',
     });
   });
@@ -214,18 +214,18 @@ describe('ConfigState model capabilities', () => {
   });
 
   it('restores the ambient model after a cold resume', async () => {
-    kimiConfig = {
+    floydConfig = {
       providers: {
-        kimi: {
-          type: 'kimi',
+        floyd: {
+          type: 'floyd',
           apiKey: 'test-key',
           baseUrl: 'https://api.example.test/v1',
         },
       },
       models: {
-        'kimi-code/kimi-for-coding': {
-          provider: 'kimi',
-          model: 'kimi-for-coding',
+        'floyd-code/floyd-for-coding': {
+          provider: 'floyd',
+          model: 'floyd-for-coding',
           maxContextSize: 1_000_000,
         },
       },
@@ -233,14 +233,14 @@ describe('ConfigState model capabilities', () => {
     const resumedRecords: TelemetryRecord[] = [];
     const resumed = createTestAgent(
       { autoConfigure: false },
-      configServices(() => kimiConfig),
+      configServices(() => floydConfig),
       llmGenerateServices({
         generate: (config, content, control) => generate.generate(config, content, control),
       }),
       telemetryServices(recordingTelemetry(resumedRecords)),
       wireRecordPersistenceServices(
         new InMemoryWireRecordPersistence([
-          { type: 'config.update', agentId: 'main', modelAlias: 'kimi-code/kimi-for-coding' },
+          { type: 'config.update', agentId: 'main', modelAlias: 'floyd-code/floyd-for-coding' },
         ]),
       ),
     );
@@ -248,8 +248,8 @@ describe('ConfigState model capabilities', () => {
       await resumed.restorePersisted();
 
       expect(resumed.get(ITelemetryService).getContext()).toMatchObject({
-        model: 'kimi-code/kimi-for-coding',
-        provider_type: 'kimi',
+        model: 'floyd-code/floyd-for-coding',
+        provider_type: 'floyd',
         protocol: 'openai',
       });
     } finally {
@@ -257,25 +257,25 @@ describe('ConfigState model capabilities', () => {
     }
   });
 
-  it('does not infer Kimi capabilities from the provider catalogue', () => {
-    kimiConfig = {
+  it('does not infer Floyd capabilities from the provider catalogue', () => {
+    floydConfig = {
       providers: {
-        kimi: {
-          type: 'kimi',
+        floyd: {
+          type: 'floyd',
           apiKey: 'test-key',
           baseUrl: 'https://api.example.test/v1',
         },
       },
       models: {
-        'kimi-code': {
-          provider: 'kimi',
-          model: 'kimi-code',
+        'floyd-code': {
+          provider: 'floyd',
+          model: 'floyd-code',
           maxContextSize: 128_000,
         },
       },
     };
 
-    profile.update({ modelAlias: 'kimi-code' });
+    profile.update({ modelAlias: 'floyd-code' });
 
     expect(profile.getModelCapabilities()).toMatchObject({
       image_in: false,
@@ -287,7 +287,7 @@ describe('ConfigState model capabilities', () => {
 
   it('uses model max output size as the LLM completion cap', async () => {
     let requestMaxTokens: unknown;
-    kimiConfig = {
+    floydConfig = {
       providers: {
         deepseek: {
           type: 'openai',
@@ -329,27 +329,27 @@ describe('ConfigState model capabilities', () => {
 describe('ConfigState prompt cache hint', () => {
   let ctx: TestAgentContext;
   let profile: IAgentProfileService;
-  let kimiConfig: TestKimiConfig;
+  let floydConfig: TestFloydConfig;
 
   beforeEach(() => {
-    kimiConfig = {
+    floydConfig = {
       providers: {
-        kimi: {
-          type: 'kimi',
+        floyd: {
+          type: 'floyd',
           apiKey: 'test-key',
           baseUrl: 'https://api.example.test/v1',
         },
       },
       models: {
-        'kimi-code': {
-          provider: 'kimi',
-          model: 'kimi-code',
+        'floyd-code': {
+          provider: 'floyd',
+          model: 'floyd-code',
           maxContextSize: 128_000,
         },
       },
     };
     ctx = createTestAgent(
-      configServices(() => kimiConfig),
+      configServices(() => floydConfig),
       modelProviderOptionServices({ promptCacheKey: 'session-test' }),
     );
     profile = ctx.get(IAgentProfileService);
@@ -364,11 +364,11 @@ describe('ConfigState prompt cache hint', () => {
   });
 
   it('uses session id as a provider prompt cache hint without storing it on Agent', () => {
-    profile.update({ modelAlias: 'kimi-code' });
+    profile.update({ modelAlias: 'floyd-code' });
 
-    const model = ctx.modelResolver.get('kimi-code');
+    const model = ctx.modelResolver.get('floyd-code');
     expect(model.protocol).toBe('openai');
-    expect(model.providerType).toBe('kimi');
+    expect(model.providerType).toBe('floyd');
     expect('sessionId' in ctx).toBe(false);
   });
 });
@@ -377,44 +377,44 @@ describe('ConfigState thinking clamp for always-thinking models', () => {
   let ctx: TestAgentContext;
   let profile: IAgentProfileService;
   let requester: IAgentLLMRequesterService;
-  let kimiConfig: TestKimiConfig;
+  let floydConfig: TestFloydConfig;
   let capturedThinking: unknown;
 
   beforeEach(() => {
-    kimiConfig = {
-      providers: { kimi: { type: 'kimi', apiKey: 'test-key', baseUrl: 'https://api.example.test/v1' } },
+    floydConfig = {
+      providers: { floyd: { type: 'floyd', apiKey: 'test-key', baseUrl: 'https://api.example.test/v1' } },
       models: {
-        'kimi-code/deep': {
-          provider: 'kimi',
-          model: 'kimi-deep-coder',
+        'floyd-code/deep': {
+          provider: 'floyd',
+          model: 'floyd-deep-coder',
           maxContextSize: 128_000,
           capabilities: ['thinking', 'always_thinking', 'tool_use'],
           supportEfforts: ['low', 'high', 'max'],
         },
-        'kimi-code/toggle': {
-          provider: 'kimi',
-          model: 'kimi-for-coding',
+        'floyd-code/toggle': {
+          provider: 'floyd',
+          model: 'floyd-for-coding',
           maxContextSize: 128_000,
           capabilities: ['thinking'],
         },
-        'kimi-code/custom': {
-          provider: 'kimi',
-          model: 'kimi-custom-coder',
+        'floyd-code/custom': {
+          provider: 'floyd',
+          model: 'floyd-custom-coder',
           maxContextSize: 128_000,
           capabilities: ['thinking'],
           supportEfforts: ['low', 'medium', 'max'],
           defaultEffort: 'max',
         },
-        'kimi-code/ultra': {
-          provider: 'kimi',
-          model: 'kimi-ultra',
+        'floyd-code/ultra': {
+          provider: 'floyd',
+          model: 'floyd-ultra',
           maxContextSize: 128_000,
           capabilities: ['thinking'],
           supportEfforts: ['low', 'high', 'ultra'],
           defaultEffort: 'ultra',
         },
-        'kimi-code/compatible': {
-          provider: 'kimi',
+        'floyd-code/compatible': {
+          provider: 'floyd',
           protocol: 'anthropic',
           model: 'compatible-model',
           maxContextSize: 128_000,
@@ -426,7 +426,7 @@ describe('ConfigState thinking clamp for always-thinking models', () => {
     };
     capturedThinking = undefined;
     ctx = createTestAgent(
-      configServices(() => kimiConfig),
+      configServices(() => floydConfig),
       llmGenerateServices(requesterFromGenerateFn(async (_provider, _systemPrompt, _tools, _history, _callbacks, options) => {
         capturedThinking = options?.thinking;
         return {
@@ -451,13 +451,13 @@ describe('ConfigState thinking clamp for always-thinking models', () => {
   });
 
   it('clamps thinkingLevel off to the configured effort', () => {
-    profile.update({ modelAlias: 'kimi-code/deep', thinkingLevel: 'off' });
+    profile.update({ modelAlias: 'floyd-code/deep', thinkingLevel: 'off' });
 
     expect(profile.data().thinkingLevel).toBe('high');
   });
 
   it('sends the clamped thinking effort in the per-turn intent after thinking was set off', async () => {
-    profile.update({ modelAlias: 'kimi-code/deep', thinkingLevel: 'off' });
+    profile.update({ modelAlias: 'floyd-code/deep', thinkingLevel: 'off' });
 
     await requester.request({}, undefined, new AbortController().signal);
 
@@ -465,48 +465,48 @@ describe('ConfigState thinking clamp for always-thinking models', () => {
   });
 
   it('keeps thinking off working for toggleable models', () => {
-    profile.update({ modelAlias: 'kimi-code/toggle', thinkingLevel: 'off' });
+    profile.update({ modelAlias: 'floyd-code/toggle', thinkingLevel: 'off' });
 
     expect(profile.data().thinkingLevel).toBe('off');
   });
 
   it('resolves an explicit on request to the model default effort', () => {
-    profile.update({ modelAlias: 'kimi-code/custom', thinkingLevel: 'on' });
+    profile.update({ modelAlias: 'floyd-code/custom', thinkingLevel: 'on' });
 
     expect(profile.data().thinkingLevel).toBe('max');
   });
 
   it('re-clamps when switching to an always-on model after thinking was off', () => {
-    profile.update({ modelAlias: 'kimi-code/toggle', thinkingLevel: 'off' });
+    profile.update({ modelAlias: 'floyd-code/toggle', thinkingLevel: 'off' });
     expect(profile.data().thinkingLevel).toBe('off');
 
-    profile.update({ modelAlias: 'kimi-code/deep' });
+    profile.update({ modelAlias: 'floyd-code/deep' });
     expect(profile.data().thinkingLevel).toBe('high');
   });
 
   it('falls back to the target default when a model switch carries an unsupported effort', () => {
-    profile.update({ modelAlias: 'kimi-code/ultra', thinkingLevel: 'ultra' });
+    profile.update({ modelAlias: 'floyd-code/ultra', thinkingLevel: 'ultra' });
 
-    profile.update({ modelAlias: 'kimi-code/custom' });
+    profile.update({ modelAlias: 'floyd-code/custom' });
 
     expect(profile.data().thinkingLevel).toBe('max');
   });
 
   it('projects an inherited concrete effort to on when switching to a boolean model', () => {
-    profile.update({ modelAlias: 'kimi-code/ultra', thinkingLevel: 'ultra' });
+    profile.update({ modelAlias: 'floyd-code/ultra', thinkingLevel: 'ultra' });
 
-    profile.update({ modelAlias: 'kimi-code/toggle' });
+    profile.update({ modelAlias: 'floyd-code/toggle' });
 
     expect(profile.data().thinkingLevel).toBe('on');
   });
 
-  it('rejects an unsupported effort explicitly set on the current Kimi model', () => {
-    profile.update({ modelAlias: 'kimi-code/custom' });
+  it('rejects an unsupported effort explicitly set on the current Floyd model', () => {
+    profile.update({ modelAlias: 'floyd-code/custom' });
 
     expect(() => {
       profile.setThinking('ultra');
     }).toThrow(
-      'Thinking effort "ultra" is not supported by model "kimi-code/custom"',
+      'Thinking effort "ultra" is not supported by model "floyd-code/custom"',
     );
   });
 
@@ -514,7 +514,7 @@ describe('ConfigState thinking clamp for always-thinking models', () => {
     [' HIGH ', 'high'],
     ['OFF', 'off'],
   ])('normalizes runtime effort %j to %s before validation', (input, expected) => {
-    profile.update({ modelAlias: 'kimi-code/ultra' });
+    profile.update({ modelAlias: 'floyd-code/ultra' });
 
     profile.setThinking(input);
 
@@ -522,15 +522,15 @@ describe('ConfigState thinking clamp for always-thinking models', () => {
   });
 
   it('uses the model default when the runtime effort is blank', () => {
-    profile.update({ modelAlias: 'kimi-code/custom', thinkingLevel: 'low' });
+    profile.update({ modelAlias: 'floyd-code/custom', thinkingLevel: 'low' });
 
     profile.setThinking('   ');
 
     expect(profile.data().thinkingLevel).toBe('max');
   });
 
-  it('preserves unlisted efforts with a warning for Kimi-managed Anthropic models', () => {
-    profile.update({ modelAlias: 'kimi-code/compatible', thinkingLevel: 'max' });
+  it('preserves unlisted efforts with a warning for Floyd-managed Anthropic models', () => {
+    profile.update({ modelAlias: 'floyd-code/compatible', thinkingLevel: 'max' });
 
     expect(() => {
       profile.setThinking('high');
@@ -548,7 +548,7 @@ describe('ConfigState thinking clamp for always-thinking models', () => {
   });
 
   it('clamps off to the model default for always-on models, on any transport', () => {
-    profile.update({ modelAlias: 'kimi-code/compatible', thinkingLevel: 'max' });
+    profile.update({ modelAlias: 'floyd-code/compatible', thinkingLevel: 'max' });
 
     expect(() => {
       profile.setThinking('off');
@@ -557,28 +557,28 @@ describe('ConfigState thinking clamp for always-thinking models', () => {
   });
 });
 
-describe('ConfigState.provider applies global KIMI_MODEL_* request config', () => {
+describe('ConfigState.provider applies global FLOYD_MODEL_* request config', () => {
   let ctx: TestAgentContext | undefined;
   let profile: IAgentProfileService;
   let requester: IAgentLLMRequesterService;
-  let kimiConfig: TestKimiConfig;
+  let floydConfig: TestFloydConfig;
   let capturedProvider: unknown;
   let capturedOptions: Parameters<LegacyGenerateFn>[5];
 
   beforeEach(() => {
-    kimiConfig = {
-      providers: { kimi: { type: 'kimi', apiKey: 'test-key', baseUrl: 'https://api.example.test/v1' } },
+    floydConfig = {
+      providers: { floyd: { type: 'floyd', apiKey: 'test-key', baseUrl: 'https://api.example.test/v1' } },
       models: {
-        'kimi-code': {
-          provider: 'kimi',
-          model: 'kimi-code',
+        'floyd-code': {
+          provider: 'floyd',
+          model: 'floyd-code',
           maxContextSize: 128_000,
           capabilities: ['thinking'],
         },
-        'kimi-code-anthropic': {
-          provider: 'kimi',
+        'floyd-code-anthropic': {
+          provider: 'floyd',
           protocol: 'anthropic',
-          model: 'kimi-code-anthropic',
+          model: 'floyd-code-anthropic',
           maxContextSize: 128_000,
           capabilities: ['thinking'],
           supportEfforts: ['low', 'high'],
@@ -600,7 +600,7 @@ describe('ConfigState.provider applies global KIMI_MODEL_* request config', () =
 
   function createAgentWithEnv(): void {
     ctx = createTestAgent(
-      configServices(() => kimiConfig),
+      configServices(() => floydConfig),
       llmGenerateServices(requesterFromGenerateFn(async (provider, _systemPrompt, _tools, _history, _callbacks, options) => {
         capturedProvider = provider;
         capturedOptions = options;
@@ -617,11 +617,11 @@ describe('ConfigState.provider applies global KIMI_MODEL_* request config', () =
     requester = ctx.get(IAgentLLMRequesterService);
   }
 
-  it('injects KIMI_MODEL_TEMPERATURE into the per-turn sampling intent (the compaction request also uses)', async () => {
-    vi.stubEnv('KIMI_MODEL_TEMPERATURE', '0.3');
+  it('injects FLOYD_MODEL_TEMPERATURE into the per-turn sampling intent (the compaction request also uses)', async () => {
+    vi.stubEnv('FLOYD_MODEL_TEMPERATURE', '0.3');
     createAgentWithEnv();
 
-    profile.update({ modelAlias: 'kimi-code' });
+    profile.update({ modelAlias: 'floyd-code' });
     await requester.request({}, undefined, new AbortController().signal);
 
     expect(capturedOptions?.sampling).toMatchObject({
@@ -629,32 +629,32 @@ describe('ConfigState.provider applies global KIMI_MODEL_* request config', () =
     });
   });
 
-  it('injects KIMI_MODEL_THINKING_KEEP into the per-turn thinking intent when thinking is on (so compaction keeps it)', async () => {
-    vi.stubEnv('KIMI_MODEL_THINKING_KEEP', 'all');
+  it('injects FLOYD_MODEL_THINKING_KEEP into the per-turn thinking intent when thinking is on (so compaction keeps it)', async () => {
+    vi.stubEnv('FLOYD_MODEL_THINKING_KEEP', 'all');
     createAgentWithEnv();
 
-    profile.update({ modelAlias: 'kimi-code', thinkingLevel: 'high' });
+    profile.update({ modelAlias: 'floyd-code', thinkingLevel: 'high' });
     await requester.request({}, undefined, new AbortController().signal);
 
     expect(capturedOptions?.thinking).toMatchObject({ effort: 'on', keep: 'all' });
   });
 
   it('does NOT inject thinking.keep into the per-turn intent when thinking is off', async () => {
-    vi.stubEnv('KIMI_MODEL_THINKING_KEEP', 'all');
+    vi.stubEnv('FLOYD_MODEL_THINKING_KEEP', 'all');
     createAgentWithEnv();
 
-    profile.update({ modelAlias: 'kimi-code', thinkingLevel: 'off' });
+    profile.update({ modelAlias: 'floyd-code', thinkingLevel: 'off' });
     await requester.request({}, undefined, new AbortController().signal);
 
     expect(capturedOptions?.thinking?.effort).toBe('off');
     expect(capturedOptions?.thinking?.keep).toBeUndefined();
   });
 
-  it('injects forced effort through the Anthropic protocol for a Kimi provider', async () => {
-    vi.stubEnv('KIMI_MODEL_THINKING_EFFORT', 'max');
+  it('injects forced effort through the Anthropic protocol for a Floyd provider', async () => {
+    vi.stubEnv('FLOYD_MODEL_THINKING_EFFORT', 'max');
     createAgentWithEnv();
 
-    profile.update({ modelAlias: 'kimi-code-anthropic', thinkingLevel: 'high' });
+    profile.update({ modelAlias: 'floyd-code-anthropic', thinkingLevel: 'high' });
     expect(profile.data().thinkingLevel).toBe('high');
     expect(profile.resolveModelContext().thinkingLevel).toBe('max');
     const statusEvent = ctx?.allEvents.findLast(
@@ -663,7 +663,7 @@ describe('ConfigState.provider applies global KIMI_MODEL_* request config', () =
         (event.args as { thinkingEffort?: unknown } | undefined)?.thinkingEffort !== undefined,
     );
     expect(statusEvent?.args).toMatchObject({
-      model: 'kimi-code-anthropic',
+      model: 'floyd-code-anthropic',
       thinkingEffort: 'max',
     });
 

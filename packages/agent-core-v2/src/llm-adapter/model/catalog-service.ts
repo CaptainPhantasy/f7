@@ -1,8 +1,8 @@
-import { parseKimiCodeCustomHeaders } from '@moonshot-ai/kimi-code-oauth';
+import { parseFloydCodeCustomHeaders } from '@legacy-ai/floyd-code-oauth';
 import {
   apiKeyEnvMissingMessage,
   declaredProviderCredential,
-} from '@moonshot-ai/kimi-code-oauth/provider-credential';
+} from '@legacy-ai/floyd-code-oauth/provider-credential';
 
 import { Disposable } from '#/_base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
@@ -498,7 +498,7 @@ export function resolveOutboundHeaders(
     providerType !== undefined &&
     getProviderDefinition(providerType)?.hostHeaders === 'full';
   const hostLayer = forwardsAll ? host.headers : host.thirdPartyHeaders;
-  return { ...parseKimiCodeCustomHeaders(), ...hostLayer, ...customHeaders };
+  return { ...parseFloydCodeCustomHeaders(), ...hostLayer, ...customHeaders };
 }
 
 function resolveModelCapabilities(

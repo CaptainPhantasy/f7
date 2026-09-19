@@ -10,8 +10,8 @@ import { proxyEnvForChild, reconcileChildNoProxy } from '#/_base/utils/proxy';
 
 import {
   buildRequestOptions,
-  KIMI_MCP_CLIENT_NAME,
-  KIMI_MCP_CLIENT_VERSION,
+  FLOYD_MCP_CLIENT_NAME,
+  FLOYD_MCP_CLIENT_VERSION,
   MCP_LIVENESS_PROBE_TIMEOUT_MS,
   toMcpToolDefinition,
   toMcpToolResult,
@@ -56,8 +56,8 @@ export class StdioMcpClient implements MCPClient {
     }
     this.transport = new RuntimeStdioTransport(config, options, this.stderrBuffer);
     this.client = new Client({
-      name: options.clientName ?? KIMI_MCP_CLIENT_NAME,
-      version: options.clientVersion ?? KIMI_MCP_CLIENT_VERSION,
+      name: options.clientName ?? FLOYD_MCP_CLIENT_NAME,
+      version: options.clientVersion ?? FLOYD_MCP_CLIENT_VERSION,
     });
     this.startupTimeoutMs = options.startupTimeoutMs;
     this.toolCallTimeoutMs = options.toolCallTimeoutMs;

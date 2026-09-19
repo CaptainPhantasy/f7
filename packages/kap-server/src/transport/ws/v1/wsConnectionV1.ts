@@ -7,7 +7,7 @@ import {
   detachGrades,
   transcriptSubscribeV2PayloadSchema,
   type TranscriptGradeSpec,
-} from '@moonshot-ai/transcript';
+} from '@legacy-ai/transcript';
 import { ulid } from 'ulid';
 import type { RawData, WebSocket } from 'ws';
 
@@ -200,7 +200,7 @@ export class WsConnectionV1 implements BroadcastTarget {
     const cursors = payload['cursors'] as Record<string, SessionCursor> | undefined;
     const agentFilter = parseAgentFilter(payload['agent_filter']);
 
-    if (payload['client_id'] === 'kimi-inspect') this.broadcaster.addDiEventTarget(this);
+    if (payload['client_id'] === 'floyd-inspect') this.broadcaster.addDiEventTarget(this);
 
     const accepted: string[] = [];
     const resyncRequired: string[] = [];

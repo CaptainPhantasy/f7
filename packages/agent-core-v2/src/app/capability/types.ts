@@ -1,4 +1,4 @@
-export type CapabilityId = 'kimi-cu' | 'kimi-webbridge';
+export type CapabilityId = 'floyd-cu' | 'floyd-webbridge';
 
 export type CapabilityReadiness = 'not_installed' | 'partial' | 'ready' | 'unsupported';
 

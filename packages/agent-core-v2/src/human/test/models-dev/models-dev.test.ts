@@ -60,15 +60,15 @@ describe('resolveModelsDevImport', () => {
     });
     expect(
       resolveModelsDevImport({
-        id: 'kimi-for-coding',
+        id: 'floyd-for-coding',
         npm: '@ai-sdk/anthropic',
-        api: 'https://api.kimi.com/coding/v1',
+        api: 'https://api.floyd.com/coding/v1',
       }),
     ).toEqual({
       kind: 'ok',
       wire: 'anthropic',
       guessed: false,
-      baseUrl: 'https://api.kimi.com/coding',
+      baseUrl: 'https://api.floyd.com/coding',
     });
     expect(
       resolveModelsDevImport({
@@ -258,8 +258,8 @@ describe('modelsDevProviderModels', () => {
           'claude-sonnet-4-5': { id: 'claude-sonnet-4-5', limit: { context: 200000 } },
           'claude-fable-5': { id: 'claude-fable-5', limit: { context: 200000 } },
           'claude-latest': { id: 'claude-latest', limit: { context: 200000 } },
-          'kimi-k3': {
-            id: 'kimi-k3',
+          'floyd-k3': {
+            id: 'floyd-k3',
             limit: { context: 262144 },
             reasoning_options: [{ type: 'effort', values: ['low', 'high'] }],
           },
@@ -272,9 +272,9 @@ describe('modelsDevProviderModels', () => {
     expect(fable?.supportEfforts).toBeUndefined();
     expect(fable?.alwaysThinking).toBeUndefined();
     expect(anthropic.get('claude-latest')?.supportEfforts).toBeUndefined();
-    const kimi = anthropic.get('kimi-k3');
-    expect(kimi?.supportEfforts).toEqual(['low', 'high']);
-    expect(kimi?.alwaysThinking).toBeUndefined();
+    const floyd = anthropic.get('floyd-k3');
+    expect(floyd?.supportEfforts).toEqual(['low', 'high']);
+    expect(floyd?.alwaysThinking).toBeUndefined();
     const glm = anthropic.get('glm-5');
     expect(glm?.supportEfforts).toBeUndefined();
     expect(glm?.capability.thinking).toBe(false);

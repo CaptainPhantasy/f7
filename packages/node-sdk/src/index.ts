@@ -1,24 +1,24 @@
-export { KimiHarness } from '#/kimi-harness';
-export type { KimiHarnessRuntimeOptions } from '#/kimi-harness';
+export { FloydHarness } from '#/floyd-harness';
+export type { FloydHarnessRuntimeOptions } from '#/floyd-harness';
 export { Session } from '#/session';
-export { KimiAuthFacade } from '#/auth';
+export { FloydAuthFacade } from '#/auth';
 export {
-  createKimiHarness,
+  createFloydHarness,
   SDKRpcClientV2,
   type SDKRpcClientV2Options,
 } from '#/sdk-rpc-client-v2';
 export {
-  createKimiConfigRpc,
-  KimiConfigRpcClient,
-  type KimiConfigRpc,
-  type KimiConfigValidationIssue,
-  type KimiConfigValidationPathSegment,
-  type ResolveKimiConfigPathInput,
-  type ValidateKimiConfigTomlInput,
+  createFloydConfigRpc,
+  FloydConfigRpcClient,
+  type FloydConfigRpc,
+  type FloydConfigValidationIssue,
+  type FloydConfigValidationPathSegment,
+  type ResolveFloydConfigPathInput,
+  type ValidateFloydConfigTomlInput,
 } from '#/config-rpc';
 export { SDKRpcClientBase } from '#/rpc';
-export { KimiForCodingProvider } from '#/kimi-code-model-provider';
-export type { KimiForCodingProviderOptions } from '#/kimi-code-model-provider';
+export { FloydForCodingProvider } from '#/floyd-code-model-provider';
+export type { FloydForCodingProviderOptions } from '#/floyd-code-model-provider';
 export { removeProviderFromConfig } from '#/v2/config-mapper';
 
 export {
@@ -46,15 +46,15 @@ export type {
 
 export {
   ErrorCodes,
-  KimiError,
-  type KimiErrorCode,
-  type KimiErrorInfo,
-  type KimiErrorOptions,
-  type KimiErrorPayload,
-  KIMI_ERROR_INFO,
-  fromKimiErrorPayload,
-  isKimiError,
-  toKimiErrorPayload,
+  FloydError,
+  type FloydErrorCode,
+  type FloydErrorInfo,
+  type FloydErrorOptions,
+  type FloydErrorPayload,
+  FLOYD_ERROR_INFO,
+  fromFloydErrorPayload,
+  isFloydError,
+  toFloydErrorPayload,
 } from '#/errors';
 
 export {
@@ -64,15 +64,15 @@ export {
   redact,
   resolveGlobalLogPath,
 } from '#/logging/index';
-export { resolveKimiHome } from '@moonshot-ai/agent-core-v2';
+export { resolveFloydHome } from '@legacy-ai/agent-core-v2';
 export type { LogContext, LogLevel, LogPayload, Logger } from '#/logging/index';
 
 export { effectiveModelAlias, loadRuntimeConfigSafe } from '#/config/index';
-export { resolveConfigPath } from '@moonshot-ai/agent-core-v2';
+export { resolveConfigPath } from '@legacy-ai/agent-core-v2';
 export { limitAgentReplayByTurns } from '#/replay';
-export { parseAgentFileText, resolveAgentPath } from '@moonshot-ai/agent-core-v2';
+export { parseAgentFileText, resolveAgentPath } from '@legacy-ai/agent-core-v2';
 export { SECONDARY_DERIVED_MODEL_ALIAS } from '#/config/index';
-export { PRIMARY_SUBAGENT_MODEL_CHOICE } from '@moonshot-ai/agent-core-v2/session/subagent/configSection';
+export { PRIMARY_SUBAGENT_MODEL_CHOICE } from '@legacy-ai/agent-core-v2/session/subagent/configSection';
 
 export { installGlobalProxyDispatcher } from '#/proxy';
 
@@ -87,7 +87,7 @@ export {
   sessionMediaOriginalsDir,
   IMAGE_BYTE_BUDGET,
   MAX_IMAGE_EDGE_PX,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 export { compressBase64ForModel, compressImageForModel, ImageLimits } from '#/image';
 export type {
   CompressImageOptions,
@@ -113,22 +113,22 @@ export {
   isDaemonFileUrl,
   matchSingleMediaPathTag,
   parseDaemonFileUrl,
-} from '@moonshot-ai/agent-core-v2/agent/media/mediaRef';
+} from '@legacy-ai/agent-core-v2/agent/media/mediaRef';
 export type {
   DaemonFileRef,
   MediaKind,
-} from '@moonshot-ai/agent-core-v2/agent/media/mediaRef';
+} from '@legacy-ai/agent-core-v2/agent/media/mediaRef';
 
 export type {
-  KimiAuthCompleteFeedbackUploadInput,
-  KimiAuthCompleteFeedbackUploadPart,
-  KimiAuthCreateFeedbackUploadUrlInput,
-  KimiAuthCreateFeedbackUploadUrlOk,
-  KimiAuthCreateFeedbackUploadUrlResult,
-  KimiAuthFeedbackUploadPart,
-  KimiAuthLoginResult,
-  KimiAuthLogoutResult,
-  KimiAuthSubmitFeedbackInput,
+  FloydAuthCompleteFeedbackUploadInput,
+  FloydAuthCompleteFeedbackUploadPart,
+  FloydAuthCreateFeedbackUploadUrlInput,
+  FloydAuthCreateFeedbackUploadUrlOk,
+  FloydAuthCreateFeedbackUploadUrlResult,
+  FloydAuthFeedbackUploadPart,
+  FloydAuthLoginResult,
+  FloydAuthLogoutResult,
+  FloydAuthSubmitFeedbackInput,
 } from '#/auth';
 
 export * from '#/events';

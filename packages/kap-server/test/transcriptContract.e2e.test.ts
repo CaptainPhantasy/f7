@@ -13,7 +13,7 @@ import {
   MAIN_AGENT_ID,
   getLiveSessionById,
   resumeSessionById,
-} from '@moonshot-ai/agent-core-v2';
+} from '@legacy-ai/agent-core-v2';
 
 import { type RunningServer, startServer } from '../src/start';
 import { TEST_HOST_IDENTITY } from './helpers/hostIdentity';
@@ -203,7 +203,7 @@ function rawToString(data: RawData): string {
 }
 
 async function subscribeTranscript(server: RunningServer, sid: string): Promise<TranscriptChannel> {
-  const ws = new WebSocket(`ws://127.0.0.1:${server.port}/api/v1/ws`, [`kimi-code.bearer.${bearerToken(server)}`]);
+  const ws = new WebSocket(`ws://127.0.0.1:${server.port}/api/v1/ws`, [`floyd-code.bearer.${bearerToken(server)}`]);
   const frames: any[] = [];
   const ops: any[] = [];
   let resetFrame: any;
@@ -245,7 +245,7 @@ describe('transcript contract e2e', () => {
   let base: string;
 
   beforeAll(async () => {
-    home = await mkdtemp(join(tmpdir(), 'kimi-transcript-contract-'));
+    home = await mkdtemp(join(tmpdir(), 'floyd-transcript-contract-'));
     server = await startServer({ hostIdentity: TEST_HOST_IDENTITY, host: '127.0.0.1', port: 0, homeDir: home, logLevel: 'silent' });
     base = `http://127.0.0.1:${server.port}`;
   });

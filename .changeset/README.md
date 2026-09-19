@@ -10,21 +10,21 @@ Current publishable packages:
 
 | Package | Directory | Description |
 | --- | --- | --- |
-| `@moonshot-ai/kimi-code` | `apps/kimi-code` | CLI / TUI application — provides the `kimi` command after install |
-| `@moonshot-ai/kimi-code-sdk` | `packages/node-sdk` | Public TypeScript SDK |
+| `@legacy-ai/floyd-code` | `apps/floyd-code` | CLI / TUI application — provides the `floyd` command after install |
+| `@legacy-ai/floyd-code-sdk` | `packages/node-sdk` | Public TypeScript SDK |
 
 All other workspace packages are private internal packages, are not published to npm, and are excluded via `ignore` in `.changeset/config.json`:
 
-- `@moonshot-ai/kaos`
-- `@moonshot-ai/kimi-code-oauth`
-- `@moonshot-ai/kimi-telemetry`
-- `@moonshot-ai/kosong`
-- `@moonshot-ai/migration-legacy`
-- `@moonshot-ai/vis`
-- `@moonshot-ai/vis-server`
-- `@moonshot-ai/vis-web`
+- `@legacy-ai/kaos`
+- `@legacy-ai/floyd-code-oauth`
+- `@legacy-ai/floyd-telemetry`
+- `@legacy-ai/kosong`
+- `@legacy-ai/migration-legacy`
+- `@legacy-ai/vis`
+- `@legacy-ai/vis-server`
+- `@legacy-ai/vis-web`
 
-Version impact from internal dependencies must be judged manually. The published artifacts for CLI and SDK bundle internal workspace packages into the artifact itself; runtime `dependencies` of published packages must not include any `@moonshot-ai/*` internal workspace packages.
+Version impact from internal dependencies must be judged manually. The published artifacts for CLI and SDK bundle internal workspace packages into the artifact itself; runtime `dependencies` of published packages must not include any `@legacy-ai/*` internal workspace packages.
 
 The repository's `.changeset/config.json` sets `updateInternalDependencies: "patch"`. Because internal packages are not published, you still need to manually select all affected publishable packages in the changeset — do not rely solely on automatic dependency bumps to express user-visible changes.
 
@@ -32,14 +32,14 @@ Example scenarios:
 
 | Change | Changeset selection |
 | --- | --- |
-| Only modifies TUI behavior in `@moonshot-ai/kimi-code` | Add `patch` / `minor` / `major` to `@moonshot-ai/kimi-code` |
+| Only modifies TUI behavior in `@legacy-ai/floyd-code` | Add `patch` / `minor` / `major` to `@legacy-ai/floyd-code` |
 | Only modifies internal packages, no user-visible change in SDK / CLI | Usually no changeset needed |
-| Internal package fix changes the CLI user experience | Add a changeset to `@moonshot-ai/kimi-code` describing the user-visible fix |
-| Internal package adds a new capability exposed by the SDK | Add a changeset to `@moonshot-ai/kimi-code-sdk` |
-| SDK behavior change affects CLI user experience | Add changesets to both `@moonshot-ai/kimi-code-sdk` and `@moonshot-ai/kimi-code` |
-| Provider abstraction change affects SDK / CLI | Add changesets to the affected `@moonshot-ai/kimi-code-sdk` and/or `@moonshot-ai/kimi-code` |
+| Internal package fix changes the CLI user experience | Add a changeset to `@legacy-ai/floyd-code` describing the user-visible fix |
+| Internal package adds a new capability exposed by the SDK | Add a changeset to `@legacy-ai/floyd-code-sdk` |
+| SDK behavior change affects CLI user experience | Add changesets to both `@legacy-ai/floyd-code-sdk` and `@legacy-ai/floyd-code` |
+| Provider abstraction change affects SDK / CLI | Add changesets to the affected `@legacy-ai/floyd-code-sdk` and/or `@legacy-ai/floyd-code` |
 | Test-only, internal refactor, docs, or private debug tooling changes | Usually no changeset needed |
-| Bundled official plugin change under `plugins/` (e.g. `kimi-datasource`) | No changeset — the plugin is versioned via its own `kimi.plugin.json` / `plugins/marketplace.json` and shipped through the marketplace CDN, not the npm package |
+| Bundled official plugin change under `plugins/` (e.g. `floyd-datasource`) | No changeset — the plugin is versioned via its own `floyd.plugin.json` / `plugins/marketplace.json` and shipped through the marketplace CDN, not the npm package |
 
 ## Prerequisite: NPM Trusted Publishing (OIDC)
 
@@ -47,7 +47,7 @@ This repository uses npm's **Trusted Publishing** (OIDC-based) for publishing �
 
 ### Configuration steps
 
-1. Open each publishable package's page on the npm website, e.g. `https://www.npmjs.com/package/@moonshot-ai/kimi-code`.
+1. Open each publishable package's page on the npm website, e.g. `https://www.npmjs.com/package/@legacy-ai/floyd-code`.
 2. Go to **Settings** -> **Publishing access**.
 3. Find **Automate publishing with GitHub Actions** or **Add trusted publisher**.
 4. Click **Add a new trusted publisher**.
@@ -56,8 +56,8 @@ Fill in the following:
 
 | Field | Value |
 | --- | --- |
-| GitHub Organization | `MoonshotAI` |
-| GitHub Repository | `kimi-code` |
+| GitHub Organization | `LegacyAI` |
+| GitHub Repository | `floyd-code` |
 | GitHub Workflow | `release.yml` |
 | Environment | leave empty |
 
@@ -139,12 +139,12 @@ The root-level `pnpm run publish` first runs typecheck, lint, sherif, test, buil
 ## Notes
 
 - Every PR that affects publishable-package behavior or public API should include a corresponding changeset.
-- Changes under `plugins/` (the bundled official plugins such as `kimi-datasource`) do **not** need a changeset: each plugin carries its own version in `kimi.plugin.json` and `plugins/marketplace.json` and is distributed via the marketplace CDN, separately from the `@moonshot-ai/kimi-code` npm package.
+- Changes under `plugins/` (the bundled official plugins such as `floyd-datasource`) do **not** need a changeset: each plugin carries its own version in `floyd.plugin.json` and `plugins/marketplace.json` and is distributed via the marketplace CDN, separately from the `@legacy-ai/floyd-code` npm package.
 - Changeset files must be committed to the repository — release PRs are only triggered after they're merged.
 - Release PRs require human review and merge; they will not publish automatically.
-- Do not add release changesets for private internal packages; only select `@moonshot-ai/kimi-code` and `@moonshot-ai/kimi-code-sdk`.
-- If a change in an underlying internal package alters user-visible behavior or public API of a publishable package, add a changeset to the affected publishable package. For example, when a bug fixed in `@moonshot-ai/kosong` resolves an issue CLI users encounter, add a changeset to `@moonshot-ai/kimi-code` describing the user-visible fix.
-- `@moonshot-ai/kimi-code` is the official CLI package name; after a global install it provides the `kimi` command.
+- Do not add release changesets for private internal packages; only select `@legacy-ai/floyd-code` and `@legacy-ai/floyd-code-sdk`.
+- If a change in an underlying internal package alters user-visible behavior or public API of a publishable package, add a changeset to the affected publishable package. For example, when a bug fixed in `@legacy-ai/kosong` resolves an issue CLI users encounter, add a changeset to `@legacy-ai/floyd-code` describing the user-visible fix.
+- `@legacy-ai/floyd-code` is the official CLI package name; after a global install it provides the `floyd` command.
 - Make sure each publishable package on npm has a Trusted Publisher configured.
 
 ## References

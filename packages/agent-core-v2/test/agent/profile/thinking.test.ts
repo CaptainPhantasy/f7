@@ -21,13 +21,13 @@ const alwaysThinkingModel = {
   capabilities: ['thinking', 'always_thinking'],
   alwaysThinking: true,
   protocol: 'openai',
-  providerType: 'kimi',
+  providerType: 'floyd',
 };
 const alwaysThinkingEffortModel = {
   capabilities: ['thinking', 'always_thinking'],
   alwaysThinking: true,
   protocol: 'openai',
-  providerType: 'kimi',
+  providerType: 'floyd',
   supportEfforts: ['low', 'high', 'max'],
   defaultEffort: 'high',
 };
@@ -35,10 +35,10 @@ const nonThinkingModel = { capabilities: ['tool_use'] };
 const alwaysThinkingAnthropicEffortModel = {
   ...alwaysThinkingEffortModel,
   protocol: 'anthropic',
-  providerType: 'kimi',
+  providerType: 'floyd',
 };
-const kimiEffortModel = { ...effortModel, protocol: 'openai', providerType: 'kimi' };
-const kimiBooleanModel = { ...booleanModel, protocol: 'openai', providerType: 'kimi' };
+const floydEffortModel = { ...effortModel, protocol: 'openai', providerType: 'floyd' };
+const floydBooleanModel = { ...booleanModel, protocol: 'openai', providerType: 'floyd' };
 const openaiEffortModel = { ...effortModel, providerType: 'openai' };
 
 describe('defaultThinkingEffortForModel', () => {
@@ -181,18 +181,18 @@ describe('resolveThinkingEffortForModel', () => {
     expect(resolveThinkingEffortForModel('OFF', { effort: 'high' }, undefined)).toBe('off');
   });
 
-  it('falls back to the model default for an unsupported Kimi effort', () => {
-    expect(resolveThinkingEffortForModel('ultra', undefined, kimiEffortModel, true)).toBe(
+  it('falls back to the model default for an unsupported Floyd effort', () => {
+    expect(resolveThinkingEffortForModel('ultra', undefined, floydEffortModel, true)).toBe(
       'medium',
     );
   });
 
-  it('projects a concrete effort to on for a boolean-only Kimi model', () => {
-    expect(resolveThinkingEffortForModel('ultra', undefined, kimiBooleanModel, true)).toBe('on');
+  it('projects a concrete effort to on for a boolean-only Floyd model', () => {
+    expect(resolveThinkingEffortForModel('ultra', undefined, floydBooleanModel, true)).toBe('on');
   });
 
-  it('reports unsupported concrete efforts only for Kimi effort models', () => {
-    expect(modelSupportsThinkingEffort('ultra', kimiEffortModel, true)).toBe(false);
+  it('reports unsupported concrete efforts only for Floyd effort models', () => {
+    expect(modelSupportsThinkingEffort('ultra', floydEffortModel, true)).toBe(false);
     expect(modelSupportsThinkingEffort('ultra', openaiEffortModel, false)).toBe(true);
   });
 });
