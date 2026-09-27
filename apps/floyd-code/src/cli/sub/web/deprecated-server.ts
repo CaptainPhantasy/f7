@@ -17,15 +17,15 @@ import type { Command } from 'commander';
 import { registerLegacyKillCommand } from './legacy-kill';
 
 export const DEPRECATED_SERVER_NOTICE =
-  '`floyd server` has been deprecated and no longer works.\n' +
-  'Use `floyd web` instead — it runs the local server in the foreground and opens the web UI (`--no-open` to skip).\n' +
-  'To stop a server started by a version before 0.28.0, use `floyd server kill`.\n' +
+  '`f7 server` has been deprecated and no longer works.\n' +
+  'Use `f7 web` instead — it runs the local server in the foreground and opens the web UI (`--no-open` to skip).\n' +
+  'To stop a server started by a version before 0.28.0, use `f7 server kill`.\n' +
   'This notice will be removed in the next major version of Floyd Code.\n';
 
 export function registerDeprecatedServerCommand(program: Command): void {
   const server = program
     .command('server')
-    .description('Deprecated — use `floyd web` instead.')
+    .description('Deprecated — use `f7 web` instead.')
     // Swallow every legacy subcommand/flag (`run`, `kill`, `--port`, …) so
     // they all land in the same notice instead of a commander parse error.
     .allowUnknownOption(true)
