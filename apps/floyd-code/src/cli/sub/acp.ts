@@ -36,7 +36,10 @@ export function registerAcpCommand(parent: Command): void {
       'Run the device-code login flow then exit (entry point for ACP terminal-auth).',
       false,
     )
-    .option('--region <region>', 'Login region used together with --login: "mainland-cn" (floyd.com) or "global" (floyd.ai).')
+    .option(
+      '--region <region>',
+      'OAuth server region slot used together with --login: "mainland-cn" or "global". Hosts come from FLOYD_CODE_OAUTH_HOST / FLOYD_CODE_GLOBAL_OAUTH_HOST; optional, and not needed to use your own provider.',
+    )
     .action(async (opts: { login?: boolean; region?: string }) => {
       if (opts.login === true) {
         await runLoginFlow({

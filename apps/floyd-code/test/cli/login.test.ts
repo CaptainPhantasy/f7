@@ -68,6 +68,26 @@ describe('floyd login', () => {
     expect(login?.description()).toMatch(/[Aa]uthenticat/);
   });
 
+  it('points at provider configuration instead of advertising dead login hosts', () => {
+    const program = new Command('floyd');
+    registerLoginCommand(program);
+
+    const login = program.commands.find((c) => c.name() === 'login');
+    const help = login?.helpInformation() ?? '';
+    const description = login?.description() ?? '';
+    const region = login?.options.find((option) => option.long === '--region');
+    const regionHelp = region?.description ?? '';
+
+    expect(region).toBeDefined();
+    expect(description).toMatch(/\[providers\.\*\]/);
+    expect(description).toMatch(/\/provider/);
+    expect(regionHelp).toMatch(/mainland-cn/);
+    expect(regionHelp).toMatch(/global/);
+    expect(regionHelp).toMatch(/FLOYD_CODE_OAUTH_HOST/);
+    expect(`${help}\n${description}\n${regionHelp}`).not.toMatch(/floyd\.(com|ai)/);
+    expect(help).toContain('--region <region>');
+  });
+
   it('invokes harness.auth.login and exits 0 on success', async () => {
     mockLogin.mockResolvedValue({ providerName: 'floyd-code', ok: true });
 

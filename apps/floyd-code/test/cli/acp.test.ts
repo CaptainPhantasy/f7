@@ -53,6 +53,26 @@ describe('floyd acp', () => {
     expect(acp?.description()).toMatch(/Agent Client Protocol/);
   });
 
+  it('documents --region without advertising dead login hosts', () => {
+    const program = new Command('floyd');
+    registerAcpCommand(program);
+
+    const acp = program.commands.find((c) => c.name() === 'acp');
+    const help = acp?.helpInformation() ?? '';
+    const region = acp?.options.find((option) => option.long === '--region');
+    const regionHelp = region?.description ?? '';
+    const loginHelp = acp?.options.find((option) => option.long === '--login')?.description ?? '';
+
+    expect(region).toBeDefined();
+    expect(regionHelp).toMatch(/mainland-cn/);
+    expect(regionHelp).toMatch(/global/);
+    expect(regionHelp).toMatch(/FLOYD_CODE_OAUTH_HOST/);
+    expect(regionHelp).toMatch(/--login/);
+    expect(`${help}\n${regionHelp}\n${loginHelp}`).not.toMatch(/floyd\.(com|ai)/);
+    expect(help).toContain('--region <region>');
+    expect(help).toContain('--login');
+  });
+
   it('invokes runAcpServer with the host options and exits 0 on success', async () => {
     const program = new Command('floyd').exitOverride();
     registerAcpCommand(program);

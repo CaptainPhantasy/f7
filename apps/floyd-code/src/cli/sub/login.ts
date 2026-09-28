@@ -13,10 +13,12 @@ import { parseRegionFlag, runLoginFlow } from './login-flow';
 export function registerLoginCommand(parent: Command): void {
   parent
     .command('login')
-    .description('Authenticate with Floyd Code CLI via the device-code flow.')
+    .description(
+      'Authenticate via the device-code flow against an operator-supplied OAuth server. To use your own model provider instead, configure [providers.*] in config.toml or run /provider.',
+    )
     .option(
       '--region <region>',
-      'Login region: "mainland-cn" (floyd.com) or "global" (floyd.ai).',
+      'OAuth server region slot: "mainland-cn" or "global". Hosts come from FLOYD_CODE_OAUTH_HOST / FLOYD_CODE_GLOBAL_OAUTH_HOST; optional, and not needed to use your own provider.',
     )
     .action(async (opts: { region?: string }) => {
       await runLoginFlow({
