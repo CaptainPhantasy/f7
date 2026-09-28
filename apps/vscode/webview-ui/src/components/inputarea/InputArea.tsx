@@ -38,10 +38,6 @@ import { useClickOutside } from "./hooks/useClickOutside";
 import { useInputHistory } from "./hooks/useInputHistory";
 import { computeMentionInsert } from "./utils";
 
-interface InputAreaProps {
-  onAuthAction?: () => void;
-}
-
 const SWITCH_CACHE_NOTE =
   "Note: Switching models or thinking effort invalidates the existing prompt cache. Start a new conversation to avoid extra token costs.";
 
@@ -51,7 +47,7 @@ function adjustHeight(textarea: HTMLTextAreaElement | null) {
   textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
 }
 
-export function InputArea({ onAuthAction }: InputAreaProps) {
+export function InputArea() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [text, setText] = useState("");
@@ -462,7 +458,7 @@ export function InputArea({ onAuthAction }: InputAreaProps) {
                 <TooltipContent>Add files or media</TooltipContent>
               </Tooltip>
 
-              <ActionMenu onAuthAction={onAuthAction} />
+              <ActionMenu />
 
               {isStreaming ? (
                 <Button variant="destructive" size="icon-xs" onClick={abort}>

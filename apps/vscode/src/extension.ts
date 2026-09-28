@@ -214,10 +214,10 @@ function legacyReauthNotice(
   const mcpLogins = discovery.notices.mcpOauthServersRequiringReauth.length;
   if (floydLogins === 0 && mcpLogins === 0) return null;
   if (floydLogins > 0 && mcpLogins > 0) {
-    return "Legacy OAuth credentials are not copied. Sign in to Floyd Code and authorize your MCP servers again.";
+    return "Legacy OAuth credentials are not copied. Add a provider and model to your shared Floyd Code config.toml, and authorize your MCP servers again.";
   }
   return floydLogins > 0
-    ? "Legacy OAuth credentials are not copied. Sign in to Floyd Code again."
+    ? "Legacy OAuth credentials are not copied. Add a provider and model to your shared Floyd Code config.toml instead."
     : "Legacy MCP OAuth credentials are not copied. Authorize those MCP servers again.";
 }
 
@@ -244,7 +244,7 @@ async function performMigration(
   const reauthNotice =
     reauthCount === 0
       ? ""
-      : ` ${reauthCount} OAuth connection(s) must be signed in again.`;
+      : ` ${reauthCount} OAuth connection(s) must be authorized again.`;
   const message = `${result.message}${reauthNotice}`;
   const needsLogs =
     result.status === "partial" ||

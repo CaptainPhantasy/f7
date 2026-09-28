@@ -132,11 +132,12 @@ function expectNoDeviceHeaders(headers: Record<string, string>): void {
   expect(headers['x-msh-version']).toBeUndefined();
 }
 
-function flowConfig(): OAuthFlowConfig {
+function flowConfig(overrides: Partial<OAuthFlowConfig> = {}): OAuthFlowConfig {
   return {
     name: 'floyd-code',
     oauthHost: server.host,
     clientId: 'test-client-id',
+    ...overrides,
   };
 }
 
@@ -307,6 +308,35 @@ describe('requestDeviceAuthorization', () => {
       },
     });
     await expect(requestAuth()).rejects.toBeInstanceOf(OAuthError);
+  });
+
+  // ── unconfigured host ─────────────────────────────────────────────────
+
+  it('fails closed naming the knob to set when no OAuth host is configured', async () => {
+    const failure = await requestAuth(flowConfig({ oauthHost: '' })).catch(
+      (error: unknown) => error,
+    );
+
+    expect(failure).toBeInstanceOf(OAuthError);
+    // A configuration gap, not a transport failure: the caller must not read
+    // this as a retryable connection problem.
+    expect(failure).not.toBeInstanceOf(OAuthConnectionError);
+    expect((failure as Error).message).toBe(
+      'No OAuth host is configured, so device-code login cannot start. Set FLOYD_CODE_OAUTH_HOST to your OAuth server, or for the "global" region slot set FLOYD_CODE_GLOBAL_OAUTH_HOST and FLOYD_CODE_GLOBAL_BASE_URL and run floyd login --region global. Login is optional: a provider under [providers.*] in config.toml needs no OAuth at all.',
+    );
+    // The guard runs before the request: nothing is sent anywhere.
+    expect(server.recorded).toHaveLength(0);
+  });
+
+  it('treats a whitespace-only OAuth host as unconfigured', async () => {
+    const failure = await requestAuth(flowConfig({ oauthHost: '   ' })).catch(
+      (error: unknown) => error,
+    );
+
+    expect(failure).toBeInstanceOf(OAuthError);
+    expect(failure).not.toBeInstanceOf(OAuthConnectionError);
+    expect((failure as Error).message).toContain('No OAuth host is configured');
+    expect(server.recorded).toHaveLength(0);
   });
 });
 

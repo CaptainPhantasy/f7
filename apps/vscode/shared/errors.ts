@@ -55,7 +55,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [LEGACY.PROCESS_CRASHED]: "Process connection lost.",
 
   // CLI errors
-  [LEGACY.LLM_NOT_SET]: "Authentication failed. Please sign in.",
+  [LEGACY.LLM_NOT_SET]: "No model is configured. Add a provider and model to your shared Floyd Code config.toml.",
   [LEGACY.LLM_NOT_SUPPORTED]: "This model is not supported.",
   [LEGACY.INVALID_STATE]: "Please wait for the current operation.",
   [LEGACY.CHAT_PROVIDER_ERROR]: "Service temporarily unavailable.",
@@ -72,8 +72,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
   [LEGACY.INTERNAL_ERROR]: "Internal error occurred.",
 
   "config.invalid": "Floyd Code configuration is invalid.",
-  "model.not_configured": "No model is configured. Please sign in or configure a provider.",
-  "auth.login_required": "Authentication failed. Please sign in.",
+  "model.not_configured": "No model is configured. Add a provider and model to your shared Floyd Code config.toml.",
+  "auth.login_required": "OAuth provider credentials were rejected. Check FLOYD_CODE_OAUTH_HOST, or add your own provider to config.toml.",
   "session.not_found": "Session was not found.",
   "session.state_not_found": "Session data is missing.",
   "session.state_invalid": "Session data is invalid.",
@@ -83,7 +83,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   "turn.agent_busy": "A message is being sent. Please wait.",
   "provider.api_error": "Service temporarily unavailable.",
   "provider.rate_limit": "Too many requests. Please try again later.",
-  "provider.auth_error": "Authentication failed. Please sign in again.",
+  "provider.auth_error": "The provider rejected the credentials. Check its api_key in config.toml, or set FLOYD_CODE_OAUTH_HOST for an OAuth provider.",
   "provider.connection_error": "Could not connect to the model provider.",
   "request.prompt_input_empty": "Prompt cannot be empty.",
   internal: "Internal error occurred.",

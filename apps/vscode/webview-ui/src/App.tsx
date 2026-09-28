@@ -16,7 +16,7 @@ import { isPreflightError } from "shared/errors";
 import type { UIStreamEvent, StreamError, ExtensionConfig } from "shared/types";
 import "./styles/index.css";
 
-function MainContent({ onAuthAction }: { onAuthAction: () => void }) {
+function MainContent() {
   const { processEvent, startNewConversation, sessionId } = useChatStore();
   const { setExtensionConfig, extensionConfig } = useSettingsStore();
   const queryClient = useQueryClient();
@@ -72,7 +72,7 @@ function MainContent({ onAuthAction }: { onAuthAction: () => void }) {
         <ChatArea />
       </div>
       <div className="shrink-0 max-h-[80vh] flex flex-col min-h-0">
-        <InputArea onAuthAction={onAuthAction} />
+        <InputArea />
       </div>
       <MCPServersModal />
       <WorkDirModal />
@@ -100,12 +100,6 @@ export default function App() {
     setSkippedLogin(false);
     setShowLogin(true);
   }, []);
-
-  const handleAuthAction = useCallback(() => {
-    setSkippedLogin(false);
-    setShowLogin(false);
-    refresh();
-  }, [refresh]);
 
   const resolution = resolveAppView({ status, modelsCount, skippedLogin, showLogin });
 
@@ -140,7 +134,7 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen text-foreground overflow-hidden">
       <Header />
-      <MainContent onAuthAction={handleAuthAction} />
+      <MainContent />
       <Toaster position="top-center" />
     </div>
   );

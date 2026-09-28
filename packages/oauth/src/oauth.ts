@@ -11,6 +11,7 @@
  */
 
 import { extractApiErrorMessage } from './api-error';
+import { FLOYD_CODE_OAUTH_HOST_UNCONFIGURED_MESSAGE } from './constants';
 import {
   OAuthConnectionError,
   OAuthError,
@@ -120,6 +121,11 @@ export async function requestDeviceAuthorization(
   config: OAuthFlowConfig,
   options: { readonly deviceHeaders?: OAuthRequestHeaders | undefined },
 ): Promise<DeviceAuthorization> {
+  // Guard before any request: with no OAuth host the URL would degrade to a
+  // relative path, so the flow has to fail closed here naming the knob to set.
+  if (config.oauthHost.trim().length === 0) {
+    throw new OAuthError(FLOYD_CODE_OAUTH_HOST_UNCONFIGURED_MESSAGE);
+  }
   const url = `${config.oauthHost.replace(/\/$/, '')}/api/oauth/device_authorization`;
   const { status, data } = await postForm(
     url,

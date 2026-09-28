@@ -6,7 +6,6 @@ import type {
   SessionInfo,
   FloydConfig,
   MCPTestResult,
-  LoginResult,
   UpdateMCPServerRequest,
 } from "shared/legacy-sdk";
 import type {
@@ -43,7 +42,7 @@ class Bridge {
   private webviewId: string;
 
   constructor() {
-    this.webviewId = document.body.getAttribute("data-webviewid") || `unknown_${Date.now()}`;
+    this.webviewId = document.body.dataset.webviewid || `unknown_${Date.now()}`;
 
     if (typeof acquireVsCodeApi === "function") {
       this.vscode = acquireVsCodeApi();
@@ -124,14 +123,6 @@ class Bridge {
 
   checkLoginStatus() {
     return this.call<LoginStatus>(Methods.CheckLoginStatus);
-  }
-
-  login() {
-    return this.call<LoginResult>(Methods.Login, undefined, OAUTH_REQUEST_TIMEOUT_MS);
-  }
-
-  logout() {
-    return this.call<LoginResult>(Methods.Logout);
   }
 
   saveConfig(sessionConfig: SessionConfig) {
