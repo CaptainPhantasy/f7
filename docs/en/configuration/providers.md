@@ -44,9 +44,9 @@ The same operations are also available in non-interactive environments via the s
 
 ## `floyd`
 
-The OpenAI-compatible protocol used by Legacy AI's managed service, with one extra capability: video upload. Unless you have a managed Legacy AI key, use [`openai`](#openai) instead — it speaks the same protocol and lets you name your own endpoint plainly.
+The OpenAI-compatible protocol used by the Legacy AI managed service, with one extra capability: video upload. That capability is the only thing it adds over [`openai`](#openai), so prefer that type unless your endpoint needs video upload.
 
-- Default `base_url`: the managed service's own endpoint, so set `base_url` explicitly to point this type at your own gateway
+- Default `base_url`: none — this build ships no managed endpoint, so `base_url` (or `FLOYD_BASE_URL`) is required
 - Credential key names: `FLOYD_API_KEY`, `FLOYD_BASE_URL`
 - Additional capability: supports video upload
 
@@ -57,7 +57,7 @@ base_url = "https://your-gateway.example/v1"
 api_key = "YOUR_API_KEY"
 ```
 
-> With a managed account, `base_url` and credentials are written for you, so nothing in this section needs to be set by hand.
+> A managed login (`/login`) writes `base_url` and credentials for you, but only against a deployment whose OAuth host you configured first (`FLOYD_CODE_OAUTH_HOST`); this build ships none. Without one, set both by hand here.
 
 ## `anthropic`
 
@@ -172,7 +172,7 @@ To route Vertex requests through a custom (e.g. proxied) endpoint, set `base_url
 
 ## OAuth and credential injection
 
-The Legacy AI managed service authenticates with OAuth rather than a static API key: once a managed account is authenticated, the built-in toolchain writes and refreshes the credential, so nothing needs to be configured in `config.toml` by hand. Providers you configure yourself always use `api_key` or `api_key_env`.
+The Legacy AI managed service authenticates with OAuth rather than a static API key: once a managed account is authenticated, the built-in toolchain writes and refreshes the credential, so nothing in `config.toml` needs to be set by hand — provided you first pointed the client at a deployment (`FLOYD_CODE_OAUTH_HOST`), since this build ships no managed host. Providers you configure yourself always use `api_key` or `api_key_env`.
 
 ## Next steps
 

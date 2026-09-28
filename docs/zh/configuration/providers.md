@@ -44,9 +44,9 @@ Floyd Code CLI 支持同时接入多家模型供应商服务，用哪家完全�
 
 ## `floyd`
 
-Legacy AI 托管服务使用的 OpenAI 兼容协议，额外支持视频上传。如果你没有 Legacy AI 托管账号，请改用 [`openai`](#openai)——协议相同，而且端点由你自己指定，写起来更直白。
+Legacy AI 托管服务使用的 OpenAI 兼容协议，额外支持视频上传。相比 [`openai`](#openai) 它只多了这一项能力；除非你要指向的端点需要视频上传，否则优先用 `openai`。
 
-- 默认 `base_url`：托管服务自己的端点；想指向自有网关，请显式设置 `base_url`
+- 默认 `base_url`：无——本构建不带任何托管端点，因此必须提供 `base_url`（或 `FLOYD_BASE_URL`）
 - 凭证键名：`FLOYD_API_KEY`、`FLOYD_BASE_URL`
 - 额外能力：支持视频上传
 
@@ -57,7 +57,7 @@ base_url = "https://your-gateway.example/v1"
 api_key = "YOUR_API_KEY"
 ```
 
-> 使用托管账号时，`base_url` 和凭证会自动写入，这一节无需手动配置。
+> 托管登录（`/login`）会自动写入 `base_url` 和凭证，但前提是你先配置好该部署的 OAuth host（`FLOYD_CODE_OAUTH_HOST`）；本构建未内置任何 host。没有 host 时，请在这里手动填写两项。
 
 ## `anthropic`
 

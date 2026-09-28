@@ -9,7 +9,6 @@ const EXPECTED_COMMANDS = [
   "floyd.clearAllState",
   "floyd.focusInput",
   "floyd.insertMention",
-  "floyd.logout",
   "floyd.migrateLegacyData",
   "floyd.newConversation",
   "floyd.openInSideBar",

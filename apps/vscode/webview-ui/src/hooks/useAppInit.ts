@@ -75,7 +75,7 @@ export function useAppInit(): AppInitState {
     modelsCount: 0,
   });
   const [initKey, setInitKey] = useState(0);
-  const { initModels, setExtensionConfig, setWireSlashCommands, setIsLoggedIn, setWorkspaceRoot } = useSettingsStore();
+  const { initModels, setExtensionConfig, setWireSlashCommands, setWorkspaceRoot } = useSettingsStore();
 
   const refresh = useCallback(() => {
     setState({ status: "loading", errorMessage: null, modelsCount: 0 });
@@ -123,7 +123,6 @@ export function useAppInit(): AppInitState {
 
         console.log("[AppInit] Login status:", loginStatus, "floydConfig:", floydConfig);
 
-        setIsLoggedIn(loginStatus.loggedIn);
         initModels(floydConfig.models, floydConfig.defaultModel, floydConfig.defaultThinking, floydConfig.defaultThinkingEffort);
 
         const modelsCount = floydConfig.models?.length ?? 0;
@@ -154,7 +153,7 @@ export function useAppInit(): AppInitState {
     return () => {
       cancelled = true;
     };
-  }, [initKey, initModels, setExtensionConfig, setWireSlashCommands, setIsLoggedIn]);
+  }, [initKey, initModels, setExtensionConfig, setWireSlashCommands]);
 
   return { ...state, refresh };
 }

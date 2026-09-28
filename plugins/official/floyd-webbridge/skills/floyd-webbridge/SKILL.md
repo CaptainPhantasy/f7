@@ -34,7 +34,7 @@ Control the user's real browser (with their login sessions) via a local daemon a
 Single-tab tools (`snapshot`, `click`, `fill`, `screenshot`, `save_as_pdf`) act on the **current tab** — the one you most recently opened with `navigate` or selected with `find_tab`.
 
 - **Opening pages**: use `newTab:true` when pages should coexist (comparing, cross-referencing); omit it to send the current tab to a new URL.
-- **Going back to an earlier tab**: call `find_tab` to make a tab **you opened earlier in this session** the current one again. Pass the tab's **full URL** — take it from `list_tabs` or the earlier `navigate` result. A bare root domain (`floyd.com`) may miss a `www.floyd.com` tab, so prefer the exact URL. By default `find_tab` searches **only this session's own tabs** — it never reaches into the user's other tabs or windows.
+- **Going back to an earlier tab**: call `find_tab` to make a tab **you opened earlier in this session** the current one again. Pass the tab's **full URL** — take it from `list_tabs` or the earlier `navigate` result. A bare root domain (`example.com`) may miss a `www.example.com` tab, so prefer the exact URL. By default `find_tab` searches **only this session's own tabs** — it never reaches into the user's other tabs or windows.
 - **Acting on a page the user already has open**: pass `active:true` ("use my open X tab" / "the X page I'm viewing"). It **borrows** the tab the user is currently viewing (returns `borrowed:true`); the borrowed tab is operated in place — it is not pulled into the session's tab group.
 - If `find_tab` errors with "no tab matching … in this session", the page isn't open in this session — `navigate` with `newTab:true` instead.
 

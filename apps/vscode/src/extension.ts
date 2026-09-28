@@ -122,10 +122,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     },
     "floyd.showLogs": () => outputChannel?.show(),
     "floyd.resetFloyd": () => provider?.resetAllWebviews(),
-    "floyd.logout": async () => {
-      await vscode.commands.executeCommand("floyd.webview.focus");
-      await vscode.window.showInformationMessage("Use the logout button in Floyd settings.");
-    },
     "floyd.migrateLegacyData": () => runMigration(true),
   };
 

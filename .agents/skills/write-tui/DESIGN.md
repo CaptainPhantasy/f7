@@ -120,9 +120,9 @@
                                             ← 空行
  Installed plugins (2)                      ← 分区标题（textStrong / 加粗）
   ❯ Floyd Datasource  enabled                ← 选中行（❯ + primary+bold 名称）+ 状态标签（success）
-    id floyd-datasource · 1 skill · MCP 1/1 · via code.floyd.com · official   ← 次要信息行（textMuted，` · ` 分隔）
+    id floyd-datasource · 1 skill · MCP 1/1 · via code.example.test · official   ← 次要信息行（textMuted，` · ` 分隔）
     Superpowers  disabled                   ← 未选中行（text 名称）+ 关态标签（textDim）
-    id superpowers · 14 skills · via code.floyd.com · curated
+    id superpowers · 14 skills · via code.example.test · curated
 ```
 
 约定：

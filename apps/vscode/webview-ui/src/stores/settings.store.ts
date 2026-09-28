@@ -171,7 +171,6 @@ interface SettingsState {
   modelsLoaded: boolean;
   wireSlashCommands: SlashCommandInfo[];
   slashCommands: SlashCommandInfo[];
-  isLoggedIn: boolean;
 
   setCurrentModel: (model: string) => void;
   setThinkingEffort: (effort: string) => void;
@@ -185,7 +184,6 @@ interface SettingsState {
   setWorkspaceRoot: (root: string | null) => void;
   initModels: (models: ModelConfig[], defaultModel: string | null, defaultThinking: boolean, defaultThinkingEffort?: string) => void;
   setWireSlashCommands: (commands: SlashCommandInfo[]) => void;
-  setIsLoggedIn: (loggedIn: boolean) => void;
   getCurrentThinkingMode: () => ThinkingMode;
 }
 
@@ -203,7 +201,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   modelsLoaded: false,
   wireSlashCommands: [],
   slashCommands: [],
-  isLoggedIn: false,
 
   setCurrentModel: (currentModel) => set({ currentModel }),
 
@@ -337,8 +334,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       slashCommands: commands,
     });
   },
-
-  setIsLoggedIn: (isLoggedIn) => set({ isLoggedIn }),
 
   getCurrentThinkingMode: () => {
     const { models, currentModel } = get();

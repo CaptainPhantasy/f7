@@ -1,10 +1,12 @@
 /**
  * Process-wide region cache for the CLI/TUI.
  *
- * Region decides which deployment (mainland-China .com / international .ai)
- * the client's off-session endpoints point at: CDN (updates, plugins, tips),
- * site links, telemetry. The OAuth login flow itself does NOT read this — it
- * takes explicit hosts; this cache is for everything derived afterwards.
+ * Region picks which deployment slot (`mainland-cn` / `global`) the client's
+ * off-session endpoints read their configuration from — each slot has its own
+ * env overrides — covering the CDN (updates, plugins, tips), site links, and
+ * telemetry. No slot ships a host, so an unconfigured client reaches nothing.
+ * The OAuth login flow itself does NOT read this — it takes explicit hosts;
+ * this cache is for everything derived afterwards.
  *
  * Resolution lives in `@legacy-ai/floyd-code-oauth` (see `resolveFloydRegion`);
  * this module only adds the one thing that package deliberately does not own:

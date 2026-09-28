@@ -139,11 +139,6 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "floyd.logout",
-        "title": "Floyd Code: Logout",
-        "icon": "$(sign-out)"
-      },
-      {
         "command": "floyd.migrateLegacyData",
         "title": "Floyd Code: Migrate Legacy Data"
       }
@@ -224,10 +219,6 @@
         {
           "command": "floyd.resetFloyd",
           "when": "true"
-        },
-        {
-          "command": "floyd.logout",
-          "when": "floyd.isLoggedIn"
         },
         {
           "command": "floyd.migrateLegacyData",

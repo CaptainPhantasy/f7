@@ -16,8 +16,6 @@ export const Methods = {
 
   GetSlashCommands: "getSlashCommands",
   CheckLoginStatus: "checkLoginStatus",
-  Login: "login",
-  Logout: "logout",
   SaveConfig: "saveConfig",
   GetExtensionConfig: "getExtensionConfig",
   OpenSettings: "openSettings",
@@ -95,7 +93,6 @@ export const Events = {
   NewConversation: "newConversation",
   FileChangesUpdated: "fileChangesUpdated",
   RollbackInput: "rollbackInput",
-  LoginUrl: "loginUrl",
 } as const;
 
 const rpcMethods = new Set<string>(Object.values(Methods));
@@ -132,8 +129,6 @@ function validateParams(method: RpcMethod, params: unknown): boolean {
     case Methods.GetInputHistory:
     case Methods.GetSlashCommands:
     case Methods.CheckLoginStatus:
-    case Methods.Login:
-    case Methods.Logout:
     case Methods.GetExtensionConfig:
     case Methods.OpenSettings:
     case Methods.OpenFolder:
