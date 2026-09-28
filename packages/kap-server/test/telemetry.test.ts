@@ -29,6 +29,7 @@ describe('server telemetry', () => {
 
   afterEach(async () => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
     core?.dispose();
     core = undefined;
     if (home !== undefined) {
@@ -80,6 +81,7 @@ describe('server telemetry', () => {
   it('keeps host delivery independent of the server-owned cloud appender lifecycle', async () => {
     const cloudFetch = vi.fn(async () => new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', cloudFetch);
+    vi.stubEnv('FLOYD_CODE_TELEMETRY_ENDPOINT', 'http://127.0.0.1:9/events');
     const hostEvents: string[] = [];
     const hostAppender: ITelemetryAppender = {
       track: (record) => hostEvents.push(record.event),

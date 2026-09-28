@@ -215,10 +215,17 @@ async function startGatedExchangeAuthServer(): Promise<GatedExchangeAuthServer> 
   return { url: `http://127.0.0.1:${port}`, counts, exchangeStarted, releaseExchange };
 }
 
-function authServerState(authServerUrl: string) {
+function authServerState(authServerUrl: string, mcpServerUrl: string | null = SERVER_URL) {
   return {
     discovery: {
       authorizationServerUrl: authServerUrl,
+      resourceMetadata:
+        mcpServerUrl === null
+          ? undefined
+          : {
+              resource: mcpServerUrl,
+              authorization_servers: [authServerUrl],
+            },
       authorizationServerMetadata: {
         issuer: authServerUrl,
         authorization_endpoint: `${authServerUrl}/authorize`,
@@ -514,6 +521,10 @@ describe('McpOAuthService single-flight refresh', () => {
     const provider = await readyProvider(fixture);
     await provider.saveDiscoveryState({
       authorizationServerUrl: authServerUrl,
+      resourceMetadata: {
+        resource: SERVER_URL,
+        authorization_servers: [authServerUrl],
+      },
       authorizationServerMetadata: {
         issuer: authServerUrl,
         authorization_endpoint: `${authServerUrl}/authorize`,
@@ -929,7 +940,7 @@ describe('McpOAuthService interactive flow serialization', () => {
     cleanups.push(() => fixture.service.dispose());
     const provider = fixture.service.getProvider(SERVER_NAME, hanging.url);
     await provider.ready;
-    const state = authServerState(authServer.url);
+    const state = authServerState(authServer.url, null);
     await provider.saveDiscoveryState(state.discovery);
     await provider.saveClientInformation(state.client);
 
@@ -950,7 +961,7 @@ describe('McpOAuthService interactive flow serialization', () => {
     cleanups.push(() => gated.releaseExchange());
     const provider = fixture.service.getProvider(SERVER_NAME, gated.url);
     await provider.ready;
-    const state = authServerState(gated.url);
+    const state = authServerState(gated.url, gated.url);
     await provider.saveDiscoveryState(state.discovery);
     await provider.saveClientInformation(state.client);
 
@@ -1360,7 +1371,7 @@ describe('McpOAuthService shutdown', () => {
     cleanups.push(() => gated.releaseExchange());
     const provider = fixture.service.getProvider(SERVER_NAME, gated.url);
     await provider.ready;
-    const state = authServerState(gated.url);
+    const state = authServerState(gated.url, gated.url);
     await provider.saveDiscoveryState(state.discovery);
     await provider.saveClientInformation(state.client);
 

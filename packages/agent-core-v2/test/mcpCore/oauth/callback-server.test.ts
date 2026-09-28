@@ -121,6 +121,7 @@ describe('McpOAuthService cancellation', () => {
         grant_types_supported: ['authorization_code'],
         token_endpoint_auth_methods_supported: ['none'],
       },
+      resourceMetadata: { resource: 'https://mcp.example.test/rpc' },
     });
 
     const flow = await service.beginAuthorization('example', 'https://mcp.example.test/rpc');

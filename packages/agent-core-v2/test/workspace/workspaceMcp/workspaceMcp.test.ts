@@ -526,6 +526,7 @@ describe('WorkspaceMcpService', () => {
           grant_types_supported: ['authorization_code', 'refresh_token'],
           token_endpoint_auth_methods_supported: ['none'],
         },
+        resourceMetadata: { resource: SERVER_URL },
       });
       await provider.saveClientInformation({
         client_id: 'cached-client',

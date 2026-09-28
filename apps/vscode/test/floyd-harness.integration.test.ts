@@ -48,6 +48,14 @@ import type { SessionRuntime } from "../src/runtime/session-runtime";
 const MODEL_ALIAS = "vscode-test";
 const PROVIDER_TOKEN = "sk-vscode-boundary-secret";
 
+/**
+ * MCP fixtures point at a closed loopback port: a trusted workspace makes the
+ * engine connect every configured server, and a `.test` host would stall that
+ * on a real (and here, unanswered) DNS lookup. A closed loopback port refuses
+ * immediately without ever resolving a name.
+ */
+const MCP_LOOPBACK_ORIGIN = "http://127.0.0.1:9";
+
 interface BroadcastRecord {
   readonly event: string;
   readonly data: unknown;
@@ -533,7 +541,9 @@ describe("VS Code Floyd harness integration (shares one in-process SDK home)", (
     await writeFile(
       join(project, ".mcp.json"),
       JSON.stringify({
-        mcpServers: { "project-api": { transport: "http", url: "https://example.test/project" } },
+        mcpServers: {
+          "project-api": { transport: "http", url: `${MCP_LOOPBACK_ORIGIN}/project` },
+        },
       }),
     );
     const ctx = { ...mcpHandlerContext(rig), workDir: project } as HandlerContext;
@@ -547,14 +557,14 @@ describe("VS Code Floyd harness integration (shares one in-process SDK home)", (
     // return a cwd-less list, so the handler must re-list with the workspace).
     const assertList = (servers: MCPServerConfig[]): void => {
       const projectEntry = servers.find((server) => server.name === "project-api");
-      expect(projectEntry).toMatchObject({ mutable: false, url: "https://example.test/project" });
+      expect(projectEntry).toMatchObject({ mutable: false, url: `${MCP_LOOPBACK_ORIGIN}/project` });
     };
     assertList(await call(Methods.GetMCPServers, undefined));
 
     const added = await call<MCPServerConfig[]>(Methods.AddMCPServer, {
       name: "user-api",
       transport: "http",
-      url: "https://example.test/user",
+      url: `${MCP_LOOPBACK_ORIGIN}/user`,
     });
     assertList(added);
     assertList(rig.broadcasts.at(-1)!.data as MCPServerConfig[]);
