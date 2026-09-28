@@ -133,7 +133,6 @@ export class AsyncTransport {
   }
 
   async retryDiskEvents(): Promise<void> {
-    if (this.resolveEndpoint() === undefined) return;
     let entries: string[];
     try {
       entries = readdirSync(this.telemetryDir());
@@ -182,7 +181,11 @@ export class AsyncTransport {
 
   private async sendHttp(payload: TelemetryPayload, signal?: AbortSignal): Promise<void> {
     const endpoint = this.resolveEndpoint();
-    if (endpoint === undefined) return;
+    if (endpoint === undefined) {
+      throw new Error(
+        `telemetry endpoint is not configured; set ${TELEMETRY_ENDPOINT_ENV} or pass an endpoint`,
+      );
+    }
     const token = this.getAccessToken === null ? null : await this.getAccessToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

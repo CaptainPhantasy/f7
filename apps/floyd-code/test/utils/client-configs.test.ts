@@ -1,3 +1,4 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -10,7 +11,7 @@ import {
   peekClientConfig,
   resetClientConfigCache,
 } from '#/utils/client-configs';
-import { refreshFloydRegion } from '#/utils/region';
+import { currentFloydRegion, refreshFloydRegion } from '#/utils/region';
 import { z } from 'zod';
 
 const configSchema = z.object({
@@ -25,6 +26,8 @@ const CONFIG = {
 
 const ENVELOPE = { name: 'estimated_cache_duration', config: CONFIG };
 
+const BASE_URL = 'https://api.example.test/coding/v1';
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -32,7 +35,12 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
+beforeEach(() => {
+  vi.stubEnv('FLOYD_CODE_BASE_URL', BASE_URL);
+});
+
 afterEach(() => {
+  vi.unstubAllEnvs();
   resetClientConfigCache();
 });
 
@@ -46,7 +54,7 @@ describe('fetchClientConfig', () => {
 
     expect(result).toEqual(CONFIG);
     expect(fetchImpl).toHaveBeenCalledWith(
-      expect.stringContaining('/client_configs'),
+      `${BASE_URL}/client_configs`,
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ name: 'estimated_cache_duration' }),
@@ -357,17 +365,22 @@ describe('getClientConfig disk cache', () => {
 });
 
 describe('region awareness', () => {
+  let home: string;
+
   beforeEach(() => {
-    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', 'https://auth.floyd.ai');
+    home = mkdtempSync(join(tmpdir(), 'client-configs-region-'));
+    vi.stubEnv('FLOYD_CODE_HOME', home);
+    vi.stubEnv('FLOYD_CODE_REGION_MARKER', undefined);
     refreshFloydRegion();
   });
 
   afterEach(() => {
     vi.unstubAllEnvs();
     refreshFloydRegion();
+    rmSync(home, { recursive: true, force: true });
   });
 
-  it('fetches from the active region profile and partitions the cache by region', async () => {
+  it('fetches from the configured base url and partitions the cache by region', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse(ENVELOPE));
 
     const data = await getClientConfig('estimated_cache_duration', configSchema, {
@@ -377,15 +390,30 @@ describe('region awareness', () => {
 
     expect(data).toEqual(CONFIG);
     expect(fetchImpl).toHaveBeenCalledWith(
-      expect.stringContaining('https://api.floyd.ai/coding/v1/client_configs'),
+      `${BASE_URL}/client_configs`,
       expect.anything(),
     );
     expect(peekClientConfig('estimated_cache_duration', configSchema)).toEqual(CONFIG);
 
     // A region switch must not serve the other deployment's cached entry.
-    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', 'https://auth.floyd.com');
+    writeFileSync(join(home, 'region'), 'global\n');
     refreshFloydRegion();
+    expect(currentFloydRegion()).toBe('global');
     expect(peekClientConfig('estimated_cache_duration', configSchema)).toBeUndefined();
+  });
+
+  it('makes no request when no base url is configured', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    refreshFloydRegion();
+    const fetchImpl = vi.fn(async () => jsonResponse(ENVELOPE));
+
+    await expect(
+      getClientConfig('estimated_cache_duration', configSchema, {
+        fetchImpl: fetchImpl as typeof fetch,
+        cacheFile: null,
+      }),
+    ).resolves.toBeUndefined();
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it('keeps honoring the FLOYD_CODE_BASE_URL override ahead of the profile', async () => {

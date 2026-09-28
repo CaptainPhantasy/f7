@@ -236,7 +236,27 @@ describe('loadPluginMarketplace', () => {
     );
   });
 
-  it('loads the default CDN marketplace with injectable fetch', async () => {
+  // The env override is the only way to reach the CDN default: this build
+  // ships no vendor CDN base, so floydCodePluginMarketplaceUrl() is empty.
+  function withMarketplaceUrlEnv<T>(value: string | undefined, body: () => Promise<T>): Promise<T> {
+    const previous = process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV];
+    if (value === undefined) {
+      delete process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV];
+    } else {
+      process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV] = value;
+    }
+    return body().finally(() => {
+      if (previous === undefined) {
+        delete process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV];
+      } else {
+        process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV] = previous;
+      }
+    });
+  }
+
+  it('loads the configured default marketplace with injectable fetch', async () => {
+    expect(floydCodePluginMarketplaceUrl()).toBe('');
+    const source = 'https://cdn.example.test/plugins/marketplace.json';
     const fetchImpl = vi.fn(async () => ({
       ok: true,
       status: 200,
@@ -252,36 +272,34 @@ describe('loadPluginMarketplace', () => {
         }),
     })) as unknown as typeof fetch;
 
-    const marketplace = await loadPluginMarketplace({
-      workDir: '/tmp/work',
-      source: floydCodePluginMarketplaceUrl(),
-      fetchImpl,
-    });
-
-    expect(fetchImpl).toHaveBeenCalledWith(floydCodePluginMarketplaceUrl());
-    expect(marketplace.plugins[0]).toEqual(
-      expect.objectContaining({
-        id: 'floyd-datasource',
-        displayName: 'Floyd Datasource',
-        source: new URL(
-          './official/floyd-datasource.zip',
-          floydCodePluginMarketplaceUrl(),
-        ).toString(),
-      }),
-    );
-  });
-
-  it('falls back to the source checkout marketplace when the default CDN cannot be fetched', async () => {
-    const previous = process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV];
-    delete process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV];
-    const fetchImpl = vi.fn(async () => {
-      throw new Error('fetch failed');
-    }) as unknown as typeof fetch;
-
-    try {
+    await withMarketplaceUrlEnv(source, async () => {
       const marketplace = await loadPluginMarketplace({ workDir: '/tmp/work', fetchImpl });
 
-      expect(fetchImpl).toHaveBeenCalledWith(floydCodePluginMarketplaceUrl());
+      expect(fetchImpl).toHaveBeenCalledWith(source);
+      expect(marketplace.source).toBe(source);
+      expect(marketplace.plugins[0]).toEqual(
+        expect.objectContaining({
+          id: 'floyd-datasource',
+          displayName: 'Floyd Datasource',
+          source: new URL('./official/floyd-datasource.zip', source).toString(),
+        }),
+      );
+    });
+  });
+
+  it('does not request anything and falls back to the source checkout catalog when unconfigured', async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new Error('should not be called');
+    }) as unknown as typeof fetch;
+
+    await withMarketplaceUrlEnv(undefined, async () => {
+      const marketplace = await loadPluginMarketplace({
+        workDir: '/tmp/work',
+        fetchImpl,
+        skipLatestVersions: true,
+      });
+
+      expect(fetchImpl).not.toHaveBeenCalled();
       expect(marketplace.source).toBe(join(REPO_ROOT, 'plugins/marketplace.json'));
       expect(marketplace.plugins).toContainEqual(
         expect.objectContaining({
@@ -289,25 +307,39 @@ describe('loadPluginMarketplace', () => {
           source: 'https://github.com/obra/superpowers',
         }),
       );
-    } finally {
-      if (previous === undefined) {
-        delete process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV];
-      } else {
-        process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV] = previous;
-      }
-    }
+    });
+  });
+
+  it('treats an empty default marketplace URL as unconfigured', async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new Error('should not be called');
+    }) as unknown as typeof fetch;
+
+    await withMarketplaceUrlEnv(undefined, async () => {
+      const marketplace = await loadPluginMarketplace({
+        workDir: '/tmp/work',
+        source: floydCodePluginMarketplaceUrl(),
+        fetchImpl,
+        skipLatestVersions: true,
+      });
+
+      expect(fetchImpl).not.toHaveBeenCalled();
+      expect(marketplace.source).toBe(join(REPO_ROOT, 'plugins/marketplace.json'));
+    });
   });
 
   it('does not use the source checkout fallback for explicit marketplace sources', async () => {
+    const source = 'https://cdn.example.test/plugins/marketplace.json';
     const fetchImpl = vi.fn(async () => {
       throw new Error('fetch failed');
     }) as unknown as typeof fetch;
 
     await expect(loadPluginMarketplace({
       workDir: '/tmp/work',
-      source: floydCodePluginMarketplaceUrl(),
+      source,
       fetchImpl,
     })).rejects.toThrow(/fetch failed/);
+    expect(fetchImpl).toHaveBeenCalledWith(source);
   });
 
   it('keeps the built-in entries when the catalog is unreachable', async () => {

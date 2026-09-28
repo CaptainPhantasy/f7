@@ -11,6 +11,7 @@ import type { RecommendedEffortConfig } from '#/utils/recommended-effort-config'
 
 const OFFICIAL_COM = 'https://api.floyd.com/coding/v1';
 const OFFICIAL_AI = 'https://api.floyd.ai/coding/v1';
+const CONFIGURED = 'https://api.managed.example.test/coding/v1';
 const GATEWAY = 'https://gateway.example.com/coding/v1';
 
 const NOW = new Date('2026-09-05T02:00:00.000Z');
@@ -75,7 +76,7 @@ describe('applyRecommendedEffort', () => {
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), 'floyd-recommended-effort-'));
     stateFile = join(dir, 'recommended-effort-state.json');
-    delete process.env['FLOYD_CODE_BASE_URL'];
+    process.env['FLOYD_CODE_BASE_URL'] = OFFICIAL_COM;
   });
 
   afterEach(async () => {
@@ -211,6 +212,7 @@ describe('applyRecommendedEffort', () => {
   });
 
   it('matches the global official endpoint as well', async () => {
+    process.env['FLOYD_CODE_BASE_URL'] = OFFICIAL_AI;
     const h = makeHarness(
       makeConfig({
         providers: { 'managed:floyd-code': { type: 'floyd', baseUrl: OFFICIAL_AI } },
@@ -273,6 +275,27 @@ describe('applyRecommendedEffort', () => {
     expect(h.setConfig).not.toHaveBeenCalled();
     expect(h.track).not.toHaveBeenCalled();
     await expectNoStateFile(stateFile);
+  });
+
+  it('matches an endpoint configured through FLOYD_CODE_BASE_URL', async () => {
+    process.env['FLOYD_CODE_BASE_URL'] = CONFIGURED;
+    const h = makeHarness(
+      makeConfig({
+        providers: { 'managed:floyd-code': { type: 'floyd', baseUrl: CONFIGURED } },
+      }),
+      { k3: CAMPAIGN },
+      stateFile,
+    );
+
+    await h.run();
+
+    expect(h.setConfig).toHaveBeenCalledWith({ thinking: { effort: 'max' } });
+    expect(h.track).toHaveBeenCalledWith('recommended_effort_applied', {
+      model: 'k3',
+      version: 5,
+      effort: 'max',
+      previous_effort: 'high',
+    });
   });
 
   it('does nothing when the model does not support the recommended effort', async () => {

@@ -19,19 +19,46 @@ export interface OpenPlatformDefinition {
   readonly allowedPrefixes?: readonly string[] | undefined;
 }
 
+const OPEN_PLATFORM_ENV_PREFIX = 'FLOYD_CODE_OPEN_PLATFORM_';
+
+type OpenPlatformEnvField = 'BASE_URL' | 'CONSOLE_URL';
+
+function openPlatformEnvName(id: string, field: OpenPlatformEnvField): string {
+  return `${OPEN_PLATFORM_ENV_PREFIX}${id.toUpperCase().replaceAll('-', '_')}_${field}`;
+}
+
+function openPlatformEnv(id: string, field: OpenPlatformEnvField): string | undefined {
+  const value = process.env[openPlatformEnvName(id, field)];
+  return value !== undefined && value.length > 0 ? value : undefined;
+}
+
+/**
+ * A platform keeps its id / name / model-prefix structure and takes its
+ * endpoints from env, so no deployment is implied: `baseUrl` stays empty and
+ * `consoleUrl` undefined until `FLOYD_CODE_OPEN_PLATFORM_<ID>_BASE_URL` /
+ * `_CONSOLE_URL` are set.
+ */
+function openPlatform(
+  id: string,
+  name: string,
+  allowedPrefixes: readonly string[],
+): OpenPlatformDefinition {
+  return {
+    id,
+    name,
+    get baseUrl(): string {
+      return openPlatformEnv(id, 'BASE_URL') ?? '';
+    },
+    get consoleUrl(): string | undefined {
+      return openPlatformEnv(id, 'CONSOLE_URL');
+    },
+    allowedPrefixes,
+  };
+}
+
 export const OPEN_PLATFORMS: readonly OpenPlatformDefinition[] = [
-  {
-    id: 'legacy-cn',
-    name: 'Floyd Platform (API key · mainland CN)',
-    baseUrl: '',
-    allowedPrefixes: ['floyd-k'],
-  },
-  {
-    id: 'legacy-ai',
-    name: 'Floyd Platform (API key · global)',
-    baseUrl: '',
-    allowedPrefixes: ['floyd-k'],
-  },
+  openPlatform('legacy-cn', 'Floyd Platform (API key · mainland CN)', ['floyd-k']),
+  openPlatform('legacy-ai', 'Floyd Platform (API key · global)', ['floyd-k']),
 ];
 
 export function getOpenPlatformById(id: string): OpenPlatformDefinition | undefined {
@@ -114,7 +141,9 @@ export async function fetchOpenPlatformModels(
 ): Promise<ManagedFloydCodeModelInfo[]> {
   const baseUrl = platform.baseUrl.replace(/\/+$/, '');
   if (baseUrl.length === 0) {
-    throw new Error(`No base URL configured for platform "${platform.id}".`);
+    throw new Error(
+      `No base URL configured for platform "${platform.id}". Set ${openPlatformEnvName(platform.id, 'BASE_URL')} to the platform's API base URL.`,
+    );
   }
   const res = await fetchImpl(`${baseUrl}/models`, {
     headers: {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setCapabilities } from '@legacy-ai/pi-tui';
 
@@ -146,6 +146,10 @@ describe('handleWebCommand', () => {
 });
 
 describe('handleRemoteControlCommand', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('stays in the TUI with a readable error when another instance holds Remote Control', async () => {
     vi.clearAllMocks();
     const { mkdtempSync, mkdirSync, rmSync, writeFileSync } = await import('node:fs');
@@ -185,6 +189,7 @@ describe('handleRemoteControlCommand', () => {
 
   it('starts the tunnel and saves a token-free session QR code', async () => {
     vi.clearAllMocks();
+    vi.stubEnv('FLOYD_CODE_REMOTE_CONTROL_RELAY_URL', 'https://rc.example.test/coding-relay');
     setCapabilities({ images: null, trueColor: true, hyperlinks: false });
     const { mkdtempSync, readFileSync, rmSync } = await import('node:fs');
     const { tmpdir } = await import('node:os');
@@ -193,9 +198,9 @@ describe('handleRemoteControlCommand', () => {
     const tempRoot = mkdtempSync(join(tmpdir(), 'floyd-rc-qrcode-'));
     const dataDir = join(tempRoot, 'custom-home');
     const entryUrl =
-      'https://code-rc.floyd.com/devices/device-1/?rc=1&from=floyd_code_cli';
+      'https://rc.example.test/coding-relay/devices/device-1/?rc=1&from=floyd_code_cli';
     const sessionUrl =
-      'https://code-rc.floyd.com/devices/device-1/sessions/ses-1?rc=1&from=floyd_code_cli';
+      'https://rc.example.test/coding-relay/devices/device-1/sessions/ses-1?rc=1&from=floyd_code_cli';
     const pngPath = join(dataDir, 'rc-qrcode.png');
     mocks.getDataDir.mockReturnValue(dataDir);
     mocks.tryResolveServerToken.mockReturnValue('local-server-token');
@@ -257,6 +262,7 @@ describe('handleRemoteControlCommand', () => {
 
   it('opens the device entry URL without a session instead of creating one', async () => {
     vi.clearAllMocks();
+    vi.stubEnv('FLOYD_CODE_REMOTE_CONTROL_RELAY_URL', 'https://rc.example.test/coding-relay');
     setCapabilities({ images: null, trueColor: true, hyperlinks: false });
     const { mkdtempSync, readFileSync, rmSync } = await import('node:fs');
     const { tmpdir } = await import('node:os');
@@ -265,7 +271,7 @@ describe('handleRemoteControlCommand', () => {
     const tempRoot = mkdtempSync(join(tmpdir(), 'floyd-rc-entry-'));
     const dataDir = join(tempRoot, 'custom-home');
     const entryUrl =
-      'https://code-rc.floyd.com/devices/device-1/?rc=1&from=floyd_code_cli';
+      'https://rc.example.test/coding-relay/devices/device-1/?rc=1&from=floyd_code_cli';
     mocks.getDataDir.mockReturnValue(dataDir);
     mocks.tryResolveServerToken.mockReturnValue('local-server-token');
     const close = vi.fn(async () => {});

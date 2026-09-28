@@ -6,6 +6,7 @@ import {
   resolveFloydRegion,
 } from '@legacy-ai/floyd-code-oauth';
 
+import { onUnexpectedError } from '#/_base/errors/unexpectedError';
 import { isAbortError } from '#/_base/utils/abort';
 import type { IFileSystemStorageService } from '#/persistence/interface/storage';
 
@@ -54,6 +55,8 @@ export const DISK_EVENT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 export const RETRY_BACKOFFS_MS = [1_000, 4_000, 16_000] as const;
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
+const UNCONFIGURED_ENDPOINT_MESSAGE =
+  'Cloud telemetry endpoint is not configured: no region profile ships one, so events are neither sent nor spooled. Set CloudAppenderOptions.endpoint to a URL that accepts telemetry events.';
 const TELEMETRY_SCOPE = 'telemetry';
 const FAILED_PREFIX = 'failed_';
 const JSONL_SUFFIX = '.jsonl';
@@ -77,6 +80,7 @@ export class CloudTransport {
   private readonly requestTimeoutMs: number;
   private readonly sleepImpl: (ms: number, signal?: AbortSignal) => Promise<void>;
   private readonly now: () => number;
+  private reportedUnconfigured = false;
 
   constructor(options: CloudTransportOptions) {
     this.storage = options.storage;
@@ -97,6 +101,10 @@ export class CloudTransport {
 
   async send(events: readonly EnrichedCloudEvent[], signal?: AbortSignal): Promise<void> {
     if (events.length === 0) return;
+    if (this.resolveEndpoint() === undefined) {
+      this.reportUnconfigured();
+      return;
+    }
     let savedToDisk = false;
     const saveEventsToDisk = async (): Promise<void> => {
       if (savedToDisk) return;
@@ -151,6 +159,7 @@ export class CloudTransport {
   }
 
   async retryDiskEvents(): Promise<void> {
+    if (this.resolveEndpoint() === undefined) return;
     const keys = await this.storage.list(TELEMETRY_SCOPE, FAILED_PREFIX);
     const now = this.now();
     for (const key of keys) {
@@ -196,6 +205,8 @@ export class CloudTransport {
   }
 
   private async sendHttp(payload: CloudPayload, signal?: AbortSignal): Promise<void> {
+    const endpoint = this.resolveEndpoint();
+    if (endpoint === undefined) return;
     const token = this.getAccessToken === null ? null : await this.getAccessToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -204,10 +215,10 @@ export class CloudTransport {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await this.post(payload, headers, signal);
+    const response = await this.post(payload, headers, endpoint, signal);
     if (response.status === 401 && headers['Authorization'] !== undefined) {
       delete headers['Authorization'];
-      const retry = await this.post(payload, headers, signal);
+      const retry = await this.post(payload, headers, endpoint, signal);
       handleStatus(retry.status);
       return;
     }
@@ -217,12 +228,13 @@ export class CloudTransport {
   private async post(
     payload: CloudPayload,
     headers: Record<string, string>,
+    endpoint: string,
     signal?: AbortSignal,
   ): Promise<Response> {
     try {
       return await fetchWithTimeout(
         this.fetchImpl,
-        this.endpoint,
+        endpoint,
         {
           method: 'POST',
           headers: { ...headers },
@@ -235,6 +247,17 @@ export class CloudTransport {
       if (signal?.aborted === true || isAbortError(error)) throw error;
       throw new TransientCloudError(String(error));
     }
+  }
+
+  private resolveEndpoint(): string | undefined {
+    const value = this.endpoint.trim();
+    return value.length === 0 ? undefined : value;
+  }
+
+  private reportUnconfigured(): void {
+    if (this.reportedUnconfigured) return;
+    this.reportedUnconfigured = true;
+    onUnexpectedError(new Error(UNCONFIGURED_ENDPOINT_MESSAGE));
   }
 }
 

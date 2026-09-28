@@ -3,6 +3,7 @@ import { EventEmitter } from 'node:events';
 import { describe, expect, it } from 'vitest';
 
 import {
+  CHANGELOG_URL,
   createInstallPromptChoices,
   getDefaultInstallPromptSelection,
   moveInstallPromptSelection,
@@ -34,8 +35,6 @@ describe('install prompt helpers', () => {
 
 describe('promptForInstallChoice', () => {
   it('renders changelog hyperlink in the prompt output', async () => {
-    const CHANGELOG_URL = 'https://legacyai.github.io/floyd-code/en/release-notes/changelog.html';
-
     const input = Object.assign(new EventEmitter(), {
       isRaw: false,
       setRawMode: () => {},
@@ -66,7 +65,8 @@ describe('promptForInstallChoice', () => {
     await promptPromise;
 
     const rendered = outputChunks.join('');
-    expect(rendered).toContain(CHANGELOG_URL);
-    expect(rendered).toContain('View changelog');
+    // The OSC-8 escape target and the visible label must both carry the URL.
+    expect(rendered).toContain(`]8;;${CHANGELOG_URL}`);
+    expect(rendered).toContain(`View changelog: ${CHANGELOG_URL}`);
   });
 });

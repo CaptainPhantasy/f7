@@ -165,10 +165,11 @@ describe('server-v2 /api/v1/remote-control', () => {
         nonce: 'other-process',
         local_origin: 'http://127.0.0.1:58627',
         device_id: 'other-device',
-        url: 'https://code-rc.floyd.com/devices/other-device/',
+        url: 'https://rc.example.test/devices/other-device/',
         started_at: Date.now(),
       }),
     );
+    vi.stubEnv('FLOYD_CODE_REMOTE_CONTROL_RELAY_URL', 'https://rc.example.test');
 
     const posted = await postRemoteControl(true);
     expect(posted.code).toBe(ErrorCode.REMOTE_CONTROL_ALREADY_RUNNING);

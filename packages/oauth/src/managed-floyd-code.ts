@@ -495,6 +495,11 @@ export async function fetchManagedFloydCodeModels(
 ): Promise<ManagedFloydCodeModelInfo[]> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const baseUrl = defaultBaseUrl(options.baseUrl);
+  if (baseUrl.length === 0) {
+    throw new Error(
+      'No Floyd Code API base URL is configured. Set FLOYD_CODE_BASE_URL (or pass baseUrl) before provisioning Floyd Code.',
+    );
+  }
   const response = await fetchImpl(`${baseUrl}/models`, {
     headers: {
       ...parseFloydCodeCustomHeaders(),
@@ -628,18 +633,25 @@ export function applyManagedFloydCodeConfig(
   config.models = existingModels;
   config.defaultModel = selectedDefault.modelKey;
   config.thinking = { ...config.thinking, enabled: selectedDefault.thinking };
-  config.services = {
-    legacySearch: {
-      baseUrl: `${baseUrl}/search`,
-      apiKey: '',
-      oauth,
-    },
-    legacyFetch: {
-      baseUrl: `${baseUrl}/fetch`,
-      apiKey: '',
-      oauth,
-    },
-  };
+  // The derived service endpoints only exist alongside a configured API base:
+  // without one they would be root-relative paths (`/search`), which no caller
+  // can use — `services: undefined` is how the rest of the config spells "not
+  // configured".
+  config.services =
+    baseUrl.length === 0
+      ? undefined
+      : {
+          legacySearch: {
+            baseUrl: `${baseUrl}/search`,
+            apiKey: '',
+            oauth,
+          },
+          legacyFetch: {
+            baseUrl: `${baseUrl}/fetch`,
+            apiKey: '',
+            oauth,
+          },
+        };
 
   return {
     defaultModel: selectedDefault.modelKey,

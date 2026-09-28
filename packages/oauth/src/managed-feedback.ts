@@ -33,8 +33,12 @@ export interface FetchSubmitFeedbackError {
 export type FetchSubmitFeedbackResult = FetchSubmitFeedbackOk | FetchSubmitFeedbackError;
 
 export function floydCodeFeedbackUrl(baseUrl?: string): string {
-  return `${(baseUrl ?? floydCodeBaseUrl()).replace(/\/+$/, '')}/feedback`;
+  const base = (baseUrl ?? floydCodeBaseUrl()).replace(/\/+$/, '');
+  return base.length > 0 ? `${base}/feedback` : '';
 }
+
+const MANAGED_BASE_URL_UNCONFIGURED =
+  'Failed to submit feedback: no managed base URL is configured. Set FLOYD_CODE_BASE_URL.';
 
 export async function fetchSubmitFeedback(
   url: string,
@@ -42,6 +46,7 @@ export async function fetchSubmitFeedback(
   body: SubmitFeedbackBody,
   opts: { timeoutMs?: number } = {},
 ): Promise<FetchSubmitFeedbackResult> {
+  if (url.length === 0) return { kind: 'error', message: MANAGED_BASE_URL_UNCONFIGURED };
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();

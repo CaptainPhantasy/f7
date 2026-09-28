@@ -18,6 +18,9 @@ import {
   windowsPowerShell7Path,
 } from '#/app/capability/entries/floydCu';
 
+const CDN_BASE = 'https://cdn.example.test/floyd-code';
+const CONTENT_CDN_BASE_ENV = 'FLOYD_CODE_CONTENT_CDN_BASE';
+
 function fakeProc(code: number, stdout = '', stderr = ''): IHostProcess {
   return {
     _serviceBrand: undefined,
@@ -226,12 +229,17 @@ describe('readAppBundleVersion', () => {
 
 describe('floyd-cu entry', () => {
   let root: string;
+  let savedContentCdnBase: string | undefined;
 
   beforeEach(async () => {
     root = await mkdtemp(path.join(tmpdir(), 'floyd-cu-entry-'));
+    savedContentCdnBase = process.env[CONTENT_CDN_BASE_ENV];
+    process.env[CONTENT_CDN_BASE_ENV] = CDN_BASE;
   });
   afterEach(async () => {
     await rm(root, { recursive: true, force: true });
+    if (savedContentCdnBase === undefined) delete process.env[CONTENT_CDN_BASE_ENV];
+    else process.env[CONTENT_CDN_BASE_ENV] = savedContentCdnBase;
   });
 
   async function fakeAppBundle(): Promise<string> {
@@ -371,7 +379,7 @@ describe('floyd-cu entry', () => {
     await entry.install((step, percent) => reports.push([step, percent]));
 
     expect(plugins.installs).toEqual([
-      'https://cdn.floyd.com/floyd-computer-use-windows/latest/floyd-cu-win-plugin.zip',
+      `${CDN_BASE}/floyd-computer-use-windows/latest/floyd-cu-win-plugin.zip`,
     ]);
     expect(reports).toContainEqual(['plugin', undefined]);
     expect(reports).toContainEqual(['download', 0]);
@@ -444,7 +452,7 @@ describe('floyd-cu entry', () => {
       ),
     ).toBe(true);
     expect(plugins.installs).toEqual([
-      'https://cdn.floyd.com/floyd-computer-use-windows/latest/floyd-cu-win-plugin.zip',
+      `${CDN_BASE}/floyd-computer-use-windows/latest/floyd-cu-win-plugin.zip`,
     ]);
   });
 
@@ -636,7 +644,7 @@ describe('floyd-cu entry', () => {
     await entry.install(() => undefined);
 
     expect(plugins.installs).toEqual([
-      'https://cdn.floyd.com/floyd-computer-use-windows/latest/floyd-cu-win-plugin.zip',
+      `${CDN_BASE}/floyd-computer-use-windows/latest/floyd-cu-win-plugin.zip`,
     ]);
     expect(doctorResults).toEqual([]);
   });
@@ -939,7 +947,7 @@ describe('floyd-cu entry', () => {
     await entry.install(() => {});
 
     expect(plugins.installs).toEqual([
-      'https://cdn.floyd.com/floyd-computer-use/latest/floyd-cu-plugin.zip',
+      `${CDN_BASE}/floyd-computer-use/latest/floyd-cu-plugin.zip`,
     ]);
   });
 
@@ -1060,5 +1068,29 @@ describe('floyd-cu entry', () => {
       state: 'missing',
       detail: 'not executable',
     });
+  });
+
+  it('fails closed instead of fetching a relative path when no CDN base is configured', async () => {
+    delete process.env[CONTENT_CDN_BASE_ENV];
+    const plugins = fakePlugins([]);
+    const host = fakeHostProcess([]);
+    const fetched: string[] = [];
+    const entry = createFloydCuEntry(
+      makeCtx({
+        applicationsDir: path.join(root, 'Applications'),
+        plugins: plugins.service,
+        hostProcess: host.service,
+        fetchImpl: ((url: string) => {
+          fetched.push(url);
+          return Promise.reject(new Error('no network'));
+        }) as never,
+      }),
+    );
+
+    await expect(entry.install(() => {})).rejects.toThrow(
+      /Set FLOYD_CODE_CONTENT_CDN_BASE to the CDN root URL/,
+    );
+    expect(plugins.installs).toEqual([]);
+    expect(fetched).toEqual([]);
   });
 });

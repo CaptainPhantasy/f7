@@ -962,6 +962,49 @@ describe('AsyncTransport', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
     expect(() => statSync(join(homeDir, 'telemetry'))).toThrow();
   });
+
+  it('drops sends and preserves the disk spool while no endpoint is configured', async () => {
+    const homeDir = await tempHome();
+    const telemetryDir = join(homeDir, 'telemetry');
+    mkdirSync(telemetryDir, { recursive: true });
+    const spool = join(telemetryDir, 'failed_unconfigured.jsonl');
+    writeFileSync(spool, `${JSON.stringify(sampleEvent('from_disk'))}\n`);
+    const fetchImpl = vi.fn(async () => new Response('', { status: 200 }));
+    const transport = new AsyncTransport({
+      homeDir,
+      deviceId: 'dev',
+      endpoint: '',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      retryBackoffsMs: [],
+    });
+
+    await transport.send([sampleEvent('unconfigured')]);
+    await transport.retryDiskEvents();
+
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(readdirSync(telemetryDir)).toEqual(['failed_unconfigured.jsonl']);
+  });
+
+  it('still prunes expired disk events while no endpoint is configured', async () => {
+    const homeDir = await tempHome();
+    const telemetryDir = join(homeDir, 'telemetry');
+    mkdirSync(telemetryDir, { recursive: true });
+    const expired = join(telemetryDir, 'failed_expired.jsonl');
+    writeFileSync(expired, `${JSON.stringify(sampleEvent('expired'))}\n`);
+    const fetchImpl = vi.fn(async () => new Response('', { status: 200 }));
+    const transport = new AsyncTransport({
+      homeDir,
+      deviceId: 'dev',
+      endpoint: '',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      now: () => Date.now() + DISK_EVENT_MAX_AGE_MS + 1,
+    });
+
+    await transport.retryDiskEvents();
+
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(() => statSync(expired)).toThrow();
+  });
 });
 
 describe('telemetry bootstrap', () => {
@@ -1043,6 +1086,7 @@ describe('telemetry bootstrap', () => {
       deviceId: 'dev',
       appName: 'floyd-code-cli',
       version: '1.2.3',
+      endpoint: 'https://mock.test/events',
       initiallyEnabled: false,
     });
     track('dropped');
@@ -1062,7 +1106,7 @@ describe('telemetry bootstrap', () => {
     mkdirSync(telemetryDir, { recursive: true });
     const spool = join(telemetryDir, 'failed_default.jsonl');
     writeFileSync(spool, `${JSON.stringify(sampleEvent('from_disk'))}\n`);
-    const fetchImpl = vi.fn(async () => new Response('', { status: 200 }));
+    const fetchImpl = vi.fn(async (_input: string | URL) => new Response('', { status: 200 }));
     vi.stubGlobal('fetch', fetchImpl);
 
     initializeTelemetry({
@@ -1070,12 +1114,14 @@ describe('telemetry bootstrap', () => {
       deviceId: 'dev',
       appName: 'floyd-code-cli',
       version: '1.2.3',
+      endpoint: 'https://mock.test/events',
     });
     await vi.waitFor(() => {
       expect(fetchImpl).toHaveBeenCalledTimes(1);
     });
     await shutdownTelemetry();
 
+    expect(fetchImpl.mock.calls[0]?.[0]).toBe('https://mock.test/events');
     expect(() => statSync(spool)).toThrow();
   });
 
@@ -1090,6 +1136,7 @@ describe('telemetry bootstrap', () => {
       sessionId: 'ses',
       appName: 'floyd-code-cli',
       version: '1.2.3',
+      endpoint: 'https://mock.test/events',
     });
 
     await shutdownTelemetry();
@@ -1151,6 +1198,7 @@ describe('telemetry bootstrap', () => {
       deviceId: 'dev',
       appName: 'floyd-code-cli',
       version: '1.2.3',
+      endpoint: 'https://mock.test/events',
       model: 'model-a',
     });
     track('first');

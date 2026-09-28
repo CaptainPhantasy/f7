@@ -3,9 +3,8 @@ import { access, mkdtemp, readFile, rename, rm, stat, writeFile } from 'node:fs/
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { floydCdnContentUrl } from '@legacy-ai/floyd-code-oauth';
-
 import { downloadToFile, runCommand } from '../host';
+import { requireContentCdnUrl } from './cdn';
 import type {
   CapabilityDetectResult,
   CapabilityEntry,
@@ -16,6 +15,8 @@ import type { CapabilityEntryContext } from './context';
 
 const MAC_PLUGIN_ID = 'floyd-cu';
 const WINDOWS_PLUGIN_ID = 'floyd-cu-win';
+const MAC_APP_CDN_PATH = 'floyd-computer-use/latest/FloydCU.app.zip';
+const WINDOWS_SETUP_CDN_PATH = 'floyd-computer-use-windows/latest/setup_windows.ps1';
 const APP_BUNDLE = 'FloydCU.app';
 const LAUNCHD_LABEL = 'ai.floyd.cu.service';
 const COMMAND_TIMEOUT_MS = 30_000;
@@ -43,20 +44,20 @@ const WINDOWS_DOCTOR_SCRIPT =
 
 interface PluginLayerConfig {
   readonly id: string;
-  readonly zipUrl: string;
+  readonly cdnPath: string;
 }
 
 function macPlugin(): PluginLayerConfig {
   return {
     id: MAC_PLUGIN_ID,
-    zipUrl: floydCdnContentUrl('floyd-computer-use/latest/floyd-cu-plugin.zip'),
+    cdnPath: 'floyd-computer-use/latest/floyd-cu-plugin.zip',
   };
 }
 
 function windowsPlugin(): PluginLayerConfig {
   return {
     id: WINDOWS_PLUGIN_ID,
-    zipUrl: floydCdnContentUrl('floyd-computer-use-windows/latest/floyd-cu-win-plugin.zip'),
+    cdnPath: 'floyd-computer-use-windows/latest/floyd-cu-win-plugin.zip',
   };
 }
 
@@ -178,7 +179,12 @@ async function installPluginLayer(
   ctx: CapabilityEntryContext,
   config: PluginLayerConfig,
 ): Promise<void> {
-  const summary = await ctx.plugins.installPlugin({ source: config.zipUrl });
+  const summary = await ctx.plugins.installPlugin({
+    source: requireContentCdnUrl(
+      config.cdnPath,
+      `Installing the ${config.id} plugin requires a content CDN`,
+    ),
+  });
   if (!summary.enabled) {
     await ctx.plugins.setPluginEnabled({ id: config.id, enabled: true });
   }
@@ -436,7 +442,10 @@ function createMacFloydCuEntry(ctx: CapabilityEntryContext): CapabilityEntry {
         report('download', 0);
         const zipPath = path.join(workDir, 'FloydCU.app.zip');
         await downloadToFile(
-          floydCdnContentUrl('floyd-computer-use/latest/FloydCU.app.zip'),
+          requireContentCdnUrl(
+            MAC_APP_CDN_PATH,
+            'Downloading FloydCU.app requires a content CDN',
+          ),
           zipPath,
           (percent) => {
             report('download', percent);
@@ -645,7 +654,10 @@ function createWindowsFloydCuEntry(ctx: CapabilityEntryContext): CapabilityEntry
         const setupPath = path.join(workDir, 'setup_windows.ps1');
         report('download', 0);
         await downloadToFile(
-          floydCdnContentUrl('floyd-computer-use-windows/latest/setup_windows.ps1'),
+          requireContentCdnUrl(
+            WINDOWS_SETUP_CDN_PATH,
+            'Downloading the Floyd Computer Use Windows installer requires a content CDN',
+          ),
           setupPath,
           (percent) => {
             report('download', percent);

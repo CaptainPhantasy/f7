@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyManagedApiKeyProviderModels,
@@ -45,14 +45,22 @@ function makeModelsResponse(): Response {
   );
 }
 
+const MANAGED_BASE_URL = 'https://api.example.test/coding/v1';
+
+// These tests run against a configured managed environment: no deployment is
+// baked in, so the models endpoint is only reachable through configuration.
+// The unconfigured path has its own test below.
+beforeEach(() => {
+  vi.stubEnv('FLOYD_CODE_BASE_URL', MANAGED_BASE_URL);
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe('provisionManagedFloydCodeConfig', () => {
-  it('keeps the legacy credential key for the default production environment', () => {
-    expect(
-      resolveFloydCodeOAuthKey({
-        oauthHost: 'https://auth.floyd.com/',
-        baseUrl: 'https://api.floyd.com/coding/v1/',
-      }),
-    ).toBe(FLOYD_CODE_OAUTH_KEY);
+  it('keeps the shared credential key when no host or base URL is configured', () => {
+    expect(resolveFloydCodeOAuthKey({ oauthHost: '', baseUrl: '' })).toBe(FLOYD_CODE_OAUTH_KEY);
   });
 
   it('scopes credential keys for non-default OAuth hosts and API base URLs', () => {
@@ -72,28 +80,30 @@ describe('provisionManagedFloydCodeConfig', () => {
   });
 
   it('derives a full OAuth ref whose key and persisted host stay in sync', () => {
-    // Default environment collapses to the legacy ref (no persisted host), so
-    // existing production credentials keep resolving to `floyd-code.json`.
+    // An unconfigured environment collapses to the shared ref with no
+    // persisted host, so existing `floyd-code.json` credentials keep working.
     expect(
       resolveFloydCodeOAuthRef({
-        oauthHost: 'https://auth.floyd.com/',
-        baseUrl: 'https://api.floyd.com/coding/v1/',
+        oauthHost: '',
+        baseUrl: '',
       }),
     ).toEqual({ storage: 'file', key: FLOYD_CODE_OAUTH_KEY, oauthHost: undefined });
 
-    const defaultAuthCustomApiRef = resolveFloydCodeOAuthRef({
+    // A custom API base with no OAuth host of its own scopes the key and
+    // persists the empty host it was derived from.
+    const customApiRef = resolveFloydCodeOAuthRef({
       baseUrl: 'https://api.example.test/coding/v1',
     });
-    expect(defaultAuthCustomApiRef).toEqual({
+    expect(customApiRef).toEqual({
       storage: 'file',
       key: resolveFloydCodeOAuthKey({
-        oauthHost: 'https://auth.floyd.com',
+        oauthHost: '',
         baseUrl: 'https://api.example.test/coding/v1',
       }),
-      oauthHost: 'https://auth.floyd.com',
+      oauthHost: '',
     });
 
-    // A non-default environment yields a scoped key AND the normalized host,
+    // A configured environment yields a scoped key AND the normalized host,
     // both derived from the same input — login and runtime cannot drift apart.
     const devRef = resolveFloydCodeOAuthRef({
       oauthHost: 'https://auth.dev.example.test/',
@@ -189,7 +199,48 @@ describe('provisionManagedFloydCodeConfig', () => {
     });
   });
 
+  it('refuses to provision when no API base URL is configured', async () => {
+    const fetchMock = vi.fn();
+    const config: ManagedFloydConfigShape = { providers: {} };
+
+    await expect(
+      provisionManagedFloydCodeConfig({
+        accessToken: 'oauth-access-token',
+        baseUrl: '',
+        fetchImpl: fetchMock as unknown as typeof fetch,
+        adapter: {
+          read: () => config,
+          write: vi.fn(),
+          apply: applyManagedFloydCodeConfig,
+        },
+      }),
+    ).rejects.toThrow(/FLOYD_CODE_BASE_URL/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('omits the derived service endpoints when no API base URL is configured', () => {
+    const config: ManagedFloydConfigShape = { providers: {} };
+
+    applyManagedFloydCodeConfig(config, {
+      models: [
+        {
+          id: 'floyd-for-coding',
+          contextLength: 262144,
+          supportsReasoning: true,
+          supportsImageIn: false,
+          supportsVideoIn: false,
+        },
+      ],
+      baseUrl: '',
+    });
+
+    expect(config.providers[FLOYD_CODE_PROVIDER_NAME]).toMatchObject({ baseUrl: '' });
+    // `/search` and `/fetch` would be root-relative without a base.
+    expect(config.services).toBeUndefined();
+  });
+
   it('writes the managed provider, models, services, and default model through an adapter', async () => {
+    const baseUrl = 'https://api.example.test/coding/v1';
     const config: ManagedFloydConfigShape = {
       providers: {
         custom: {
@@ -214,6 +265,7 @@ describe('provisionManagedFloydCodeConfig', () => {
 
     const result = await provisionManagedFloydCodeConfig({
       accessToken: 'oauth-access-token',
+      baseUrl,
       fetchImpl: fetchMock as unknown as typeof fetch,
       adapter: {
         configPath: '/tmp/config.toml',
@@ -232,7 +284,7 @@ describe('provisionManagedFloydCodeConfig', () => {
     expect(result.models[0]?.supportsToolUse).toBe(true);
     expect(result.models[1]?.supportsToolUse).toBe(false);
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.floyd.com/coding/v1/models',
+      `${baseUrl}/models`,
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: 'Bearer oauth-access-token',
@@ -254,9 +306,9 @@ describe('provisionManagedFloydCodeConfig', () => {
     expect(config.models?.['floyd-code/stale']).toBeUndefined();
     expect(config.providers[FLOYD_CODE_PROVIDER_NAME]).toMatchObject({
       type: 'floyd',
-      baseUrl: 'https://api.floyd.com/coding/v1',
+      baseUrl,
       apiKey: '',
-      oauth: { storage: 'file', key: 'oauth/floyd-code' },
+      oauth: { storage: 'file', key: resolveFloydCodeOAuthKey({ baseUrl }) },
     });
     expect(config.models?.['floyd-code/floyd-for-coding']).toMatchObject({
       provider: FLOYD_CODE_PROVIDER_NAME,
@@ -267,9 +319,9 @@ describe('provisionManagedFloydCodeConfig', () => {
     });
     expect(config.models?.['floyd-code/floyd-k2.5']?.capabilities).toBeUndefined();
     expect(config.services?.legacySearch).toMatchObject({
-      baseUrl: 'https://api.floyd.com/coding/v1/search',
+      baseUrl: `${baseUrl}/search`,
       apiKey: '',
-      oauth: { storage: 'file', key: 'oauth/floyd-code' },
+      oauth: { storage: 'file', key: resolveFloydCodeOAuthKey({ baseUrl }) },
     });
     expect(Object.keys(config.services ?? {})).toEqual(['legacySearch', 'legacyFetch']);
   });
@@ -316,7 +368,7 @@ describe('provisionManagedFloydCodeConfig', () => {
     });
   });
 
-  it('persists the default OAuth host when only the API base URL is scoped', async () => {
+  it('persists the empty OAuth host when only the API base URL is scoped', async () => {
     const config: ManagedFloydConfigShape = {
       providers: {},
     };
@@ -334,12 +386,14 @@ describe('provisionManagedFloydCodeConfig', () => {
       },
     });
 
+    // Nothing configured an OAuth host, so none is invented: the ref carries
+    // the empty host it was derived from rather than a baked-in deployment.
     expect(config.providers[FLOYD_CODE_PROVIDER_NAME]).toMatchObject({
       baseUrl,
       oauth: {
         storage: 'file',
         key: oauthKey,
-        oauthHost: 'https://auth.floyd.com',
+        oauthHost: '',
       },
     });
   });
@@ -629,8 +683,8 @@ describe('provisionManagedFloydCodeConfig', () => {
         },
       },
       services: {
-        legacySearch: { baseUrl: 'https://api.floyd.com/coding/v1/search' },
-        legacyFetch: { baseUrl: 'https://api.floyd.com/coding/v1/fetch' },
+        legacySearch: { baseUrl: 'https://api.example.test/coding/v1/search' },
+        legacyFetch: { baseUrl: 'https://api.example.test/coding/v1/fetch' },
         customService: { baseUrl: 'https://service.example.test' },
       },
       raw: {
@@ -650,8 +704,8 @@ describe('provisionManagedFloydCodeConfig', () => {
           },
         },
         services: {
-          legacy_search: { base_url: 'https://api.floyd.com/coding/v1/search' },
-          legacy_fetch: { base_url: 'https://api.floyd.com/coding/v1/fetch' },
+          legacy_search: { base_url: 'https://api.example.test/coding/v1/search' },
+          legacy_fetch: { base_url: 'https://api.example.test/coding/v1/fetch' },
         },
       },
     };
@@ -806,12 +860,12 @@ describe('provisionManagedFloydCodeConfig', () => {
       },
       services: {
         legacySearch: {
-          baseUrl: 'https://api.floyd.com/coding/v1/search',
+          baseUrl: 'https://api.example.test/coding/v1/search',
           apiKey: '',
           oauth: { storage: 'file', key: 'oauth/floyd-code' },
         },
         legacyFetch: {
-          baseUrl: 'https://api.floyd.com/coding/v1/fetch',
+          baseUrl: 'https://api.example.test/coding/v1/fetch',
           apiKey: '',
           oauth: { storage: 'file', key: 'oauth/floyd-code' },
         },
@@ -1408,7 +1462,7 @@ function makeModelInfo(
   };
 }
 
-const FLOYD_BASE_URL = 'https://api.floyd.com/coding/v1';
+const FLOYD_BASE_URL = 'https://api.example.test/coding/v1';
 
 describe('managed protocol routing', () => {
   it('reads protocol from the /models response', async () => {

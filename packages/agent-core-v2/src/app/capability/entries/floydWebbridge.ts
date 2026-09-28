@@ -3,13 +3,10 @@ import { access, chmod, mkdir, mkdtemp, rename, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import {
-  floydCdnContentUrl,
-  floydRegionProfile,
-  resolveFloydRegion,
-} from '@legacy-ai/floyd-code-oauth';
+import { resolveFloydRegion } from '@legacy-ai/floyd-code-oauth';
 
 import { downloadToFile, runCommand } from '../host';
+import { requireContentCdnUrl, requireRegionCdnUrl } from './cdn';
 import type {
   CapabilityDetectResult,
   CapabilityEntry,
@@ -224,7 +221,11 @@ export function createFloydWebbridgeEntry(ctx: CapabilityEntryContext): Capabili
     report('skill');
     const region = (await ctx.resolveRegion?.()) ?? resolveFloydRegion();
     const summary = await ctx.plugins.installPlugin({
-      source: `${floydRegionProfile(region).cdnBase}/${PLUGIN_ZIP_PATH}`,
+      source: requireRegionCdnUrl(
+        region,
+        PLUGIN_ZIP_PATH,
+        'Installing the Floyd Browser Extension plugin requires a CDN',
+      ),
     });
     if (!summary.enabled) {
       await ctx.plugins.setPluginEnabled({ id: PLUGIN_ID, enabled: true });
@@ -250,7 +251,10 @@ export function createFloydWebbridgeEntry(ctx: CapabilityEntryContext): Capabili
     asset: string,
   ): Promise<void> {
     report('download', 0);
-    const url = floydCdnContentUrl(`${BINARY_CDN_PATH}/${asset}`);
+    const url = requireContentCdnUrl(
+      `${BINARY_CDN_PATH}/${asset}`,
+      'Downloading the Floyd Browser Extension binary requires a content CDN',
+    );
     const staging = path.join(
       tmpdir(),
       `floyd-webbridge-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ctx.platform === 'win32' ? '.exe' : ''}`,

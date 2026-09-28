@@ -1,7 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_FLOYD_CODE_OAUTH_HOST } from '#/constants';
 import { FLOYD_CODE_OAUTH_KEY } from '#/managed-floyd-code';
@@ -9,6 +9,7 @@ import { DEFAULT_FLOYD_CODE_BASE_URL } from '#/managed-usage';
 import {
   FLOYD_REGION_MARKER_FILENAME,
   FLOYD_REGION_PROFILES,
+  floydCdnContentUrl,
   floydRegionLoginHosts,
   floydRegionProfile,
   floydRegionSchema,
@@ -17,15 +18,73 @@ import {
 
 import { createTempWorkDir, type TempDirHandle } from './helpers';
 
+const EMPTY_PROFILE = {
+  oauthHost: '',
+  baseUrl: '',
+  cdnBase: '',
+  siteBase: '',
+  telemetryEndpoint: '',
+};
+
 describe('FLOYD_REGION_PROFILES', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('leaves an unconfigured profile empty — no deployment is baked in', () => {
+    expect(floydRegionProfile('mainland-cn', {})).toEqual(EMPTY_PROFILE);
+    expect(floydRegionProfile('global', {})).toEqual(EMPTY_PROFILE);
+  });
+
   it('keeps the mainland-cn profile aligned with the shared defaults', () => {
+    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', '');
+    vi.stubEnv('FLOYD_OAUTH_HOST', '');
+    vi.stubEnv('FLOYD_CODE_BASE_URL', '');
     expect(FLOYD_REGION_PROFILES['mainland-cn'].oauthHost).toBe(DEFAULT_FLOYD_CODE_OAUTH_HOST);
     expect(FLOYD_REGION_PROFILES['mainland-cn'].baseUrl).toBe(DEFAULT_FLOYD_CODE_BASE_URL);
   });
 
-  it('floydRegionProfile returns the requested profile', () => {
-    expect(floydRegionProfile('global').oauthHost).toBe('https://auth.floyd.ai');
-    expect(floydRegionProfile('mainland-cn')).toBe(FLOYD_REGION_PROFILES['mainland-cn']);
+  it('reads every endpoint from that region own env overrides', () => {
+    expect(
+      floydRegionProfile('global', {
+        FLOYD_CODE_GLOBAL_OAUTH_HOST: 'https://auth.example.test',
+        FLOYD_CODE_GLOBAL_BASE_URL: 'https://api.example.test/coding/v1',
+        FLOYD_CODE_GLOBAL_CDN_BASE: 'https://cdn.example.test/floyd-code',
+        FLOYD_CODE_GLOBAL_SITE_BASE: 'https://www.example.test',
+        FLOYD_CODE_GLOBAL_TELEMETRY_ENDPOINT: 'https://telemetry.example.test/v1/event',
+      }),
+    ).toEqual({
+      oauthHost: 'https://auth.example.test',
+      baseUrl: 'https://api.example.test/coding/v1',
+      cdnBase: 'https://cdn.example.test/floyd-code',
+      siteBase: 'https://www.example.test',
+      telemetryEndpoint: 'https://telemetry.example.test/v1/event',
+    });
+  });
+
+  it('reads the shared default slot from FLOYD_CODE_* and keeps regions separate', () => {
+    const env = {
+      FLOYD_CODE_OAUTH_HOST: 'https://auth.example.test',
+      FLOYD_OAUTH_HOST: 'https://auth.alias.example.test',
+      FLOYD_CODE_BASE_URL: 'https://api.example.test/coding/v1',
+    };
+    expect(floydRegionProfile('mainland-cn', env)).toMatchObject({
+      oauthHost: 'https://auth.example.test',
+      baseUrl: 'https://api.example.test/coding/v1',
+    });
+    expect(
+      floydRegionProfile('mainland-cn', { FLOYD_OAUTH_HOST: 'https://auth.alias.example.test' })
+        .oauthHost,
+    ).toBe('https://auth.alias.example.test');
+    expect(floydRegionProfile('global', env)).toEqual(EMPTY_PROFILE);
+  });
+
+  it('exposes the profiles through the record, re-read from env', () => {
+    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', '');
+    vi.stubEnv('FLOYD_OAUTH_HOST', '');
+    vi.stubEnv('FLOYD_CODE_GLOBAL_OAUTH_HOST', 'https://auth.example.test');
+    expect(FLOYD_REGION_PROFILES['global'].oauthHost).toBe('https://auth.example.test');
+    expect(FLOYD_REGION_PROFILES['mainland-cn'].oauthHost).toBe('');
   });
 });
 
@@ -61,6 +120,23 @@ describe('resolveFloydRegion', () => {
         env: {
           FLOYD_CODE_OAUTH_HOST: 'https://auth.floyd.com',
           FLOYD_OAUTH_HOST: 'https://auth.floyd.ai',
+        },
+      }),
+    ).toBe('mainland-cn');
+  });
+
+  it('pins the global slot from its own env overrides, default slot first', () => {
+    expect(
+      resolveFloydRegion({ env: { FLOYD_CODE_GLOBAL_OAUTH_HOST: 'https://auth.example.test' } }),
+    ).toBe('global');
+    expect(
+      resolveFloydRegion({ env: { FLOYD_GLOBAL_OAUTH_HOST: 'https://auth.example.test' } }),
+    ).toBe('global');
+    expect(
+      resolveFloydRegion({
+        env: {
+          FLOYD_CODE_GLOBAL_OAUTH_HOST: 'https://auth.example.test',
+          FLOYD_OAUTH_HOST: 'https://auth.internal.example.com',
         },
       }),
     ).toBe('mainland-cn');
@@ -168,26 +244,64 @@ describe('resolveFloydRegion', () => {
 });
 
 describe('floydRegionLoginHosts', () => {
-  it('returns both profile hosts, mainland-cn included (explicit beats stale config)', () => {
-    expect(floydRegionLoginHosts('mainland-cn', {})).toEqual({
-      oauthHost: 'https://auth.floyd.com',
-      baseUrl: 'https://api.floyd.com/coding/v1',
+  it('returns both configured hosts for an explicit region choice', () => {
+    expect(
+      floydRegionLoginHosts('mainland-cn', {
+        FLOYD_CODE_OAUTH_HOST: 'https://auth.example.test',
+        FLOYD_CODE_BASE_URL: 'https://api.example.test/coding/v1',
+      }),
+    ).toEqual({
+      oauthHost: 'https://auth.example.test',
+      baseUrl: 'https://api.example.test/coding/v1',
     });
-    expect(floydRegionLoginHosts('global', {})).toEqual({
-      oauthHost: 'https://auth.floyd.ai',
-      baseUrl: 'https://api.floyd.ai/coding/v1',
+    expect(
+      floydRegionLoginHosts('global', {
+        FLOYD_CODE_GLOBAL_OAUTH_HOST: 'https://auth.example.test',
+        FLOYD_CODE_GLOBAL_BASE_URL: 'https://api.example.test/coding/v1',
+      }),
+    ).toEqual({
+      oauthHost: 'https://auth.example.test',
+      baseUrl: 'https://api.example.test/coding/v1',
     });
   });
 
-  it('yields to env overrides', () => {
-    expect(floydRegionLoginHosts('global', { FLOYD_CODE_OAUTH_HOST: 'https://auth.x.com' })).toBe(
-      undefined,
-    );
-    expect(floydRegionLoginHosts('global', { FLOYD_OAUTH_HOST: 'https://auth.x.com' })).toBe(
-      undefined,
-    );
+  it('returns undefined for an unconfigured profile instead of an empty host', () => {
+    expect(floydRegionLoginHosts('mainland-cn', {})).toBeUndefined();
+    expect(floydRegionLoginHosts('global', {})).toBeUndefined();
+    // Half-configured (host without a base URL) has no login hosts to offer.
     expect(
-      floydRegionLoginHosts('global', { FLOYD_CODE_BASE_URL: 'https://api.x.com/coding/v1' }),
+      floydRegionLoginHosts('global', {
+        FLOYD_CODE_GLOBAL_OAUTH_HOST: 'https://auth.example.test',
+      }),
+    ).toBeUndefined();
+  });
+
+  it('yields to env overrides', () => {
+    const globalHosts = {
+      FLOYD_CODE_GLOBAL_OAUTH_HOST: 'https://auth.example.test',
+      FLOYD_CODE_GLOBAL_BASE_URL: 'https://api.example.test/coding/v1',
+    };
+    expect(
+      floydRegionLoginHosts('global', {
+        ...globalHosts,
+        FLOYD_CODE_OAUTH_HOST: 'https://auth.x.com',
+      }),
+    ).toBe(undefined);
+    expect(
+      floydRegionLoginHosts('global', { ...globalHosts, FLOYD_OAUTH_HOST: 'https://auth.x.com' }),
+    ).toBe(undefined);
+    expect(
+      floydRegionLoginHosts('global', {
+        ...globalHosts,
+        FLOYD_CODE_BASE_URL: 'https://api.x.com/coding/v1',
+      }),
+    ).toBe(undefined);
+    expect(
+      floydRegionLoginHosts('mainland-cn', {
+        FLOYD_CODE_OAUTH_HOST: 'https://auth.example.test',
+        FLOYD_CODE_BASE_URL: 'https://api.example.test/coding/v1',
+        FLOYD_CODE_GLOBAL_OAUTH_HOST: 'https://auth.x.com',
+      }),
     ).toBe(undefined);
   });
 });
@@ -197,5 +311,21 @@ describe('floydRegionSchema', () => {
     expect(floydRegionSchema.parse('mainland-cn')).toBe('mainland-cn');
     expect(floydRegionSchema.parse('global')).toBe('global');
     expect(floydRegionSchema.safeParse('apac').success).toBe(false);
+  });
+});
+
+describe('floydCdnContentUrl', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('returns empty until the content CDN is configured', () => {
+    vi.stubEnv('FLOYD_CODE_CONTENT_CDN_BASE', '');
+    expect(floydCdnContentUrl('floyd-computer-use/latest/floyd-cu-plugin.zip')).toBe('');
+
+    vi.stubEnv('FLOYD_CODE_CONTENT_CDN_BASE', 'https://cdn.example.test/');
+    expect(floydCdnContentUrl('/floyd-computer-use/latest/floyd-cu-plugin.zip')).toBe(
+      'https://cdn.example.test/floyd-computer-use/latest/floyd-cu-plugin.zip',
+    );
   });
 });

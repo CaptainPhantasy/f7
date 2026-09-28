@@ -620,8 +620,10 @@ describe('refreshProviderModels api_key_env credentials', () => {
     }
   });
 
-  it('refreshes an open-platform provider through api_key_env without persisting the secret', async () => {
+  it('refreshes a provider configured through api_key_env without persisting the secret', async () => {
     vi.stubEnv('FLOYD_TEST_OPEN_PLATFORM_KEY', 'sk-open-platform');
+    const baseUrl = 'https://api.managed.example.test/coding/v1';
+    vi.stubEnv('FLOYD_CODE_BASE_URL', baseUrl);
     const fetchMock = vi.fn(
       async () =>
         new Response(
@@ -632,7 +634,11 @@ describe('refreshProviderModels api_key_env credentials', () => {
     vi.stubGlobal('fetch', fetchMock);
     const { host, discovery, providers } = await createHost({
       providers: {
-        'legacy-cn': { type: 'floyd', apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY' },
+        'env-key-provider': {
+          type: 'floyd',
+          baseUrl,
+          apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY',
+        },
       },
       models: {},
     });
@@ -640,16 +646,38 @@ describe('refreshProviderModels api_key_env credentials', () => {
       const result = await discovery.refreshProviderModels({ scope: 'all' });
       expect(result.failed).toEqual([]);
       expect(fetchMock).toHaveBeenCalledWith(
-        'https://api.legacy.cn/v1/models',
+        `${baseUrl}/models`,
         expect.objectContaining({
           headers: expect.objectContaining({ Authorization: 'Bearer sk-open-platform' }),
         }),
       );
-      expect(providers.list()['legacy-cn']).toEqual({
+      expect(providers.list()['env-key-provider']).toEqual({
         type: 'floyd',
-        baseUrl: 'https://api.legacy.cn/v1',
+        baseUrl,
         apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY',
       });
+    } finally {
+      host.dispose();
+    }
+  });
+
+  it('fails an open-platform provider with no base URL instead of fetching a relative path', async () => {
+    vi.stubEnv('FLOYD_TEST_OPEN_PLATFORM_KEY', 'sk-open-platform');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { host, discovery } = await createHost({
+      providers: {
+        'legacy-cn': { type: 'floyd', apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY' },
+      },
+      models: {},
+    });
+    try {
+      const result = await discovery.refreshProviderModels({ scope: 'all' });
+      expect(result.changed).toEqual([]);
+      expect(result.failed).toHaveLength(1);
+      expect(result.failed[0]).toMatchObject({ provider: 'legacy-cn' });
+      expect(result.failed[0]?.reason).toContain('No base URL configured');
+      expect(fetchMock).not.toHaveBeenCalled();
     } finally {
       host.dispose();
     }

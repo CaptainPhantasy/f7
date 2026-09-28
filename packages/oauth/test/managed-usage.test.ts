@@ -26,6 +26,12 @@ describe('floydCodeBaseUrl', () => {
     expect(floydCodeBaseUrl()).toBe('https://gw.example.com');
     expect(floydCodeUsageUrl()).toBe('https://gw.example.com/usages');
   });
+
+  it('resolves the base and the usage URL to empty without configuration', () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    expect(floydCodeBaseUrl()).toBe('');
+    expect(floydCodeUsageUrl()).toBe('');
+  });
 });
 
 describe('isManagedFloydCodeBaseUrl', () => {
@@ -286,5 +292,20 @@ describe('fetchManagedUsage', () => {
     const result = await fetchManagedUsage('https://api.example/usages', 'access-token');
 
     expect(result).toEqual({ kind: 'error', message: 'Failed to fetch usage: socket hang up' });
+  });
+
+  it('does not request an unconfigured base URL', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchManagedUsage(floydCodeUsageUrl(), 'access-token');
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') return;
+    expect(result.message).toBe(
+      'Failed to fetch usage: no managed base URL is configured. Set FLOYD_CODE_BASE_URL.',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

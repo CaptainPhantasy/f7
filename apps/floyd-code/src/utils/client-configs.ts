@@ -27,7 +27,9 @@ const FETCH_TIMEOUT_MS = 5000;
 
 /** The endpoint's API base: the env override keeps winning (custom/internal
     envs); otherwise the active region profile, so a global login's token is
-    not sent to the mainland-China deployment. */
+    not sent to the mainland-China deployment. Empty when neither is
+    configured (`FLOYD_CODE_BASE_URL`, or the active profile's `baseUrl`), in
+    which case there is no endpoint to call. */
 function clientConfigsBaseUrl(): string {
   return (process.env['FLOYD_CODE_BASE_URL'] ?? currentFloydProfile().baseUrl).replace(/\/+$/, '');
 }
@@ -161,6 +163,8 @@ export async function fetchClientConfig<S extends z.ZodType>(
   schema: S,
   options: ClientConfigFetchOptions = {},
 ): Promise<z.infer<S> | undefined> {
+  const baseUrl = clientConfigsBaseUrl();
+  if (baseUrl.length === 0) return undefined;
   const fetchFn = options.fetchImpl ?? fetch;
   const headers: Record<string, string> = {
     accept: 'application/json',

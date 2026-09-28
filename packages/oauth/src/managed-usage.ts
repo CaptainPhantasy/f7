@@ -7,6 +7,12 @@ const MANAGED_PREFIX = 'managed:';
 const FLOYD_CODE_PLATFORM_ID = 'floyd-code';
 export const DEFAULT_FLOYD_CODE_BASE_URL = '';
 export const GLOBAL_FLOYD_CODE_BASE_URL = '';
+const RECOGNIZED_FLOYD_CODE_BASE_URLS = [
+  'https://api.floyd.com/coding/v1',
+  'https://api.floyd.ai/coding/v1',
+];
+const MANAGED_BASE_URL_UNCONFIGURED =
+  'Failed to fetch usage: no managed base URL is configured. Set FLOYD_CODE_BASE_URL.';
 
 export function isManagedFloydCode(providerKey?: string | null): boolean {
   if (!providerKey) return false;
@@ -19,7 +25,8 @@ export function floydCodeBaseUrl(): string {
 }
 
 export function floydCodeUsageUrl(): string {
-  return `${floydCodeBaseUrl()}/usages`;
+  const baseUrl = floydCodeBaseUrl();
+  return baseUrl.length > 0 ? `${baseUrl}/usages` : '';
 }
 
 export function isManagedFloydCodeBaseUrl(baseUrl: string | undefined): boolean {
@@ -28,9 +35,9 @@ export function isManagedFloydCodeBaseUrl(baseUrl: string | undefined): boolean 
   if (candidate === undefined) return false;
   const envOverride = process.env['FLOYD_CODE_BASE_URL'];
   const managed =
-    envOverride !== undefined
+    envOverride !== undefined && envOverride.length > 0
       ? [envOverride]
-      : [DEFAULT_FLOYD_CODE_BASE_URL, GLOBAL_FLOYD_CODE_BASE_URL];
+      : RECOGNIZED_FLOYD_CODE_BASE_URLS;
   return managed.some((url) => parseNormalizedUrl(url) === candidate);
 }
 
@@ -220,6 +227,7 @@ export async function fetchManagedUsage(
   accessToken: string,
   opts: { timeoutMs?: number } = {},
 ): Promise<FetchManagedUsageResult | FetchManagedUsageError> {
+  if (url.length === 0) return { kind: 'error', message: MANAGED_BASE_URL_UNCONFIGURED };
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();

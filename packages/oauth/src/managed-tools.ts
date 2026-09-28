@@ -27,8 +27,12 @@ export interface FetchChatTitleError {
 export type FetchChatTitleResult = FetchChatTitleOk | FetchChatTitleError;
 
 export function floydCodeToolsUrl(baseUrl?: string): string {
-  return `${(baseUrl ?? floydCodeBaseUrl()).replace(/\/+$/, '')}/tools`;
+  const base = (baseUrl ?? floydCodeBaseUrl()).replace(/\/+$/, '');
+  return base.length > 0 ? `${base}/tools` : '';
 }
+
+const MANAGED_BASE_URL_UNCONFIGURED =
+  'Failed to generate session title: no managed base URL is configured. Set FLOYD_CODE_BASE_URL.';
 
 export async function fetchChatTitle(
   url: string,
@@ -36,6 +40,7 @@ export async function fetchChatTitle(
   chatContent: string,
   opts: { timeoutMs?: number; headers?: Record<string, string>; signal?: AbortSignal } = {},
 ): Promise<FetchChatTitleResult> {
+  if (url.length === 0) return { kind: 'error', message: MANAGED_BASE_URL_UNCONFIGURED };
   const controller = new AbortController();
   const onExternalAbort = () => {
     controller.abort();

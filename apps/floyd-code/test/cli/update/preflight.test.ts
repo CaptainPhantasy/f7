@@ -10,7 +10,7 @@ import {
   writeUpdateInstallState,
 } from '#/cli/update/install-state';
 import { installCommandFor, runUpdatePreflight } from '#/cli/update/preflight';
-import { promptForInstallChoice } from '#/cli/update/prompt';
+import { CHANGELOG_URL, promptForInstallChoice } from '#/cli/update/prompt';
 import type * as PromptModule from '#/cli/update/prompt';
 import { refreshUpdateCache } from '#/cli/update/refresh';
 import type * as RefreshModule from '#/cli/update/refresh';
@@ -22,8 +22,12 @@ import {
   type UpdateInstallState,
   type UpdateManifest,
 } from '#/cli/update/types';
+import {
+  floydCodeInstallPs1Url,
+  floydCodeOfficialInstallUrl,
+  nativeInstallCommandWin,
+} from '#/constant/app';
 import type { TuiConfig } from '#/tui/config';
-import { refreshFloydRegion } from '#/utils/region';
 
 const mocks = vi.hoisted(() => ({
   readUpdateCache: vi.fn(),
@@ -238,10 +242,6 @@ describe('runUpdatePreflight', () => {
     // regardless of the host environment (the flag bypasses batch holds).
     // Tests that exercise the bypass opt back in with `vi.stubEnv(..., '1')`.
     vi.stubEnv('FLOYD_CODE_EXPERIMENTAL_FLAG', '');
-    // Pin the region to cn so address assertions don't follow the dev
-    // machine's own login/marker state; global tests override below.
-    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', 'https://auth.floyd.com');
-    refreshFloydRegion();
     mocks.readUpdateInstallState.mockResolvedValue(emptyUpdateInstallState());
     mocks.writeUpdateInstallState.mockResolvedValue(undefined);
     mocks.loadTuiConfig.mockResolvedValue(tuiConfig());
@@ -254,7 +254,7 @@ describe('runUpdatePreflight', () => {
     mocks.resolveCommandPath.mockImplementation((cmd: string) => cmd);
   });
 
-  afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); refreshFloydRegion(); });
+  afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); });
 
   it('skips all update work when FLOYD_CODE_NO_AUTO_UPDATE is set', async () => {
     vi.stubEnv('FLOYD_CODE_NO_AUTO_UPDATE', '1');
@@ -499,7 +499,7 @@ describe('runUpdatePreflight', () => {
     await expect(runUpdatePreflight('0.4.0', options)).resolves.toBe('continue');
     expect(stdout.join('')).toContain('brew upgrade floyd-code');
     expect(stdout.join('')).toContain('Third-party sources may lag behind the official release.');
-    expect(stdout.join('')).toContain('https://www.floyd.com/code');
+    expect(stdout.join('')).toContain(`official installer: ${floydCodeOfficialInstallUrl()}`);
     expect(promptForInstallChoice).not.toHaveBeenCalled();
     expect(mocks.spawn).not.toHaveBeenCalled();
   });
@@ -551,28 +551,29 @@ describe('runUpdatePreflight', () => {
     }
   });
 
-  it('global region: derives install commands and site links from the .ai profile', async () => {
-    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', 'https://auth.floyd.ai');
-    refreshFloydRegion();
+  it('unconfigured CDN: install commands and site links stay vendor-neutral', async () => {
     mocks.readUpdateCache.mockResolvedValue(cacheWith('0.5.0'));
     mocks.refreshUpdateCache.mockResolvedValue(cacheWith('0.5.0'));
     const originalPlatform = process.platform;
     Object.defineProperty(process, 'platform', { value: 'win32' });
     try {
-      // Native updates self-spawn the staged downloader silently, so the
-      // region surface there is the manual install command text.
+      // No CDN base is configured, so the Windows installer-script URL is
+      // empty and the native manual command falls back to the npm package —
+      // never a vendor host and never a relative path.
+      expect(floydCodeInstallPs1Url()).toBe('');
+      expect(installCommandFor('native', '0.5.0', 'win32')).toBe(nativeInstallCommandWin());
       expect(installCommandFor('native', '0.5.0', 'win32')).toBe(
-        'irm https://code.floyd.ai/floyd-code/install.ps1 | iex',
+        'npm install -g @legacy-ai/floyd-code',
       );
 
       mocks.detectInstallSource.mockResolvedValue('homebrew');
       const brew = captureOutput();
       await expect(runUpdatePreflight('0.4.0', brew.options)).resolves.toBe('continue');
-      expect(brew.stdout.join('')).toContain('https://www.floyd.ai/code');
+      expect(brew.stdout.join('')).toContain(`official installer: ${floydCodeOfficialInstallUrl()}`);
+      expect(floydCodeOfficialInstallUrl()).toBe('https://github.com/CaptainPhantasy/f7');
       expect(mocks.spawn).not.toHaveBeenCalled();
     } finally {
       Object.defineProperty(process, 'platform', { value: originalPlatform });
-      refreshFloydRegion();
     }
   });
 
@@ -990,9 +991,7 @@ describe('runUpdatePreflight', () => {
 
     const rendered = stdout.join('');
     expect(rendered).toContain('Floyd Code updated to v0.5.0');
-    expect(rendered).toContain(
-      'https://legacyai.github.io/floyd-code/en/release-notes/changelog.html',
-    );
+    expect(rendered).toContain(`Changelog: ${CHANGELOG_URL}`);
     expect(track).toHaveBeenCalledWith('update_success_notice_shown', expect.objectContaining({
       version: '0.5.0',
       inferred_from_active: false,

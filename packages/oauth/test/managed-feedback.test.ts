@@ -21,14 +21,26 @@ const SAMPLE_BODY: SubmitFeedbackBody = {
   info: { tool: 'floyd-code-cli', env: 'test' },
 };
 
+const CONFIGURED_BASE_URL = 'https://gw.example.com/coding/v1';
+
 describe('floydCodeFeedbackUrl', () => {
-  it('appends /feedback to the default base URL', () => {
-    expect(floydCodeFeedbackUrl()).toBe('https://api.floyd.com/coding/v1/feedback');
+  it('appends /feedback to the configured base URL', () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', CONFIGURED_BASE_URL);
+    expect(floydCodeFeedbackUrl()).toBe(`${CONFIGURED_BASE_URL}/feedback`);
+    expect(floydCodeFeedbackUrl('https://api.example/coding/v1')).toBe(
+      'https://api.example/coding/v1/feedback',
+    );
   });
 
   it('honours FLOYD_CODE_BASE_URL and trims trailing slashes', () => {
     vi.stubEnv('FLOYD_CODE_BASE_URL', 'https://example.test/v9///');
     expect(floydCodeFeedbackUrl()).toBe('https://example.test/v9/feedback');
+  });
+
+  it('resolves to empty when no base URL is configured', () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    expect(floydCodeFeedbackUrl()).toBe('');
+    expect(floydCodeFeedbackUrl('')).toBe('');
   });
 });
 
@@ -204,5 +216,21 @@ describe('fetchSubmitFeedback', () => {
     if (result.kind !== 'error') return;
     expect(result.status).toBeUndefined();
     expect(result.message).toMatch(/network down/);
+  });
+
+  it('does not request an unconfigured base URL', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchSubmitFeedback(floydCodeFeedbackUrl(), 'access-token', SAMPLE_BODY);
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') return;
+    expect(result.status).toBeUndefined();
+    expect(result.message).toBe(
+      'Failed to submit feedback: no managed base URL is configured. Set FLOYD_CODE_BASE_URL.',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

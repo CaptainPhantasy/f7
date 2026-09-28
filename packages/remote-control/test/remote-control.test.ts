@@ -46,24 +46,29 @@ afterEach(async () => {
 
 describe('Remote Control URLs', () => {
   it('builds the public device entry without a local token', () => {
-    const url = buildRemoteControlUrl('device/one');
-    expect(url).toBe(
-      'https://code-rc.floyd.com/devices/device%2Fone/?rc=1&from=floyd_code_cli',
-    );
+    const url = buildRemoteControlUrl('device/one', undefined, 'https://rc.example.test');
+    expect(url).toBe('https://rc.example.test/devices/device%2Fone/?rc=1&from=floyd_code_cli');
     expect(url).not.toContain('token');
   });
 
   it('builds an encoded session deep link before the query', () => {
-    expect(buildRemoteControlUrl('device-1', 'session/a b')).toBe(
-      'https://code-rc.floyd.com/devices/device-1/sessions/session%2Fa%20b?rc=1&from=floyd_code_cli',
+    expect(buildRemoteControlUrl('device-1', 'session/a b', 'https://rc.example.test')).toBe(
+      'https://rc.example.test/devices/device-1/sessions/session%2Fa%20b?rc=1&from=floyd_code_cli',
     );
   });
 
-  it('falls back to the default relay origin when the env is unset or blank', () => {
-    expect(resolveRemoteControlRelayOrigin({})).toBe('https://code-rc.floyd.com');
+  it('resolves an unset or blank relay origin to empty and fails the build', () => {
+    expect(resolveRemoteControlRelayOrigin({})).toBe('');
     expect(
       resolveRemoteControlRelayOrigin({ FLOYD_CODE_REMOTE_CONTROL_RELAY_URL: '  ' }),
-    ).toBe('https://code-rc.floyd.com');
+    ).toBe('');
+    expect(() => buildRemoteControlUrl('device-1', undefined, '')).toThrow(
+      /requires a relay origin[\s\S]*FLOYD_CODE_REMOTE_CONTROL_RELAY_URL/,
+    );
+    vi.stubEnv('FLOYD_CODE_REMOTE_CONTROL_RELAY_URL', '');
+    expect(() => buildRemoteControlUrl('device-1')).toThrow(
+      /requires a relay origin[\s\S]*FLOYD_CODE_REMOTE_CONTROL_RELAY_URL/,
+    );
   });
 
   it('builds device URLs from the relay origin env override', () => {
@@ -136,6 +141,20 @@ describe('Remote Control HTTP forwarding', () => {
 });
 
 describe('Remote Control tunnel', () => {
+  it('refuses to start without a configured relay origin', async () => {
+    const homeDir = await createRemoteControlHome(TOKEN.refreshToken);
+    vi.stubEnv('FLOYD_CODE_REMOTE_CONTROL_RELAY_URL', '');
+    await expect(
+      startRemoteControl({
+        homeDir,
+        localOrigin: 'http://127.0.0.1:1',
+        localServerToken: 'local-server-token',
+        clientVersion: CLIENT_VERSION,
+        stderr: { write: () => true },
+      }),
+    ).rejects.toThrow(/requires a relay origin[\s\S]*FLOYD_CODE_REMOTE_CONTROL_RELAY_URL/);
+  });
+
   it('surfaces register_nak details', async () => {
     const homeDir = mkdtempSync(join(tmpdir(), 'floyd-rc-nak-'));
     cleanups.push(() => rmSync(homeDir, { recursive: true, force: true }));
@@ -753,7 +772,7 @@ describe('Remote Control single-instance lock', () => {
         nonce: 'stale',
         local_origin: 'http://127.0.0.1:1',
         device_id: 'dead-device',
-        url: 'https://code-rc.floyd.com/devices/dead-device/',
+        url: 'https://relay.example.test/devices/dead-device/',
         started_at: 0,
       }),
     );
@@ -795,7 +814,7 @@ describe('Remote Control single-instance lock', () => {
     second = await startRemoteControl(options);
     expect(second.url).toContain('/devices/');
 
-    relay.managementSockets[relay.managementSockets.length - 1]!.send(
+    relay.managementSockets.at(-1)!.send(
       JSON.stringify({ type: 'disconnect', payload: { reason: 'user_requested' } }),
     );
     await second.closed;
@@ -821,7 +840,7 @@ describe('Remote Control single-instance lock', () => {
         nonce: 'successor',
         local_origin: 'http://127.0.0.1:58628',
         device_id: 'device-2',
-        url: 'https://code-rc.floyd.com/devices/device-2/',
+        url: 'https://relay.example.test/devices/device-2/',
         started_at: Date.now(),
       }),
     );

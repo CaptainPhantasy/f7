@@ -19,6 +19,8 @@ import {
 
 vi.mock('tar', () => ({ extract: vi.fn() }));
 
+const TEST_CDN_BASE = 'https://cdn.example.test/floyd-code';
+
 function probeWith(
   resolveExitCode: (args: readonly string[]) => number,
 ): RgProbe & { exec: ReturnType<typeof vi.fn> } {
@@ -189,6 +191,7 @@ describe('ensureRgPath download branch', () => {
   let fakeShare: string;
   let savedFetch: typeof globalThis.fetch | undefined;
   let savedPath: string | undefined;
+  let savedCdnBase: string | undefined;
   beforeEach(() => {
     fakeShare = join(
       tmpdir(),
@@ -198,6 +201,8 @@ describe('ensureRgPath download branch', () => {
     savedFetch = globalThis.fetch;
     savedPath = process.env['PATH'];
     process.env['PATH'] = '';
+    savedCdnBase = process.env['FLOYD_CODE_CDN_BASE_URL'];
+    process.env['FLOYD_CODE_CDN_BASE_URL'] = TEST_CDN_BASE;
   });
   afterEach(() => {
     rmSync(fakeShare, { recursive: true, force: true });
@@ -210,6 +215,11 @@ describe('ensureRgPath download branch', () => {
       delete process.env['PATH'];
     } else {
       process.env['PATH'] = savedPath;
+    }
+    if (savedCdnBase === undefined) {
+      delete process.env['FLOYD_CODE_CDN_BASE_URL'];
+    } else {
+      process.env['FLOYD_CODE_CDN_BASE_URL'] = savedCdnBase;
     }
     vi.restoreAllMocks();
   });
@@ -314,64 +324,40 @@ describe('ensureRgPath download branch', () => {
 
     const [url] = fetchMock.mock.calls[0] as [string];
     expect(new URL(url).protocol).toBe('https:');
+    expect(url).toMatch(/^https:\/\/cdn\.example\.test\/floyd-code\/rg\/ripgrep-15\.0\.0-/);
   });
 
-  it('downloads from the global CDN when the env pins the global region', async () => {
-    const savedHost = process.env['FLOYD_CODE_OAUTH_HOST'];
-    process.env['FLOYD_CODE_OAUTH_HOST'] = 'https://auth.floyd.ai';
-    try {
-      const body = bodyFromBuffer(Buffer.from('not a real archive', 'utf8'));
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        body,
-      });
-      globalThis.fetch = fetchMock as unknown as typeof fetch;
+  it('downloads from the CDN base pinned by FLOYD_CODE_CDN_BASE_URL', async () => {
+    process.env['FLOYD_CODE_CDN_BASE_URL'] = 'https://mirror.example.test/floyd-code-archives/';
+    const body = bodyFromBuffer(Buffer.from('not a real archive', 'utf8'));
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      body,
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-      await expect(
-        ensureRgPath(noRgProbe(), { shareDir: fakeShare, allowCachedFallback: true }),
-      ).rejects.toThrow();
+    await expect(
+      ensureRgPath(noRgProbe(), { shareDir: fakeShare, allowCachedFallback: true }),
+    ).rejects.toThrow();
 
-      const [url] = fetchMock.mock.calls[0] as [string];
-      expect(url).toMatch(/^https:\/\/code\.floyd\.ai\/floyd-code\/rg\/ripgrep-/);
-    } finally {
-      if (savedHost === undefined) delete process.env['FLOYD_CODE_OAUTH_HOST'];
-      else process.env['FLOYD_CODE_OAUTH_HOST'] = savedHost;
-    }
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toMatch(
+      /^https:\/\/mirror\.example\.test\/floyd-code-archives\/rg\/ripgrep-15\.0\.0-/,
+    );
   });
 
-  it('downloads from the cn CDN by default (no env override, no install marker)', async () => {
-    const savedHost = process.env['FLOYD_CODE_OAUTH_HOST'];
-    const savedLegacyHost = process.env['FLOYD_OAUTH_HOST'];
-    const savedHome = process.env['FLOYD_CODE_HOME'];
-    delete process.env['FLOYD_CODE_OAUTH_HOST'];
-    delete process.env['FLOYD_OAUTH_HOST'];
-    process.env['FLOYD_CODE_HOME'] = fakeShare;
-    try {
-      const body = bodyFromBuffer(Buffer.from('not a real archive', 'utf8'));
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        statusText: 'OK',
-        body,
-      });
-      globalThis.fetch = fetchMock as unknown as typeof fetch;
+  it('does not attempt a download when no CDN base is configured', async () => {
+    delete process.env['FLOYD_CODE_CDN_BASE_URL'];
+    const fetchMock = vi.fn();
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-      await expect(
-        ensureRgPath(noRgProbe(), { shareDir: fakeShare, allowCachedFallback: true }),
-      ).rejects.toThrow();
+    await expect(
+      ensureRgPath(noRgProbe(), { shareDir: fakeShare, allowCachedFallback: true }),
+    ).rejects.toThrow(/FLOYD_CODE_CDN_BASE_URL/);
 
-      const [url] = fetchMock.mock.calls[0] as [string];
-      expect(url).toMatch(/^https:\/\/code\.floyd\.com\/floyd-code\/rg\/ripgrep-/);
-    } finally {
-      if (savedHost === undefined) delete process.env['FLOYD_CODE_OAUTH_HOST'];
-      else process.env['FLOYD_CODE_OAUTH_HOST'] = savedHost;
-      if (savedLegacyHost === undefined) delete process.env['FLOYD_OAUTH_HOST'];
-      else process.env['FLOYD_OAUTH_HOST'] = savedLegacyHost;
-      if (savedHome === undefined) delete process.env['FLOYD_CODE_HOME'];
-      else process.env['FLOYD_CODE_HOME'] = savedHome;
-    }
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('rejects archives that do not match the pinned SHA-256 before extraction', async () => {
@@ -429,6 +415,7 @@ describe('ensureRgPath Windows download branch', () => {
   let savedArch: string;
   let savedPlatform: string;
   let savedPath: string | undefined;
+  let savedCdnBase: string | undefined;
   beforeEach(() => {
     fakeShare = join(
       tmpdir(),
@@ -438,6 +425,8 @@ describe('ensureRgPath Windows download branch', () => {
     savedFetch = globalThis.fetch;
     savedPath = process.env['PATH'];
     process.env['PATH'] = '';
+    savedCdnBase = process.env['FLOYD_CODE_CDN_BASE_URL'];
+    process.env['FLOYD_CODE_CDN_BASE_URL'] = TEST_CDN_BASE;
     savedArch = process.arch;
     savedPlatform = process.platform;
     Object.defineProperty(process, 'arch', { value: 'x64' });
@@ -454,6 +443,11 @@ describe('ensureRgPath Windows download branch', () => {
       delete process.env['PATH'];
     } else {
       process.env['PATH'] = savedPath;
+    }
+    if (savedCdnBase === undefined) {
+      delete process.env['FLOYD_CODE_CDN_BASE_URL'];
+    } else {
+      process.env['FLOYD_CODE_CDN_BASE_URL'] = savedCdnBase;
     }
     Object.defineProperty(process, 'arch', { value: savedArch });
     Object.defineProperty(process, 'platform', { value: savedPlatform });

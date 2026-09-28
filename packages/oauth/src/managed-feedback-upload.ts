@@ -49,11 +49,13 @@ export type FetchCompleteFeedbackUploadResult =
   | FetchFeedbackUploadError;
 
 export function floydCodeFeedbackUploadUrl(baseUrl?: string): string {
-  return `${feedbackBaseUrl(baseUrl)}/feedback/upload_url`;
+  const base = feedbackBaseUrl(baseUrl);
+  return base.length > 0 ? `${base}/feedback/upload_url` : '';
 }
 
 export function floydCodeFeedbackUploadCompleteUrl(baseUrl?: string): string {
-  return `${feedbackBaseUrl(baseUrl)}/feedback/upload_complete`;
+  const base = feedbackBaseUrl(baseUrl);
+  return base.length > 0 ? `${base}/feedback/upload_complete` : '';
 }
 
 export async function fetchCreateFeedbackUploadUrl(
@@ -80,12 +82,16 @@ export async function fetchCompleteFeedbackUpload(
   return { kind: 'ok' };
 }
 
+const MANAGED_BASE_URL_UNCONFIGURED =
+  'Feedback upload request failed: no managed base URL is configured. Set FLOYD_CODE_BASE_URL.';
+
 async function postJson(
   url: string,
   accessToken: string,
   body: unknown,
   opts: { timeoutMs?: number },
 ): Promise<{ readonly kind: 'ok'; readonly payload: unknown } | FetchFeedbackUploadError> {
+  if (url.length === 0) return { kind: 'error', message: MANAGED_BASE_URL_UNCONFIGURED };
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();

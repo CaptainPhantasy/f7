@@ -44,6 +44,8 @@ function statusResponse(status: number): Response {
   return new Response(null, { status });
 }
 
+const TEST_ENDPOINT = 'https://telemetry.example.test/v1/event';
+
 function baseOptions(
   overrides: Partial<CloudAppenderOptions> & { homeDir?: string; bootstrapEnv?: NodeJS.ProcessEnv } = {},
 ): CloudAppenderOptions {
@@ -57,8 +59,23 @@ function baseOptions(
     deviceId: 'dev',
     appName: 'test-app',
     sleep: async () => {},
+    endpoint: TEST_ENDPOINT,
     ...rest,
   };
+}
+
+function failedEventFiles(home: string): string[] {
+  try {
+    return readdirSync(join(home, 'telemetry')).filter((f) => f.startsWith('failed_'));
+  } catch {
+    return [];
+  }
+}
+
+function captureUnexpectedErrors(): { errors: unknown[]; dispose: () => void } {
+  const errors: unknown[] = [];
+  setUnexpectedErrorHandler((err) => errors.push(err));
+  return { errors, dispose: resetUnexpectedErrorHandler };
 }
 
 describe('CloudAppender', () => {
@@ -105,7 +122,7 @@ describe('CloudAppender', () => {
     await appender.flush();
 
     expect(requests).toHaveLength(1);
-    expect(requests[0]?.url).toBe('https://telemetry-logs.floyd.com/v1/event');
+    expect(requests[0]?.url).toBe(TEST_ENDPOINT);
     expect(requests[0]?.body.user_id).toBe('kfc_device_id_dev123');
     const event = requests[0]?.body.events[0];
     expect(event?.['event']).toBe('kfc_tool.call');
@@ -121,76 +138,43 @@ describe('CloudAppender', () => {
     expect(typeof event?.['timestamp']).toBe('number');
   });
 
-  it('derives the global endpoint when the env pins the global region', async () => {
-    process.env['FLOYD_CODE_OAUTH_HOST'] = 'https://auth.floyd.ai';
-    const requests: CapturedRequest[] = [];
-    const appender = new CloudAppender(
-      baseOptions({
-        homeDir,
-        fetchImpl: makeFetch((req) => {
-          requests.push(req);
-          return okResponse();
-        }),
-      }),
-    );
-
-    appender.track({ event: 'tool.call', context: {}, properties: { name: 'bash' } });
-    await appender.flush();
-
-    expect(requests).toHaveLength(1);
-    expect(requests[0]?.url).toBe('https://telemetry-logs.floyd.ai/v1/event');
-  });
-
-  it('reads the install marker from the bootstrapped home for the default endpoint', async () => {
-    writeFileSync(join(homeDir, 'region'), 'global\n');
-    const requests: CapturedRequest[] = [];
-    const appender = new CloudAppender(
-      baseOptions({
-        homeDir,
-        fetchImpl: makeFetch((req) => {
-          requests.push(req);
-          return okResponse();
-        }),
-      }),
-    );
-
-    appender.track({ event: 'tool.call', context: {}, properties: { name: 'bash' } });
-    await appender.flush();
-
-    expect(requests).toHaveLength(1);
-    expect(requests[0]?.url).toBe('https://telemetry-logs.floyd.ai/v1/event');
-  });
-
-  it('honors the marker opt-out from the bootstrap env bag (no process.env needed)', async () => {
-    writeFileSync(join(homeDir, 'region'), 'global\n');
-    const requests: CapturedRequest[] = [];
-    const appender = new CloudAppender(
-      baseOptions({
-        homeDir,
-        bootstrapEnv: { FLOYD_CODE_REGION_MARKER: 'off' },
-        fetchImpl: makeFetch((req) => {
-          requests.push(req);
-          return okResponse();
-        }),
-      }),
-    );
-
-    appender.track({ event: 'tool.call', context: {}, properties: { name: 'bash' } });
-    await appender.flush();
-
-    expect(requests).toHaveLength(1);
-    expect(requests[0]?.url).toBe('https://telemetry-logs.floyd.com/v1/event');
-  });
-
-  it('honors FLOYD_CODE_REGION_MARKER=off so embedded servers ignore the install marker', async () => {
-    writeFileSync(join(homeDir, 'region'), 'global\n');
-    const savedMarkerFlag = process.env['FLOYD_CODE_REGION_MARKER'];
-    process.env['FLOYD_CODE_REGION_MARKER'] = 'off';
+  it('sends nothing when no endpoint is configured', async () => {
+    const captured = captureUnexpectedErrors();
     try {
       const requests: CapturedRequest[] = [];
       const appender = new CloudAppender(
         baseOptions({
           homeDir,
+          endpoint: undefined,
+          fetchImpl: makeFetch((req) => {
+            requests.push(req);
+            return okResponse();
+          }),
+        }),
+      );
+
+      appender.track({ event: 'tool.call', context: {}, properties: { name: 'bash' } });
+      await appender.flush();
+      await appender.retryDiskEvents();
+
+      expect(requests).toHaveLength(0);
+      expect(failedEventFiles(homeDir)).toHaveLength(0);
+      expect(captured.errors).toHaveLength(1);
+      expect(String(captured.errors[0])).toContain('CloudAppenderOptions.endpoint');
+    } finally {
+      captured.dispose();
+    }
+  });
+
+  it('sends nothing when the env pins the global region', async () => {
+    process.env['FLOYD_CODE_OAUTH_HOST'] = 'https://auth.example.test';
+    const captured = captureUnexpectedErrors();
+    try {
+      const requests: CapturedRequest[] = [];
+      const appender = new CloudAppender(
+        baseOptions({
+          homeDir,
+          endpoint: undefined,
           fetchImpl: makeFetch((req) => {
             requests.push(req);
             return okResponse();
@@ -201,9 +185,112 @@ describe('CloudAppender', () => {
       appender.track({ event: 'tool.call', context: {}, properties: { name: 'bash' } });
       await appender.flush();
 
-      expect(requests).toHaveLength(1);
-      expect(requests[0]?.url).toBe('https://telemetry-logs.floyd.com/v1/event');
+      expect(requests).toHaveLength(0);
+      expect(captured.errors).toHaveLength(1);
     } finally {
+      captured.dispose();
+    }
+  });
+
+  it('targets the configured endpoint when the env pins a region', async () => {
+    process.env['FLOYD_CODE_OAUTH_HOST'] = 'https://auth.example.test';
+    const requests: CapturedRequest[] = [];
+    const appender = new CloudAppender(
+      baseOptions({
+        homeDir,
+        endpoint: 'https://configured.example.test/v1/event',
+        fetchImpl: makeFetch((req) => {
+          requests.push(req);
+          return okResponse();
+        }),
+      }),
+    );
+
+    appender.track({ event: 'tool.call', context: {}, properties: { name: 'bash' } });
+    await appender.flush();
+
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.url).toBe('https://configured.example.test/v1/event');
+  });
+
+  it('sends nothing when the install marker in the bootstrapped home selects a region', async () => {
+    writeFileSync(join(homeDir, 'region'), 'global\n');
+    const captured = captureUnexpectedErrors();
+    try {
+      const requests: CapturedRequest[] = [];
+      const appender = new CloudAppender(
+        baseOptions({
+          homeDir,
+          endpoint: undefined,
+          fetchImpl: makeFetch((req) => {
+            requests.push(req);
+            return okResponse();
+          }),
+        }),
+      );
+
+      appender.track({ event: 'tool.call', context: {}, properties: { name: 'bash' } });
+      await appender.flush();
+
+      expect(requests).toHaveLength(0);
+      expect(captured.errors).toHaveLength(1);
+    } finally {
+      captured.dispose();
+    }
+  });
+
+  it('sends nothing when the bootstrap env bag opts out of the install marker', async () => {
+    writeFileSync(join(homeDir, 'region'), 'global\n');
+    const captured = captureUnexpectedErrors();
+    try {
+      const requests: CapturedRequest[] = [];
+      const appender = new CloudAppender(
+        baseOptions({
+          homeDir,
+          endpoint: undefined,
+          bootstrapEnv: { FLOYD_CODE_REGION_MARKER: 'off' },
+          fetchImpl: makeFetch((req) => {
+            requests.push(req);
+            return okResponse();
+          }),
+        }),
+      );
+
+      appender.track({ event: 'tool.call', context: {}, properties: { name: 'bash' } });
+      await appender.flush();
+
+      expect(requests).toHaveLength(0);
+      expect(captured.errors).toHaveLength(1);
+    } finally {
+      captured.dispose();
+    }
+  });
+
+  it('sends nothing when FLOYD_CODE_REGION_MARKER=off opts out of the install marker', async () => {
+    writeFileSync(join(homeDir, 'region'), 'global\n');
+    const savedMarkerFlag = process.env['FLOYD_CODE_REGION_MARKER'];
+    process.env['FLOYD_CODE_REGION_MARKER'] = 'off';
+    const captured = captureUnexpectedErrors();
+    try {
+      const requests: CapturedRequest[] = [];
+      const appender = new CloudAppender(
+        baseOptions({
+          homeDir,
+          endpoint: undefined,
+          fetchImpl: makeFetch((req) => {
+            requests.push(req);
+            return okResponse();
+          }),
+        }),
+      );
+
+      appender.track({ event: 'tool.call', context: {}, properties: { name: 'bash' } });
+      await appender.flush();
+
+      expect(requests).toHaveLength(0);
+      expect(captured.errors).toHaveLength(1);
+    } finally {
+      captured.dispose();
       if (savedMarkerFlag === undefined) delete process.env['FLOYD_CODE_REGION_MARKER'];
       else process.env['FLOYD_CODE_REGION_MARKER'] = savedMarkerFlag;
     }

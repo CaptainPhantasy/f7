@@ -2,6 +2,23 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { fetchLatestFromCdn, fetchLatestVersionFromCdn } from '#/cli/update/cdn';
 import { floydCodeCdnLatestJsonUrl, floydCodeCdnLatestUrl } from '#/constant/app';
+import type * as AppConstants from '#/constant/app';
+
+// This build ships no vendor CDN, so the shipped base is empty and every URL
+// builder returns ''. These tests exercise the request/fallback routing, which
+// needs a configured base: with an empty one /latest and /latest.json are both
+// '' and cannot be told apart.
+const CONFIGURED_CDN_BASE = 'https://cdn.example.test/floyd-code';
+
+vi.mock('#/constant/app', async (importOriginal) => {
+  const actual = await importOriginal<typeof AppConstants>();
+  return {
+    ...actual,
+    floydCodeCdnBase: () => CONFIGURED_CDN_BASE,
+    floydCodeCdnLatestUrl: () => `${CONFIGURED_CDN_BASE}/latest`,
+    floydCodeCdnLatestJsonUrl: () => `${CONFIGURED_CDN_BASE}/latest.json`,
+  };
+});
 
 function mockFetchOk(body: string): typeof fetch {
   return vi.fn(async () => ({

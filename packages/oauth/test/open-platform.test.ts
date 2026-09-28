@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyOpenPlatformConfig,
@@ -11,7 +11,14 @@ import {
   OpenPlatformApiError,
   removeOpenPlatformConfig,
   type ManagedFloydConfigShape,
+  type OpenPlatformDefinition,
 } from '../src/open-platform';
+
+const PLATFORM_BASE_URL = 'https://api.example.test/v1';
+
+function configuredPlatform(id: string, baseUrl: string = PLATFORM_BASE_URL): OpenPlatformDefinition {
+  return { ...getOpenPlatformById(id)!, baseUrl };
+}
 
 function makeModelsResponse(): Response {
   return new Response(
@@ -45,20 +52,42 @@ function makeModelsResponse(): Response {
 }
 
 describe('OPEN_PLATFORMS', () => {
-  it('contains legacy.cn and legacy.ai', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('keeps the platform ids and their model prefixes', () => {
+    expect(OPEN_PLATFORMS.map((platform) => platform.id)).toEqual(['legacy-cn', 'legacy-ai']);
     expect(getOpenPlatformById('legacy-cn')).toMatchObject({
-      name: 'Floyd Platform (API key · platform.floyd.com)',
-      baseUrl: 'https://api.legacy.cn/v1',
-      consoleUrl: 'https://platform.floyd.com',
+      id: 'legacy-cn',
+      name: 'Floyd Platform (API key · mainland CN)',
       allowedPrefixes: ['floyd-k'],
     });
     expect(getOpenPlatformById('legacy-ai')).toMatchObject({
-      name: 'Floyd Platform (API key · platform.floyd.ai)',
-      baseUrl: 'https://api.legacy.ai/v1',
-      consoleUrl: 'https://platform.floyd.ai',
+      id: 'legacy-ai',
+      name: 'Floyd Platform (API key · global)',
       allowedPrefixes: ['floyd-k'],
     });
     expect(getOpenPlatformById('unknown')).toBeUndefined();
+  });
+
+  it('leaves the endpoints empty until their env override configures them', () => {
+    expect(getOpenPlatformById('legacy-cn')).toMatchObject({
+      baseUrl: '',
+      consoleUrl: undefined,
+    });
+    expect(getOpenPlatformById('legacy-ai')).toMatchObject({
+      baseUrl: '',
+      consoleUrl: undefined,
+    });
+
+    vi.stubEnv('FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_BASE_URL', 'https://api.example.test/v1');
+    vi.stubEnv('FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_CONSOLE_URL', 'https://console.example.test');
+    expect(getOpenPlatformById('legacy-cn')).toMatchObject({
+      baseUrl: 'https://api.example.test/v1',
+      consoleUrl: 'https://console.example.test',
+    });
+    expect(getOpenPlatformById('legacy-ai')?.baseUrl).toBe('');
   });
 
   it('isOpenPlatformId works', () => {
@@ -69,9 +98,13 @@ describe('OPEN_PLATFORMS', () => {
 });
 
 describe('fetchOpenPlatformModels', () => {
-  it('lists and parses models from the platform endpoint', async () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('lists and parses models from the configured platform endpoint', async () => {
     const fetchMock = vi.fn(async () => makeModelsResponse());
-    const platform = getOpenPlatformById('legacy-cn')!;
+    const platform = configuredPlatform('legacy-cn');
 
     const models = await fetchOpenPlatformModels(platform, 'sk-test', fetchMock as unknown as typeof fetch);
 
@@ -88,7 +121,7 @@ describe('fetchOpenPlatformModels', () => {
     expect(models[2]?.id).toBe('non-floyd-model');
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.legacy.cn/v1/models',
+      `${PLATFORM_BASE_URL}/models`,
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: 'Bearer sk-test',
@@ -98,12 +131,26 @@ describe('fetchOpenPlatformModels', () => {
     );
   });
 
+  it('refuses to fetch when the platform has no base URL configured', async () => {
+    vi.stubEnv('FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_BASE_URL', '');
+    const fetchMock = vi.fn();
+
+    await expect(
+      fetchOpenPlatformModels(
+        getOpenPlatformById('legacy-cn')!,
+        'sk-test',
+        fetchMock as unknown as typeof fetch,
+      ),
+    ).rejects.toThrow(/FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_BASE_URL/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('surfaces API error messages and status on HTTP error', async () => {
     const fetchMock = vi.fn(
       async () =>
         new Response(JSON.stringify({ error: { message: 'invalid API key' } }), { status: 401 }),
     );
-    const platform = getOpenPlatformById('legacy-cn')!;
+    const platform = configuredPlatform('legacy-cn');
 
     const error = await fetchOpenPlatformModels(
       platform,
@@ -118,7 +165,7 @@ describe('fetchOpenPlatformModels', () => {
 
   it('throws on unexpected response shape', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({}), { status: 200 }));
-    const platform = getOpenPlatformById('legacy-cn')!;
+    const platform = configuredPlatform('legacy-cn');
 
     await expect(
       fetchOpenPlatformModels(platform, 'sk-test', fetchMock as unknown as typeof fetch),
@@ -178,7 +225,7 @@ describe('fetchOpenPlatformModels supports_thinking_type', () => {
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
     );
-    const platform = getOpenPlatformById('legacy-cn')!;
+    const platform = configuredPlatform('legacy-cn');
 
     const models = await fetchOpenPlatformModels(platform, 'sk-test', fetchMock as unknown as typeof fetch);
 
@@ -257,7 +304,7 @@ describe('applyOpenPlatformConfig', () => {
     const config: ManagedFloydConfigShape = {
       providers: {},
     };
-    const platform = getOpenPlatformById('legacy-cn')!;
+    const platform = configuredPlatform('legacy-cn');
     const models = [
       { id: 'floyd-k2-0712-preview', contextLength: 256000, supportsReasoning: true, supportsImageIn: true, supportsVideoIn: true, displayName: 'Floyd K2' },
       { id: 'floyd-k2-lite', contextLength: 128000, supportsReasoning: false, supportsImageIn: false, supportsVideoIn: false },
@@ -278,7 +325,7 @@ describe('applyOpenPlatformConfig', () => {
 
     expect(config.providers['legacy-cn']).toMatchObject({
       type: 'floyd',
-      baseUrl: 'https://api.legacy.cn/v1',
+      baseUrl: PLATFORM_BASE_URL,
       apiKey: 'sk-test',
     });
     expect(config.models?.['legacy-cn/floyd-k2-0712-preview']).toMatchObject({
@@ -296,7 +343,11 @@ describe('applyOpenPlatformConfig', () => {
   it('clears stale models for the same provider', () => {
     const config: ManagedFloydConfigShape = {
       providers: {
-        'legacy-cn': { type: 'floyd', baseUrl: 'https://api.legacy.cn/v1', apiKey: 'sk-old' },
+        'legacy-cn': {
+          type: 'floyd',
+          baseUrl: 'https://stale.example.test/v1',
+          apiKey: 'sk-old',
+        },
       },
       models: {
         'legacy-cn/stale': { provider: 'legacy-cn', model: 'stale', maxContextSize: 1000 },
@@ -323,7 +374,11 @@ describe('applyOpenPlatformConfig', () => {
   it('preserves hand-edited fields that upstream does not declare', () => {
     const config: ManagedFloydConfigShape = {
       providers: {
-        'legacy-cn': { type: 'floyd', baseUrl: 'https://api.legacy.cn/v1', apiKey: 'sk-old' },
+        'legacy-cn': {
+          type: 'floyd',
+          baseUrl: 'https://stale.example.test/v1',
+          apiKey: 'sk-old',
+        },
       },
       models: {
         'legacy-cn/floyd-k2-0712-preview': {
@@ -362,7 +417,11 @@ describe('applyOpenPlatformConfig', () => {
   it('preserves open-platform overrides during refresh', () => {
     const config: ManagedFloydConfigShape = {
       providers: {
-        'legacy-cn': { type: 'floyd', baseUrl: 'https://api.legacy.cn/v1', apiKey: 'sk-old' },
+        'legacy-cn': {
+          type: 'floyd',
+          baseUrl: 'https://stale.example.test/v1',
+          apiKey: 'sk-old',
+        },
       },
       models: {
         'legacy-cn/floyd-k2-0712-preview': {
@@ -490,13 +549,13 @@ describe('applyOpenPlatformConfig', () => {
       providers: {
         'legacy-cn': {
           type: 'floyd',
-          baseUrl: 'https://api.legacy.cn/v1',
+          baseUrl: 'https://stale.example.test/v1',
           apiKey: 'sk-resolved-secret',
           customHeaders: { 'X-Team': 'infra' },
         },
       },
     };
-    const platform = getOpenPlatformById('legacy-cn')!;
+    const platform = configuredPlatform('legacy-cn');
     const models = [
       {
         id: 'floyd-k2',
@@ -517,7 +576,7 @@ describe('applyOpenPlatformConfig', () => {
 
     expect(config.providers['legacy-cn']).toEqual({
       type: 'floyd',
-      baseUrl: 'https://api.legacy.cn/v1',
+      baseUrl: PLATFORM_BASE_URL,
       apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY',
       customHeaders: { 'X-Team': 'infra' },
     });
@@ -528,7 +587,11 @@ describe('removeOpenPlatformConfig', () => {
   it('removes provider, its models, and defaultModel when matched', () => {
     const config: ManagedFloydConfigShape = {
       providers: {
-        'legacy-cn': { type: 'floyd', baseUrl: 'https://api.legacy.cn/v1', apiKey: 'sk-test' },
+        'legacy-cn': {
+          type: 'floyd',
+          baseUrl: 'https://stale.example.test/v1',
+          apiKey: 'sk-test',
+        },
         'other': { type: 'floyd', baseUrl: 'https://other.test/v1', apiKey: 'sk-other' },
       },
       models: {
@@ -550,7 +613,11 @@ describe('removeOpenPlatformConfig', () => {
   it('leaves defaultModel intact when it belongs to another provider', () => {
     const config: ManagedFloydConfigShape = {
       providers: {
-        'legacy-cn': { type: 'floyd', baseUrl: 'https://api.legacy.cn/v1', apiKey: 'sk-test' },
+        'legacy-cn': {
+          type: 'floyd',
+          baseUrl: 'https://stale.example.test/v1',
+          apiKey: 'sk-test',
+        },
       },
       models: {
         'legacy-cn/floyd-k2': { provider: 'legacy-cn', model: 'floyd-k2', maxContextSize: 256000 },

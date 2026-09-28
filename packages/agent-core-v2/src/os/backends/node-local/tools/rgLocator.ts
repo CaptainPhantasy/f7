@@ -15,6 +15,7 @@ import { ErrorCodes, Error2 } from '#/errors';
 
 const RG_VERSION = '15.0.0';
 const DOWNLOAD_TIMEOUT_MS = 600_000;
+const RG_CDN_BASE_ENV = 'FLOYD_CODE_CDN_BASE_URL';
 const RG_ARCHIVE_SHA256: Record<string, string> = {
   'ripgrep-15.0.0-aarch64-apple-darwin.tar.gz':
     '98bb2e61e7277ba0ea72d2ae2592497fd8d2940934a16b122448d302a6637e3b',
@@ -65,8 +66,18 @@ export function getShareBinRgPath(): string {
   return join(getShareDir(), 'bin', rgBinaryName());
 }
 
+function rgCdnBase(): string {
+  const override = process.env[RG_CDN_BASE_ENV];
+  const base =
+    override !== undefined && override !== ''
+      ? override
+      : floydRegionProfile(resolveFloydRegion()).cdnBase;
+  return base.replace(/\/+$/, '');
+}
+
 function rgBaseUrl(): string {
-  return `${floydRegionProfile(resolveFloydRegion()).cdnBase}/rg`;
+  const base = rgCdnBase();
+  return base === '' ? '' : `${base}/rg`;
 }
 
 function throwIfAborted(signal: AbortSignal | undefined): void {
@@ -186,6 +197,15 @@ async function downloadAndInstallRg(shareDir: string): Promise<string> {
   const isWindows = target.includes('windows');
   const archiveExt = isWindows ? 'zip' : 'tar.gz';
   const archiveName = `ripgrep-${RG_VERSION}-${target}.${archiveExt}`;
+  const baseUrl = rgBaseUrl();
+  if (baseUrl === '') {
+    throw new Error2(
+      ErrorCodes.OS_FS_UNAVAILABLE,
+      `ripgrep (rg) is not available and the ripgrep download CDN is not configured: ` +
+        `set ${RG_CDN_BASE_ENV} to the base URL that serves the ripgrep archives, ` +
+        `or install ripgrep on PATH`,
+    );
+  }
   const expectedSha256 = RG_ARCHIVE_SHA256[archiveName];
   if (expectedSha256 === undefined) {
     throw new Error2(
@@ -194,7 +214,7 @@ async function downloadAndInstallRg(shareDir: string): Promise<string> {
       { details: { archiveName } },
     );
   }
-  const url = `${rgBaseUrl()}/${archiveName}`;
+  const url = `${baseUrl}/${archiveName}`;
 
   const binDir = join(shareDir, 'bin');
   await mkdir(binDir, { recursive: true });

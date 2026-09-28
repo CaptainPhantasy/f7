@@ -4,8 +4,9 @@
  * `app/plugin/marketplace`). The shared module owns catalog reading, the
  * lenient entry normalization, source resolution, and version derivation;
  * this wrapper adds only the CLI's configured-source resolution (option →
- * env → production default), the source-checkout fallback for offline dev,
- * and the caller-supplied built-in capability entry injection.
+ * env → CDN default, which is empty in this build), the source-checkout
+ * catalog used when nothing is configured or the configured source is
+ * unreachable, and the caller-supplied built-in capability entry injection.
  */
 
 import { stat } from 'node:fs/promises';
@@ -77,7 +78,9 @@ export async function withMarketplaceLatestVersions(
 export async function loadPluginMarketplace(
   options: LoadPluginMarketplaceOptions,
 ): Promise<PluginMarketplace> {
-  const configuredSource = options.source ?? process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV];
+  const configuredSource = trimmedOrUndefined(
+    options.source ?? process.env[FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV],
+  );
   const source = configuredSource ?? floydCodePluginMarketplaceUrl();
   const fetchImpl = options.fetchImpl ?? fetch;
   let read: { raw: string; location: MarketplaceLocation };
@@ -103,6 +106,11 @@ export async function loadPluginMarketplace(
   return options.builtInEntries !== undefined
     ? withBuiltInEntries(marketplace, options.builtInEntries)
     : marketplace;
+}
+
+function trimmedOrUndefined(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed === undefined || trimmed.length === 0 ? undefined : trimmed;
 }
 
 async function getSourceCheckoutMarketplaceLocation(): Promise<MarketplaceLocation | undefined> {

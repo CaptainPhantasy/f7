@@ -56,10 +56,19 @@ const deviceAuth = {
 
 const flush = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
+const MANAGED_BASE_URL = 'https://api.example.com';
+const MANAGED_OAUTH_HOST = 'https://auth.example.com';
+
 const EXAMPLE_COM_SCOPED_REF = {
   storage: 'file',
-  key: resolveFloydCodeOAuthKey({ baseUrl: 'https://api.example.com' }),
-  oauthHost: 'https://auth.floyd.com',
+  key: resolveFloydCodeOAuthKey({ oauthHost: MANAGED_OAUTH_HOST, baseUrl: MANAGED_BASE_URL }),
+  oauthHost: MANAGED_OAUTH_HOST,
+} as const;
+
+const UNCONFIGURED_SCOPED_REF = {
+  storage: 'file',
+  key: resolveFloydCodeOAuthKey({ baseUrl: MANAGED_BASE_URL }),
+  oauthHost: '',
 } as const;
 
 const ENV_SCOPED_REF = {
@@ -69,15 +78,6 @@ const ENV_SCOPED_REF = {
     baseUrl: 'https://env-api.example.com/coding/v1',
   }),
   oauthHost: 'https://env-auth.example.com',
-} as const;
-
-const OVERSEAS_SCOPED_REF = {
-  storage: 'file',
-  key: resolveFloydCodeOAuthKey({
-    oauthHost: 'https://auth.floyd.ai',
-    baseUrl: 'https://api.floyd.ai/coding/v1',
-  }),
-  oauthHost: 'https://auth.floyd.ai',
 } as const;
 
 interface FakeToolkit {
@@ -236,6 +236,10 @@ describe('OAuthService', () => {
     return fetchMock;
   }
 
+  function stubManagedOAuthHost(): void {
+    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', MANAGED_OAUTH_HOST);
+  }
+
   const managedK2Alias: ModelRecord = {
     provider: OAUTH_PROVIDER,
     model: 'floyd-k2',
@@ -293,6 +297,7 @@ describe('OAuthService', () => {
   }
 
   it('startLogin resolves a device-code flow and flips to authenticated on success', async () => {
+    stubManagedOAuthHost();
     stubManagedModelsFetch();
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
@@ -313,8 +318,8 @@ describe('OAuthService', () => {
       OAUTH_PROVIDER,
       expect.objectContaining({
         oauthRef: EXAMPLE_COM_SCOPED_REF,
-        baseUrl: 'https://api.example.com',
-        oauthHost: undefined,
+        baseUrl: MANAGED_BASE_URL,
+        oauthHost: MANAGED_OAUTH_HOST,
       }),
     );
 
@@ -322,6 +327,7 @@ describe('OAuthService', () => {
   });
 
   it('provisions the managed provider through the provider service after login', async () => {
+    stubManagedOAuthHost();
     stubManagedModelsFetch();
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
@@ -335,7 +341,7 @@ describe('OAuthService', () => {
       OAUTH_PROVIDER,
       expect.objectContaining({
         type: 'floyd',
-        baseUrl: 'https://api.example.com',
+        baseUrl: MANAGED_BASE_URL,
         apiKey: '',
         oauth: EXAMPLE_COM_SCOPED_REF,
       }),
@@ -343,7 +349,8 @@ describe('OAuthService', () => {
   });
 
   it('startLogin resolves an env-scoped oauth ref for the managed provider without oauth config', async () => {
-    providers[OAUTH_PROVIDER] = { type: 'floyd', baseUrl: 'https://api.example.com' };
+    providers[OAUTH_PROVIDER] = { type: 'floyd', baseUrl: MANAGED_BASE_URL };
+    stubManagedOAuthHost();
     stubManagedModelsFetch();
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
@@ -356,7 +363,7 @@ describe('OAuthService', () => {
       OAUTH_PROVIDER,
       expect.objectContaining({
         oauthRef: EXAMPLE_COM_SCOPED_REF,
-        baseUrl: 'https://api.example.com',
+        baseUrl: MANAGED_BASE_URL,
       }),
     );
     await flush();
@@ -364,8 +371,28 @@ describe('OAuthService', () => {
       OAUTH_PROVIDER,
       expect.objectContaining({
         type: 'floyd',
-        baseUrl: 'https://api.example.com',
+        baseUrl: MANAGED_BASE_URL,
         oauth: EXAMPLE_COM_SCOPED_REF,
+      }),
+    );
+  });
+
+  it('startLogin leaves the managed login environment empty when no endpoint is configured', async () => {
+    providers[OAUTH_PROVIDER] = { type: 'floyd' };
+    stubManagedModelsFetch();
+    toolkit.login.mockImplementation((_provider, options) => {
+      options.onDeviceCode(deviceAuth);
+      return Promise.resolve({ providerName: OAUTH_PROVIDER, ok: true });
+    });
+    const svc = createService();
+    await svc.startLogin(OAUTH_PROVIDER);
+
+    expect(toolkit.login).toHaveBeenCalledWith(
+      OAUTH_PROVIDER,
+      expect.objectContaining({
+        oauthRef: { storage: 'file', key: 'oauth/floyd-code', oauthHost: undefined },
+        baseUrl: undefined,
+        oauthHost: undefined,
       }),
     );
   });
@@ -373,7 +400,6 @@ describe('OAuthService', () => {
   it('startLogin reuses the configured oauth ref when it matches the login environment', async () => {
     providers[OAUTH_PROVIDER] = {
       type: 'floyd',
-      baseUrl: 'https://api.floyd.com/coding/v1',
       oauth: { storage: 'file', key: 'oauth/floyd-code' },
     };
     stubManagedModelsFetch();
@@ -387,8 +413,8 @@ describe('OAuthService', () => {
     expect(toolkit.login).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        oauthRef: { storage: 'file', key: 'oauth/floyd-code' },
-        baseUrl: 'https://api.floyd.com/coding/v1',
+        oauthRef: { storage: 'file', key: 'oauth/floyd-code', oauthHost: undefined },
+        baseUrl: undefined,
       }),
     );
   });
@@ -423,7 +449,7 @@ describe('OAuthService', () => {
     );
   });
 
-  it('startLogin with region global resolves the global login environment', async () => {
+  it('startLogin with region global keeps the configured environment when the global endpoints are unconfigured', async () => {
     stubManagedModelsFetch();
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
@@ -435,9 +461,9 @@ describe('OAuthService', () => {
     expect(toolkit.login).toHaveBeenCalledWith(
       OAUTH_PROVIDER,
       expect.objectContaining({
-        oauthRef: OVERSEAS_SCOPED_REF,
-        baseUrl: 'https://api.floyd.ai/coding/v1',
-        oauthHost: 'https://auth.floyd.ai',
+        oauthRef: UNCONFIGURED_SCOPED_REF,
+        baseUrl: MANAGED_BASE_URL,
+        oauthHost: undefined,
       }),
     );
     await flush();
@@ -445,8 +471,8 @@ describe('OAuthService', () => {
       OAUTH_PROVIDER,
       expect.objectContaining({
         type: 'floyd',
-        baseUrl: 'https://api.floyd.ai/coding/v1',
-        oauth: OVERSEAS_SCOPED_REF,
+        baseUrl: MANAGED_BASE_URL,
+        oauth: UNCONFIGURED_SCOPED_REF,
       }),
     );
   });
@@ -470,16 +496,20 @@ describe('OAuthService', () => {
     );
   });
 
-  it('getRegion resolves cn by default and global from the persisted login host', () => {
+  it('getRegion defaults to mainland-cn for an unrecognized persisted login host', () => {
     vi.stubEnv('FLOYD_CODE_REGION_MARKER', 'off');
     const svc = createService();
     expect(svc.getRegion()).toBe('mainland-cn');
 
     providers[OAUTH_PROVIDER] = {
       type: 'floyd',
-      oauth: { storage: 'file', key: OVERSEAS_SCOPED_REF.key, oauthHost: 'https://auth.floyd.ai' },
+      oauth: {
+        storage: 'file',
+        key: UNCONFIGURED_SCOPED_REF.key,
+        oauthHost: MANAGED_OAUTH_HOST,
+      },
     };
-    expect(svc.getRegion()).toBe('global');
+    expect(svc.getRegion()).toBe('mainland-cn');
   });
 
   it('getRegion reads the install marker from the bootstrapped home unless FLOYD_CODE_REGION_MARKER=off', async () => {
@@ -563,6 +593,7 @@ describe('OAuthService', () => {
   });
 
   it('startLogin returns authenticated when login resolves without issuing a device code (already-authenticated fast path)', async () => {
+    stubManagedOAuthHost();
     const fetchMock = stubManagedModelsFetch();
     toolkit.login.mockResolvedValue({ providerName: OAUTH_PROVIDER, ok: true });
     const svc = createService();
@@ -577,7 +608,7 @@ describe('OAuthService', () => {
       OAUTH_PROVIDER,
       expect.objectContaining({
         type: 'floyd',
-        baseUrl: 'https://api.example.com',
+        baseUrl: MANAGED_BASE_URL,
         oauth: EXAMPLE_COM_SCOPED_REF,
       }),
     );
@@ -586,6 +617,7 @@ describe('OAuthService', () => {
   });
 
   it('startLogin returns authenticated when model refresh fails on the already-authenticated fast path', async () => {
+    stubManagedOAuthHost();
     const fetchMock = vi.fn().mockRejectedValue(new Error('network disabled in test'));
     vi.stubGlobal('fetch', fetchMock);
     toolkit.login.mockResolvedValue({ providerName: OAUTH_PROVIDER, ok: true });
@@ -601,7 +633,7 @@ describe('OAuthService', () => {
       OAUTH_PROVIDER,
       expect.objectContaining({
         type: 'floyd',
-        baseUrl: 'https://api.example.com',
+        baseUrl: MANAGED_BASE_URL,
         oauth: EXAMPLE_COM_SCOPED_REF,
       }),
     );
@@ -627,6 +659,7 @@ describe('OAuthService', () => {
   });
 
   it('refreshes managed models and sets the default model after a device-code login succeeds', async () => {
+    stubManagedOAuthHost();
     const fetchMock = stubManagedModelsFetch();
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
@@ -779,6 +812,7 @@ describe('OAuthService', () => {
   });
 
   it('logout delegates to the toolkit and clears any pending flow', async () => {
+    stubManagedOAuthHost();
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
       return new Promise(() => { });
@@ -859,6 +893,7 @@ describe('OAuthService', () => {
   });
 
   it('logout surfaces managed provider cleanup write failures', async () => {
+    stubManagedOAuthHost();
     const failure = new Error('config write failed');
     configReplace.mockRejectedValueOnce(failure);
     const svc = createService();
@@ -899,6 +934,7 @@ describe('OAuthService', () => {
   });
 
   it('getManagedUsage resolves the managed runtime auth and delegates to the toolkit', async () => {
+    stubManagedOAuthHost();
     const quota = {
       kind: 'ok' as const,
       quota: { usages: {}, extraUsage: null },
@@ -909,11 +945,12 @@ describe('OAuthService', () => {
     await expect(svc.getManagedUsage(OAUTH_PROVIDER)).resolves.toBe(quota);
     expect(toolkit.getManagedUsage).toHaveBeenCalledWith(OAUTH_PROVIDER, {
       oauthRef: EXAMPLE_COM_SCOPED_REF,
-      baseUrl: 'https://api.example.com',
+      baseUrl: MANAGED_BASE_URL,
     });
   });
 
   it('getManagedUserInfo resolves the managed runtime auth and delegates to the toolkit', async () => {
+    stubManagedOAuthHost();
     const userInfo = {
       kind: 'ok' as const,
       userInfo: {
@@ -933,7 +970,7 @@ describe('OAuthService', () => {
     await expect(svc.getManagedUserInfo(OAUTH_PROVIDER)).resolves.toBe(userInfo);
     expect(toolkit.getManagedUserInfo).toHaveBeenCalledWith(OAUTH_PROVIDER, {
       oauthRef: EXAMPLE_COM_SCOPED_REF,
-      baseUrl: 'https://api.example.com',
+      baseUrl: MANAGED_BASE_URL,
     });
   });
 

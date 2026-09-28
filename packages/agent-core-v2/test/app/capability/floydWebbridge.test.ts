@@ -15,6 +15,12 @@ import {
 import type { CapabilityEntryContext } from '#/app/capability/entries/context';
 
 const DAEMON_BASE = 'http://127.0.0.1:10086';
+const CDN_BASE_ENV = 'FLOYD_CODE_CDN_BASE';
+const GLOBAL_CDN_BASE_ENV = 'FLOYD_CODE_GLOBAL_CDN_BASE';
+const CONTENT_CDN_BASE_ENV = 'FLOYD_CODE_CONTENT_CDN_BASE';
+const CDN_BASE = 'https://cdn.example.test/floyd-code';
+const GLOBAL_CDN_BASE = 'https://cdn.example.test/floyd-code-global';
+const CONTENT_CDN_BASE = 'https://cdn.example.test/content';
 
 function fakeProc(code: number, stdout = '', stderr = ''): IHostProcess {
   return {
@@ -105,17 +111,19 @@ function fakePlugins(installed: Array<{ id: string; enabled: boolean; state: str
 function fakeFetch(opts: {
   statusSequence?: Array<object | 'error'>;
   binary?: Uint8Array;
-}): { fetchImpl: typeof fetch } {
+}): { fetchImpl: typeof fetch; urls: string[] } {
   let statusCalls = 0;
+  const urls: string[] = [];
   const fetchImpl = (async (url: string | URL): Promise<Response> => {
     const u = String(url);
+    urls.push(u);
     if (u === `${DAEMON_BASE}/status`) {
       const step = opts.statusSequence?.[Math.min(statusCalls, (opts.statusSequence?.length ?? 1) - 1)];
       statusCalls += 1;
       if (step === 'error' || step === undefined) throw new Error('connection refused');
       return new Response(JSON.stringify(step), { status: 200 });
     }
-    if (u.includes('cdn.floyd.com/webbridge/')) {
+    if (u.startsWith(`${CONTENT_CDN_BASE}/webbridge/`)) {
       const bytes = opts.binary ?? new Uint8Array([1, 2, 3, 4]);
       return new Response(bytes, {
         status: 200,
@@ -124,17 +132,30 @@ function fakeFetch(opts: {
     }
     throw new Error(`unexpected fetch: ${u}`);
   }) as unknown as typeof fetch;
-  return { fetchImpl };
+  return { fetchImpl, urls };
 }
 
 describe('floyd-webbridge entry', () => {
   let root: string;
+  let savedEnv: Record<string, string | undefined>;
 
   beforeEach(async () => {
     root = await mkdtemp(path.join(tmpdir(), 'floyd-webbridge-entry-'));
+    savedEnv = {
+      [CONTENT_CDN_BASE_ENV]: process.env[CONTENT_CDN_BASE_ENV],
+      [CDN_BASE_ENV]: process.env[CDN_BASE_ENV],
+      [GLOBAL_CDN_BASE_ENV]: process.env[GLOBAL_CDN_BASE_ENV],
+    };
+    process.env[CONTENT_CDN_BASE_ENV] = CONTENT_CDN_BASE;
+    process.env[CDN_BASE_ENV] = CDN_BASE;
+    process.env[GLOBAL_CDN_BASE_ENV] = GLOBAL_CDN_BASE;
   });
   afterEach(async () => {
     await rm(root, { recursive: true, force: true });
+    for (const [name, value] of Object.entries(savedEnv)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
   });
 
   function makeCtx(overrides: Partial<CapabilityEntryContext> = {}): CapabilityEntryContext {
@@ -145,6 +166,7 @@ describe('floyd-webbridge entry', () => {
       userHomeDir: path.join(root, 'user-home'),
       plugins: fakePlugins([]).service,
       hostProcess: fakeHostProcess().service,
+      resolveRegion: () => 'mainland-cn',
       ...overrides,
     };
   }
@@ -229,7 +251,7 @@ describe('floyd-webbridge entry', () => {
     const note = await entry.install((step) => reports.push(step));
 
     expect(plugins.installs).toEqual([
-      'https://code.floyd.com/floyd-code/plugins/official/floyd-webbridge.zip',
+      `${CDN_BASE}/plugins/official/floyd-webbridge.zip`,
     ]);
     expect(note).toBe('user-skill-migrated');
     expect(reports).toContain('standalone-skill-migration');
@@ -250,7 +272,7 @@ describe('floyd-webbridge entry', () => {
   it('installs end-to-end: download, start-if-down, and plugin wiring', async () => {
     const plugins = fakePlugins([]);
     const host = fakeHostProcess();
-    const { fetchImpl } = fakeFetch({
+    const { fetchImpl, urls } = fakeFetch({
       statusSequence: [
         { running: false },
         { running: false },
@@ -268,14 +290,18 @@ describe('floyd-webbridge entry', () => {
     await access(binPath);
     expect(host.calls.map((c) => `${c.command} ${c.args.join(' ')}`)).toEqual([`${binPath} start`]);
     expect(plugins.installs).toEqual([
-      'https://code.floyd.com/floyd-code/plugins/official/floyd-webbridge.zip',
+      `${CDN_BASE}/plugins/official/floyd-webbridge.zip`,
     ]);
+    expect(urls).toContain(
+      `${CONTENT_CDN_BASE}/webbridge/latest/releases/floyd-webbridge-darwin-arm64`,
+    );
+    expect(urls.every((url) => url.startsWith('http'))).toBe(true);
     expect(reports[0]).toEqual(['download', 0]);
     expect(reports.some(([step]) => step === 'daemon')).toBe(true);
     expect(reports.some(([step]) => step === 'skill')).toBe(true);
   });
 
-  it('installs the plugin zip from the global CDN when the region is global', async () => {
+  it('installs the plugin zip from the global CDN base when the region is global', async () => {
     const plugins = fakePlugins([]);
     const host = fakeHostProcess();
     const { fetchImpl } = fakeFetch({
@@ -293,8 +319,55 @@ describe('floyd-webbridge entry', () => {
     await entry.install(() => {});
 
     expect(plugins.installs).toEqual([
-      'https://code.floyd.ai/floyd-code/plugins/official/floyd-webbridge.zip',
+      `${GLOBAL_CDN_BASE}/plugins/official/floyd-webbridge.zip`,
     ]);
+  });
+
+  it('fails closed when the global region has no CDN base configured', async () => {
+    const userHome = path.join(root, 'user-home');
+    await mkdir(path.join(userHome, '.floyd-webbridge', 'bin'), { recursive: true });
+    const binPath = path.join(userHome, '.floyd-webbridge', 'bin', 'floyd-webbridge');
+    await writeFile(binPath, 'bin');
+    await chmod(binPath, 0o755);
+    delete process.env[GLOBAL_CDN_BASE_ENV];
+    const plugins = fakePlugins([]);
+    const host = fakeHostProcess();
+    const { fetchImpl, urls } = fakeFetch({
+      statusSequence: [{ running: true, version: 'v1.11.3', extension_connected: true }],
+    });
+    const entry = createFloydWebbridgeEntry(
+      makeCtx({
+        plugins: plugins.service,
+        hostProcess: host.service,
+        fetchImpl,
+        resolveRegion: () => 'global',
+      }),
+    );
+
+    await expect(entry.install(() => {})).rejects.toThrow(
+      /Set FLOYD_CODE_GLOBAL_CDN_BASE to the CDN root URL/,
+    );
+    expect(plugins.installs).toEqual([]);
+    expect(host.calls).toEqual([]);
+    expect(urls.every((url) => url.startsWith(DAEMON_BASE))).toBe(true);
+  });
+
+  it('fails closed when the content CDN is not configured for the binary download', async () => {
+    delete process.env[CONTENT_CDN_BASE_ENV];
+    const plugins = fakePlugins([]);
+    const host = fakeHostProcess();
+    const { fetchImpl, urls } = fakeFetch({
+      statusSequence: [{ running: true, version: 'v1.11.3', extension_connected: true }],
+    });
+    const entry = createFloydWebbridgeEntry(
+      makeCtx({ plugins: plugins.service, hostProcess: host.service, fetchImpl }),
+    );
+
+    await expect(entry.install(() => {})).rejects.toThrow(
+      /Set FLOYD_CODE_CONTENT_CDN_BASE to the CDN root URL/,
+    );
+    expect(plugins.installs).toEqual([]);
+    expect(urls.every((url) => url.startsWith(DAEMON_BASE))).toBe(true);
   });
 
   it('never starts the daemon when one is already running (coexistence)', async () => {
@@ -335,7 +408,7 @@ describe('floyd-webbridge entry', () => {
     expect(reports).toContain('skill');
     expect(host.calls).toEqual([]);
     expect(plugins.installs).toEqual([
-      'https://code.floyd.com/floyd-code/plugins/official/floyd-webbridge.zip',
+      `${CDN_BASE}/plugins/official/floyd-webbridge.zip`,
     ]);
     expect(await readFile(binPath, 'utf8')).toBe('latest-bin');
   });
@@ -387,7 +460,7 @@ describe('floyd-webbridge entry', () => {
     await entry.install(() => {});
 
     expect(plugins.installs).toEqual([
-      'https://code.floyd.com/floyd-code/plugins/official/floyd-webbridge.zip',
+      `${CDN_BASE}/plugins/official/floyd-webbridge.zip`,
     ]);
     expect(host.calls.map((call) => `${call.command} ${call.args.join(' ')}`)).toEqual([
       `${binPath} start`,

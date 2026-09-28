@@ -763,7 +763,7 @@ describe('SurveyController kfc model gate', () => {
   const savedBaseUrl = process.env['FLOYD_CODE_BASE_URL'];
 
   beforeEach(() => {
-    delete process.env['FLOYD_CODE_BASE_URL'];
+    process.env['FLOYD_CODE_BASE_URL'] = MANAGED_BASE_URL;
   });
 
   afterEach(() => {
@@ -865,6 +865,17 @@ describe('SurveyController kfc model gate', () => {
 
     expect(harness.container.children).toHaveLength(0);
     expect(harness.track).not.toHaveBeenCalled();
+  });
+
+  it('omits the kfc model id without a configured managed endpoint, even under the managed provider key', async () => {
+    delete process.env['FLOYD_CODE_BASE_URL'];
+    const harness = createHarness();
+    useModel(harness, { providerBaseUrl: 'https://api.unconfigured.example.test/coding/v1' });
+    await harness.flush();
+    harness.appear();
+
+    expect(harness.container.children).not.toHaveLength(0);
+    expect(trackedKfcModelId(harness)).toBeUndefined();
   });
 
   it('opens on "*" with a dangling alias and omits the kfc model id', async () => {
@@ -2167,7 +2178,7 @@ describe('SurveyController appearance snapshot', () => {
   const savedBaseUrl = process.env['FLOYD_CODE_BASE_URL'];
 
   beforeEach(() => {
-    delete process.env['FLOYD_CODE_BASE_URL'];
+    process.env['FLOYD_CODE_BASE_URL'] = MANAGED_BASE_URL;
   });
 
   afterEach(() => {

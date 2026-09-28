@@ -15,14 +15,26 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+const CONFIGURED_BASE_URL = 'https://gw.example.com/coding/v1';
+
 describe('floydCodeToolsUrl', () => {
-  it('appends /tools to the default base URL', () => {
-    expect(floydCodeToolsUrl()).toBe('https://api.floyd.com/coding/v1/tools');
+  it('appends /tools to the configured base URL', () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', CONFIGURED_BASE_URL);
+    expect(floydCodeToolsUrl()).toBe(`${CONFIGURED_BASE_URL}/tools`);
+    expect(floydCodeToolsUrl('https://api.example/coding/v1')).toBe(
+      'https://api.example/coding/v1/tools',
+    );
   });
 
   it('honours FLOYD_CODE_BASE_URL and trims trailing slashes', () => {
     vi.stubEnv('FLOYD_CODE_BASE_URL', 'https://example.test/v9///');
     expect(floydCodeToolsUrl()).toBe('https://example.test/v9/tools');
+  });
+
+  it('resolves to empty when no base URL is configured', () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    expect(floydCodeToolsUrl()).toBe('');
+    expect(floydCodeToolsUrl('')).toBe('');
   });
 });
 
@@ -268,5 +280,20 @@ describe('fetchChatTitle', () => {
     expect(addSpy).toHaveBeenCalledTimes(1);
     expect(removeSpy).toHaveBeenCalledTimes(1);
     expect(removeSpy.mock.calls[0]?.[1]).toBe(addSpy.mock.calls[0]?.[1]);
+  });
+
+  it('does not request an unconfigured base URL', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchChatTitle(floydCodeToolsUrl(), 'tok', 'user: hi');
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') return;
+    expect(result.message).toBe(
+      'Failed to generate session title: no managed base URL is configured. Set FLOYD_CODE_BASE_URL.',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

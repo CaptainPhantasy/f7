@@ -63,10 +63,15 @@ export async function fetchLatestVersionFromCdn(
   fetchImpl: typeof fetch = fetch,
   timeoutMs: number = CDN_FETCH_TIMEOUT_MS,
 ): Promise<string> {
-  const response = await fetchWithTimeout(fetchImpl, floydCodeCdnLatestUrl(), timeoutMs);
+  const url = floydCodeCdnLatestUrl();
+  if (url.length === 0) {
+    throw new Error('Update CDN is not configured in this build; no update check is possible.');
+  }
+  const response = await fetchWithTimeout(fetchImpl, url, timeoutMs);
   if (!response.ok) {
     throw new Error(`CDN /latest returned HTTP ${response.status}`);
-  }  const raw = (await response.text()).trim();
+  }
+  const raw = (await response.text()).trim();
   if (valid(raw) === null) {
     throw new Error(`CDN /latest returned invalid semver: ${JSON.stringify(raw)}`);
   }
@@ -77,7 +82,11 @@ async function fetchUpdateManifestFromCdn(
   fetchImpl: typeof fetch,
   timeoutMs: number,
 ): Promise<UpdateManifest> {
-  const response = await fetchWithTimeout(fetchImpl, floydCodeCdnLatestJsonUrl(), timeoutMs);
+  const url = floydCodeCdnLatestJsonUrl();
+  if (url.length === 0) {
+    throw new Error('Update CDN is not configured in this build; no update check is possible.');
+  }
+  const response = await fetchWithTimeout(fetchImpl, url, timeoutMs);
   if (!response.ok) {
     throw new Error(`CDN /latest.json returned HTTP ${response.status}`);
   }

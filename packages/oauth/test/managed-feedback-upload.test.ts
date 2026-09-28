@@ -20,17 +20,39 @@ const SAMPLE_BODY: CreateFeedbackUploadUrlBody = {
   feedback_id: 3,
 };
 
+const CONFIGURED_BASE_URL = 'https://gw.example.com/coding/v1';
+
 describe('floydCodeFeedbackUploadUrl', () => {
-  it('uses the feedback upload_url path', () => {
-    expect(floydCodeFeedbackUploadUrl()).toBe('https://api.floyd.com/coding/v1/feedback/upload_url');
+  it('uses the feedback upload_url path on the configured base URL', () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', CONFIGURED_BASE_URL);
+    expect(floydCodeFeedbackUploadUrl()).toBe(`${CONFIGURED_BASE_URL}/feedback/upload_url`);
+    expect(floydCodeFeedbackUploadUrl('https://api.example/coding/v1///')).toBe(
+      'https://api.example/coding/v1/feedback/upload_url',
+    );
+  });
+
+  it('resolves to empty when no base URL is configured', () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    expect(floydCodeFeedbackUploadUrl()).toBe('');
+    expect(floydCodeFeedbackUploadUrl('')).toBe('');
   });
 });
 
 describe('floydCodeFeedbackUploadCompleteUrl', () => {
-  it('uses the feedback upload_complete path', () => {
+  it('uses the feedback upload_complete path on the configured base URL', () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', CONFIGURED_BASE_URL);
     expect(floydCodeFeedbackUploadCompleteUrl()).toBe(
-      'https://api.floyd.com/coding/v1/feedback/upload_complete',
+      `${CONFIGURED_BASE_URL}/feedback/upload_complete`,
     );
+    expect(floydCodeFeedbackUploadCompleteUrl('https://api.example/coding/v1///')).toBe(
+      'https://api.example/coding/v1/feedback/upload_complete',
+    );
+  });
+
+  it('resolves to empty when no base URL is configured', () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    expect(floydCodeFeedbackUploadCompleteUrl()).toBe('');
+    expect(floydCodeFeedbackUploadCompleteUrl('')).toBe('');
   });
 });
 
@@ -55,7 +77,9 @@ describe('fetchCreateFeedbackUploadUrl', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await fetchCreateFeedbackUploadUrl('access-token', SAMPLE_BODY);
+    const result = await fetchCreateFeedbackUploadUrl('access-token', SAMPLE_BODY, {
+      baseUrl: CONFIGURED_BASE_URL,
+    });
 
     expect(result).toEqual({
       kind: 'ok',
@@ -65,7 +89,7 @@ describe('fetchCreateFeedbackUploadUrl', () => {
 
     const calls = fetchMock.mock.calls as unknown as [string, RequestInit?][];
     const [calledUrl, init] = calls[0]!;
-    expect(calledUrl).toBe('https://api.floyd.com/coding/v1/feedback/upload_url');
+    expect(calledUrl).toBe(`${CONFIGURED_BASE_URL}/feedback/upload_url`);
     expect(init?.method).toBe('POST');
 
     const headers = new Headers((init?.headers ?? {}) as Record<string, string>);
@@ -84,7 +108,9 @@ describe('fetchCreateFeedbackUploadUrl', () => {
       ),
     );
 
-    const result = await fetchCreateFeedbackUploadUrl('access-token', SAMPLE_BODY);
+    const result = await fetchCreateFeedbackUploadUrl('access-token', SAMPLE_BODY, {
+      baseUrl: CONFIGURED_BASE_URL,
+    });
 
     expect(result).toEqual({
       kind: 'error',
@@ -106,7 +132,9 @@ describe('fetchCreateFeedbackUploadUrl', () => {
       ),
     );
 
-    const result = await fetchCreateFeedbackUploadUrl('access-token', SAMPLE_BODY);
+    const result = await fetchCreateFeedbackUploadUrl('access-token', SAMPLE_BODY, {
+      baseUrl: CONFIGURED_BASE_URL,
+    });
 
     expect(result).toEqual({
       kind: 'error',
@@ -117,7 +145,9 @@ describe('fetchCreateFeedbackUploadUrl', () => {
   it('returns an error with status when the server responds 401', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 401 })));
 
-    const result = await fetchCreateFeedbackUploadUrl('access-token', SAMPLE_BODY);
+    const result = await fetchCreateFeedbackUploadUrl('access-token', SAMPLE_BODY, {
+      baseUrl: CONFIGURED_BASE_URL,
+    });
 
     expect(result.kind).toBe('error');
     if (result.kind !== 'error') return;
@@ -131,18 +161,22 @@ describe('fetchCompleteFeedbackUpload', () => {
     const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await fetchCompleteFeedbackUpload('access-token', {
-      upload_id: 28,
-      parts: [
-        { part_number: 1, etag: '"etag-1"' },
-        { part_number: 2, etag: '"etag-2"' },
-      ],
-    });
+    const result = await fetchCompleteFeedbackUpload(
+      'access-token',
+      {
+        upload_id: 28,
+        parts: [
+          { part_number: 1, etag: '"etag-1"' },
+          { part_number: 2, etag: '"etag-2"' },
+        ],
+      },
+      { baseUrl: CONFIGURED_BASE_URL },
+    );
 
     expect(result).toEqual({ kind: 'ok' });
     const calls = fetchMock.mock.calls as unknown as [string, RequestInit?][];
     const [calledUrl, init] = calls[0]!;
-    expect(calledUrl).toBe('https://api.floyd.com/coding/v1/feedback/upload_complete');
+    expect(calledUrl).toBe(`${CONFIGURED_BASE_URL}/feedback/upload_complete`);
     expect(JSON.parse(init?.body as string)).toEqual({
       upload_id: 28,
       parts: [
@@ -150,5 +184,37 @@ describe('fetchCompleteFeedbackUpload', () => {
         { part_number: 2, etag: '"etag-2"' },
       ],
     });
+  });
+});
+
+describe('unconfigured base URL', () => {
+  it('does not request the upload_url endpoint', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchCreateFeedbackUploadUrl('access-token', SAMPLE_BODY);
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') return;
+    expect(result.message).toBe(
+      'Feedback upload request failed: no managed base URL is configured. Set FLOYD_CODE_BASE_URL.',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('does not request the upload_complete endpoint', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    const fetchMock = vi.fn(async () => new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchCompleteFeedbackUpload('access-token', { upload_id: 28, parts: [] });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') return;
+    expect(result.message).toBe(
+      'Feedback upload request failed: no managed base URL is configured. Set FLOYD_CODE_BASE_URL.',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

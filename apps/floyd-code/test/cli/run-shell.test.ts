@@ -163,9 +163,6 @@ vi.mock('../../src/utils/process/resolve-command', () => ({
 
 describe('runShell', () => {
   beforeEach(() => {
-    // Pin region to cn: the telemetry endpoint assertion below must not
-    // follow the dev machine's own login/marker state.
-    vi.stubEnv('FLOYD_CODE_OAUTH_HOST', 'https://auth.floyd.com');
     refreshFloydRegion();
   });
 
@@ -309,11 +306,12 @@ describe('runShell', () => {
       getAccessToken: expect.any(Function),
       onUnexpectedError: expect.any(Function),
     });
-    // The endpoint resolver defers to the active region profile at flush time.
+    // The resolver defers to the active region profile at flush time; this
+    // build ships no telemetry host, so the endpoint stays empty (no flush).
     const telemetryOptions = mocks.initializeTelemetry.mock.calls[0]![0] as {
       endpoint: () => string;
     };
-    expect(telemetryOptions.endpoint()).toBe('https://telemetry-logs.floyd.com/v1/event');
+    expect(telemetryOptions.endpoint()).toBe('');
     expect(mocks.setCrashPhase).toHaveBeenCalledWith('runtime');
 
     const [, harness, startupInput] = mocks.floydTuiConstructor.mock.calls[0]!;

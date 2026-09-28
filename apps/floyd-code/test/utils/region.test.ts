@@ -4,7 +4,12 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { currentFloydRegion, refreshFloydRegion, regionForBareLogin } from '#/utils/region';
+import {
+  currentFloydProfile,
+  currentFloydRegion,
+  refreshFloydRegion,
+  regionForBareLogin,
+} from '#/utils/region';
 
 const originalEnv = { ...process.env };
 
@@ -15,6 +20,7 @@ beforeEach(() => {
   process.env['FLOYD_CODE_HOME'] = home;
   delete process.env['FLOYD_CODE_OAUTH_HOST'];
   delete process.env['FLOYD_OAUTH_HOST'];
+  delete process.env['FLOYD_CODE_BASE_URL'];
   delete process.env['FLOYD_CODE_REGION_MARKER'];
   refreshFloydRegion();
 });
@@ -36,6 +42,14 @@ describe('currentFloydRegion', () => {
     writeFileSync(join(home, 'region'), 'global\n');
     process.env['FLOYD_CODE_REGION_MARKER'] = 'off';
     expect(refreshFloydRegion()).toBe('mainland-cn');
+  });
+
+  it('leaves every endpoint of the resolved profile unconfigured', () => {
+    expect(refreshFloydRegion()).toBe('mainland-cn');
+    const profile = currentFloydProfile();
+    expect(profile.oauthHost).toBe('');
+    expect(profile.baseUrl).toBe('');
+    expect(profile.telemetryEndpoint).toBe('');
   });
 
   it('still honors a persisted global login when the marker is opted out', () => {

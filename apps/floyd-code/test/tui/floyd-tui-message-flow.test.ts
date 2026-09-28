@@ -20,7 +20,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApprovalPanelComponent } from '#/tui/components/dialogs/approval-panel';
 import { EffortSelectorComponent } from '#/tui/components/dialogs/effort-selector';
-import { floydCodePluginMarketplaceUrl } from '#/constant/app';
+import {
+  FEEDBACK_ISSUE_URL,
+  floydCodePluginMarketplaceUrl,
+  floydCodeSignupUrl,
+} from '#/constant/app';
 import { MOON_SPINNER_FRAMES } from '#/tui/constant/rendering';
 import {
   AgentSwarmProgressComponent,
@@ -2246,8 +2250,12 @@ command = "vim"
     expect(harness.auth.submitFeedback).not.toHaveBeenCalled();
     const transcript = stripSgr(renderTranscript(driver));
     expect(transcript).toContain("You're not signed in");
-    expect(transcript).toContain('https://www.floyd.com/code');
-    expect(transcript).toContain('https://github.com/LegacyAI/floyd-code/issues');
+    // Both entry points must be usable absolute URLs: an empty or relative
+    // value would print a line the user cannot open.
+    expect(floydCodeSignupUrl()).toMatch(/^https:\/\//);
+    expect(FEEDBACK_ISSUE_URL).toMatch(/^https:\/\//);
+    expect(transcript).toContain(floydCodeSignupUrl());
+    expect(transcript).toContain(FEEDBACK_ISSUE_URL);
   });
 
   it('falls back to GitHub Issues when the sign-in status cannot be read', async () => {
@@ -2260,7 +2268,7 @@ command = "vim"
     await handleFeedbackCommand(feedbackDriver as any);
 
     expect(openUrl).toHaveBeenCalledTimes(1);
-    expect(openUrl).toHaveBeenCalledWith('https://github.com/LegacyAI/floyd-code/issues');
+    expect(openUrl).toHaveBeenCalledWith(FEEDBACK_ISSUE_URL);
     expect(promptFeedbackInput).not.toHaveBeenCalled();
     expect(harness.auth.submitFeedback).not.toHaveBeenCalled();
     const transcript = stripSgr(renderTranscript(driver));
@@ -2597,9 +2605,10 @@ command = "vim"
 
     await expect(handleFeedbackCommand(feedbackDriver as any)).rejects.toThrow('socket hangup');
 
-    expect(openUrl).toHaveBeenCalledWith('https://github.com/LegacyAI/floyd-code/issues');
+    expect(openUrl).toHaveBeenCalledWith(FEEDBACK_ISSUE_URL);
     const transcript = stripSgr(renderTranscript(driver));
     expect(transcript).toContain('Opening GitHub Issues as fallback');
+    expect(transcript).toContain(FEEDBACK_ISSUE_URL);
   });
 
   it('does not track feedback when the dialog is cancelled', async () => {
@@ -7285,17 +7294,7 @@ command = "vim"
 
   it('installs default marketplace entries through plain install', async () => {
     const originalFetch = globalThis.fetch;
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
-      plugins: [
-        {
-          id: 'floyd-datasource',
-          tier: 'official',
-          displayName: 'Floyd Datasource',
-          description: 'Datasource plugin',
-          source: './official/floyd-datasource.zip',
-        },
-      ],
-    }))));
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ plugins: [] }))));
     const session = makeSession();
     const { driver } = await makeDriver(session);
 
@@ -7309,15 +7308,31 @@ command = "vim"
       await vi.waitFor(() => {
         expect(stripSgr(panel.render(120).join('\n'))).toContain('Floyd Datasource');
       });
-      panel.handleInput('\u001B[B');
+      // No marketplace URL is configured here, so the catalog comes from the
+      // checked-out plugins/ directory: the default base stays empty and no
+      // request may target it (a bare `/plugins/marketplace.json` path would
+      // be an unparseable request target).
+      expect(floydCodePluginMarketplaceUrl()).toBe('');
+      expect(globalThis.fetch).not.toHaveBeenCalledWith(expect.stringContaining('marketplace.json'));
+
       panel.handleInput('\r');
 
       await vi.waitFor(() => {
-        expect(session.installPlugin).toHaveBeenCalledWith(
-          'https://code.floyd.com/floyd-code/plugins/official/floyd-datasource.zip',
+        expect(driver.state.editorContainer.children[0]).toBeInstanceOf(
+          PluginInstallTrustConfirmComponent,
         );
       });
-      expect(globalThis.fetch).toHaveBeenCalledWith(floydCodePluginMarketplaceUrl());
+      // A checkout path is not a trusted CDN URL, so the install is confirmed
+      // before it runs.
+      const confirm = driver.state.editorContainer.children[0] as PluginInstallTrustConfirmComponent;
+      confirm.handleInput('\u001B[B');
+      confirm.handleInput('\r');
+
+      await vi.waitFor(() => {
+        expect(session.installPlugin).toHaveBeenCalledWith(
+          resolve(import.meta.dirname, '../../../../plugins/official/floyd-datasource'),
+        );
+      });
     } finally {
       vi.stubGlobal('fetch', originalFetch);
     }
