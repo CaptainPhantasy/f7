@@ -168,7 +168,7 @@ Floyd Datasource 是 Floyd Code 官方数据插件。用自然语言直接查询
 
 ### Floyd Browser Extension <Badge type="tip" text="v1.11.4" />
 
-Floyd Browser Extension 让 AI 直接操控你的浏览器，带着你的登录状态和 Cookie 打开网页、阅读内容、点击按钮、填写表单、截图保存，把重复的网页操作交给它完成。产品介绍见 [Floyd Browser Extension 官网](https://www.floyd.com/zh-cn/features/webbridge)。
+Floyd Browser Extension 让 AI 直接操控你的浏览器，带着你的登录状态和 Cookie 打开网页、阅读内容、点击按钮、填写表单、截图保存，把重复的网页操作交给它完成。
 
 <a id="install-the-browser-extension"></a>
 
@@ -182,9 +182,9 @@ Floyd Browser Extension 让 AI 直接操控你的浏览器，带着你的登录�
 
 **方式二：手动安装**
 
-无法访问应用商店时使用这种方式，按以下步骤操作：
+无法访问应用商店、且手头已有安装包时使用这种方式，按以下步骤操作：
 
-1. [下载扩展安装包](https://floyd-web-img.legacy.cn/webbridge/latest/extension/floyd-webbridge-extension.zip) 并解压
+1. 解压安装包，记下解压后的目录
 2. 在浏览器地址栏输入 `chrome://extensions/` 打开扩展管理页，开启右上角的**开发者模式**
 
    ![开启开发者模式](../../media/webbridge-dev-mode.jpeg)
@@ -312,7 +312,7 @@ Plugin 通过 `systemPrompt` 和 `systemPromptPath` 两个字段向 Agent 的系
 
 ### 两个引擎的差异
 
-系统提示词贡献在 Floyd Code 的所有界面上都生效：交互式 TUI、`floyd -p` 和 `floyd web` 都运行在 v2 引擎上。
+系统提示词贡献在 Floyd Code 的所有界面上都生效：交互式 TUI、`f7 -p` 和 `f7 web` 都运行在 v2 引擎上。
 
 新会话和新建 Agent 会读取当前已启用 plugin 的指令，正在进行的请求继续使用已有的系统提示词。`/plugins reload` 会刷新 plugin Skill 列表，并请求重建活跃 Agent 的提示词；需要让变更在下一轮前明确收敛时使用该命令。切换 plugin 的 MCP server 不会改变系统提示词指令。
 

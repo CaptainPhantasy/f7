@@ -1,3 +1,4 @@
+import { FLOYD_REGION_PROFILES } from '@legacy-ai/floyd-code-oauth';
 import type { PluginSummary } from '@legacy-ai/floyd-code-sdk';
 
 export const OFFICIAL_BADGE = 'official';
@@ -6,12 +7,23 @@ export const THIRD_PARTY_BADGE = 'third-party';
 
 export type PluginTrustLabel = 'official' | 'curated' | 'third-party';
 
-// Trusted plugin hosts come in .com / .ai region pairs: code.floyd.* is the
-// per-region marketplace CDN (cdnBase), cdn.floyd.* the content CDN. Both
-// families are trusted regardless of the current region — a zip served by
-// either deployment is still an official build.
-const CODE_CDN_HOSTS = new Set(['code.floyd.com', 'code.floyd.ai']);
-const CONTENT_CDN_HOSTS = new Set(['cdn.floyd.com', 'cdn.floyd.ai']);
+// Trusted plugin hosts are the CDN bases the region profiles actually
+// configure (code.<domain>), plus their matching content CDNs (cdn.<domain>).
+// A profile that ships no endpoint contributes no host, so nothing is trusted
+// by default and every bare zip URL stays third-party until a deployment is
+// pointed at a CDN the project controls. The legacy hosts stay recognised
+// purely so plugins already installed from them keep their provenance and
+// update notices — this is a string match, no request is ever made to them.
+const LEGACY_CODE_CDN_HOSTS = ['code.floyd.com', 'code.floyd.ai'];
+const CODE_CDN_HOSTS = new Set([
+  ...Object.values(FLOYD_REGION_PROFILES)
+    .map((profile) => hostFromUrl(profile.cdnBase))
+    .filter((host): host is string => host !== undefined),
+  ...LEGACY_CODE_CDN_HOSTS,
+]);
+const CONTENT_CDN_HOSTS = new Set(
+  [...CODE_CDN_HOSTS].map((host) => host.replace(/^code\./, 'cdn.')),
+);
 
 /**
  * Human-readable provenance label for a plugin, suitable for inline display

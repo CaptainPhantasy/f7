@@ -19,7 +19,7 @@ body:
     id: version
     attributes:
       label: 你运行的 Floyd Code 版本是？
-      description: 复制 `floyd --version` 或 `/version` 的输出
+      description: 复制 `f7 --version` 或 `/version` 的输出
     validations:
       required: true
   - type: input
@@ -33,7 +33,7 @@ body:
     id: model
     attributes:
       label: 你使用的是哪个模型？
-      description: 底部状态栏可见，如 `floyd-k2.6`、`floyd-for-coding` 等
+      description: 底部状态栏显示的模型 ID，如 `~/.floyd-code/config.toml` 中设置的 `defaultModel`
   - type: input
     id: platform
     attributes:

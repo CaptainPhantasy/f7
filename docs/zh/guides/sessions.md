@@ -30,24 +30,24 @@ Floyd Code CLI 把每次对话持久化为一个「会话」，保留消息历�
 
 ## 启动与恢复会话
 
-每次直接运行 `floyd` 都会创建新会话。以下方式可以恢复历史会话：
+每次直接运行 `f7` 都会创建新会话。以下方式可以恢复历史会话：
 
 **继续当前目录最近的会话：**
 
 ```sh
-floyd --continue
+f7 --continue
 ```
 
 **恢复指定会话（通过 ID）：**
 
 ```sh
-floyd --session abc123
+f7 --session abc123
 ```
 
 **交互式浏览历史会话并选择：**
 
 ```sh
-floyd --session
+f7 --session
 ```
 
 ::: warning 注意
@@ -87,27 +87,27 @@ floyd --session
 
 fork 后你仍停留在原会话，对话不受影响、可以直接继续；派生出的副本与原会话彼此独立，可以随时通过 `/sessions` 切换过去。已保存的 `/goal` 不会复制到派生会话。如果你想在派生会话中进行自主 goal 工作，需要在那里开始一个新 goal。
 
-fork 完成后，CLI 会打印一条可直接运行的 `floyd --resume` 命令（并自动复制到剪贴板），方便你在新终端进程中直接进入派生会话。
+fork 完成后，CLI 会打印一条可直接运行的 `f7 --resume` 命令（并自动复制到剪贴板），方便你在新终端进程中直接进入派生会话。
 
 ## 导出会话
 
-用 `floyd export` 把会话打包为 ZIP，适合分享、归档或提交问题反馈：
+用 `f7 export` 把会话打包为 ZIP，适合分享、归档或提交问题反馈：
 
 ```sh
-floyd export <sessionId>
+f7 export <sessionId>
 ```
 
 不传 `sessionId` 时导出当前目录最近的会话（有交互式确认，加 `-y` 跳过）。用 `-o` 指定输出路径：
 
 ```sh
-floyd export <sessionId> -o ~/Desktop/my-session.zip
+f7 export <sessionId> -o ~/Desktop/my-session.zip
 ```
 
 导出包含会话目录下的所有文件，包括诊断日志。全局诊断日志（`~/.floyd-code/logs/floyd-code.log`）默认也会打包；如不需要，加 `--no-include-global-log` 排除。
 
 也可以在 TUI 内导出，无需离开交互界面：
 
-- **`/export-debug-zip`**：产生与 `floyd export` 相同的调试 ZIP。
+- **`/export-debug-zip`**：产生与 `f7 export` 相同的调试 ZIP。
 - **`/export-md`**（别名 `/export`）：导出为人类可读的 Markdown 对话记录，适合分享或存档。可选接收路径参数；不带参数时写入工作目录下的 `floyd-export-<short-id>-<timestamp>.md`。
 
 在 web UI 中，`/export` 会把当前会话下载为诊断 ZIP。压缩包包含持久化的会话数据、诊断日志，以及记录浏览器关键事件且大小有上限、只含元数据的 `logs/floyd-web.jsonl`；提示词正文、WebSocket 内容和 console 参数不会写入这份浏览器日志。这里的 web 命令与上面的 TUI `/export` 别名行为不同。
@@ -119,4 +119,4 @@ floyd export <sessionId> -o ~/Desktop/my-session.zip
 ## 下一步
 
 - [数据路径](../configuration/data-locations.md) — 会话文件的完整目录结构说明
-- [floyd 命令](../reference/floyd-command.md) — `--continue`、`--session`、`export` 等命令的完整参数参考
+- [`f7` 命令](../reference/floyd-command.md) — `--continue`、`--session`、`export` 等命令的完整参数参考

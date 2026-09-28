@@ -20,7 +20,7 @@ Floyd Code CLI 通过环境变量控制少数运行时行为：迁移数据目�
 export FLOYD_CODE_HOME="/path/to/custom/floyd-code"
 ```
 
-> 确保目录可写。多个 `floyd` 实例共用同一个 `FLOYD_CODE_HOME` 会共享配置和凭证。
+> 确保目录可写。多个 `f7` 实例共用同一个 `FLOYD_CODE_HOME` 会共享配置和凭证。
 
 数据目录的完整结构见[数据路径](./data-locations.md)。
 
@@ -61,9 +61,9 @@ export FLOYD_CODE_CUSTOM_HEADERS=$'X-Gateway-Cluster: my-cluster\nX-Custom-Tag: 
 这样设计是为了让你保留熟悉的键名写法，同时把密钥放在配置文件里统一管理：
 
 ```toml
-[providers.floyd.env]
-FLOYD_API_KEY = "sk-xxx"
-FLOYD_BASE_URL = "https://api.legacy.ai/v1"
+[providers.my-gateway.env]
+OPENAI_API_KEY = "YOUR_API_KEY"
+OPENAI_BASE_URL = "https://your-gateway.example/v1"
 ```
 
 各供应商对应的键名：
@@ -97,6 +97,8 @@ FLOYD_BASE_URL = "https://api.legacy.ai/v1"
 | `FLOYD_OAUTH_HOST` | OAuth 认证 host，作为上一个的 fallback | 未设时使用 `https://auth.floyd.com` |
 | `FLOYD_CODE_BASE_URL` | OAuth 登录后的托管 API base URL | `https://api.floyd.com/coding/v1` |
 
+这两个变量都指向厂商的托管服务，且都不需要设置：CLI 不要求账号，在 `config.toml` 里配置好供应商就会自带端点。
+
 ::: warning
 `FLOYD_CODE_BASE_URL`（OAuth 托管服务，指向 `floyd.com`）和 `FLOYD_BASE_URL`（API 密钥直连，指向 `legacy.ai`）是两个不同的变量，请按场景区分。
 :::
@@ -106,12 +108,12 @@ FLOYD_BASE_URL = "https://api.legacy.ai/v1"
 测试时想换个模型但不想动 `config.toml`？设置 `FLOYD_MODEL_NAME` 后，CLI 会从 `FLOYD_MODEL_*` 系列变量在内存里合成出一个临时供应商和模型别名，不写回配置文件。优先级高于 `config.toml` 的 `default_model`，但低于启动时 `-m <alias>` 选项。
 
 ```sh
-export FLOYD_MODEL_NAME="floyd-for-coding"
+export FLOYD_MODEL_NAME="gpt-4.1"
 export FLOYD_MODEL_API_KEY="YOUR_API_KEY"
 export FLOYD_MODEL_BASE_URL="https://api.example.com/v1"
 export FLOYD_MODEL_MAX_CONTEXT_SIZE="262144"
 export FLOYD_MODEL_CAPABILITIES="image_in,thinking"
-floyd
+f7
 ```
 
 完整变量列表：
@@ -139,11 +141,11 @@ floyd
 | 环境变量 | 用途 | 合法值 |
 | --- | --- | --- |
 | `FLOYD_DISABLE_TELEMETRY` | 关闭匿名遥测上报 | `1`、`true`、`yes`、`y`（不区分大小写） |
-| `FLOYD_CODE_PASSWORD` | 为 `floyd web` 本地服务设置并列鉴权密码；绑到非本机地址时建议设置，见 [安全注意](../guides/web.md#安全注意) | 任意非空字符串；未设置时仅 token 有效 |
+| `FLOYD_CODE_PASSWORD` | 为 `f7 web` 本地服务设置并列鉴权密码；绑到非本机地址时建议设置，见 [安全注意](../guides/web.md#安全注意) | 任意非空字符串；未设置时仅 token 有效 |
 | `FLOYD_CODE_BACKGROUND_KEEP_ALIVE_ON_EXIT` | 会话关闭时是否保留后台任务，优先级高于 `config.toml`。默认会在退出时停止后台任务 | 真值：`1`/`true`/`yes`/`on`；假值：`0`/`false`/`no`/`off` |
 | `FLOYD_CODE_BACKGROUND_MAX_RUNNING_TASKS` | 同时运行的后台任务数上限，优先级高于 `config.toml` 的 `[background] max_running_tasks`；不设置表示无上限 | 正整数；非法值被忽略 |
 | `FLOYD_CODE_BACKGROUND_BASH_TASK_TIMEOUT_S` | 后台 `Bash` 任务的默认超时（秒），也用于前台命令转入后台后的重新计时，优先级高于 `[task] bash_task_timeout_s`；`0` 表示无超时 | 非负整数；非法值被忽略 |
-| `FLOYD_CODE_BACKGROUND_PRINT_BACKGROUND_MODE` | `floyd -p` 主轮次结束后仍有后台任务待处理时的行为，优先级高于 `[task] print_background_mode` | `exit`、`drain` 或 `steer`；非法值被忽略 |
+| `FLOYD_CODE_BACKGROUND_PRINT_BACKGROUND_MODE` | `f7 -p` 主轮次结束后仍有后台任务待处理时的行为，优先级高于 `[task] print_background_mode` | `exit`、`drain` 或 `steer`；非法值被忽略 |
 | `FLOYD_CODE_BACKGROUND_PRINT_WAIT_CEILING_S` | print 模式 drain/steer 等待的时长上限（秒），优先级高于 `[task] print_wait_ceiling_s` | 正整数；非法值被忽略 |
 | `FLOYD_CODE_BACKGROUND_PRINT_MAX_TURNS` | print 模式下由后台任务完成触发的新轮次上限，优先级高于 `[task] print_max_turns` | 正整数；非法值被忽略 |
 | `FLOYD_IMAGE_MAX_EDGE_PX` | 图片压缩的最长边上限（像素），优先级高于 `config.toml` 的 `[image] max_edge_px`（默认 `2000`） | 正整数；非法值被忽略 |

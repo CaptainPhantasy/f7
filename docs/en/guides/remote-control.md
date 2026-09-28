@@ -1,6 +1,6 @@
 # Remote Control
 
-Start Floyd Code CLI with remote control enabled by running `floyd rc` in a terminal — it generates a link that can remotely control this machine. Scan the QR code with your phone to open the link, or visit it directly on another device. After opening the link, log in with the same Floyd account as in your local Floyd Code CLI to check on task progress, handle approvals, continue conversations, or start new sessions. Tasks always run on your machine — the web page is just a remote window.
+Start Floyd Code CLI with remote control enabled by running `f7 rc` in a terminal — it generates a link that can remotely control this machine. Scan the QR code with your phone to open the link, or visit it directly on another device. After opening the link, log in with the same Floyd account as in your local Floyd Code CLI to check on task progress, handle approvals, continue conversations, or start new sessions. Tasks always run on your machine — the web page is just a remote window.
 
 ## Getting started
 
@@ -16,13 +16,13 @@ Before turning on Remote Control, make sure your machine meets the following con
 
 Start it on your machine in any of the following ways — they are equivalent: each starts a foreground process and prints the remote access info.
 
-- **`floyd rc`** (alias `floyd remote`): start Remote Control directly
-- **`floyd web --remote-control`**: equivalent to `floyd rc` — starts the local web interface and exposes it to the public internet at the same time
+- **`f7 rc`** (alias `f7 remote`): start Remote Control directly
+- **`f7 web --remote-control`**: equivalent to `f7 rc` — starts the local web interface and exposes it to the public internet at the same time
 - **`/remote-control`** (alias `/rc`): use while already in a CLI session to hand the current session over to the remote interface
 
-Once started, the terminal prints the access URL (like `https://code-rc.floyd.com/devices/<device ID>/`), a QR code, and the device name (the machine's hostname), and the default browser opens the URL automatically (use `--no-open` to skip). Besides the terminal rendering, the QR code is also saved as a PNG file (the path is printed in the startup output) — if the QR code doesn't render properly in your terminal, open that file instead.
+Once started, the terminal prints the access URL (the Remote Control relay host, followed by `/devices/<device ID>/`), a QR code, and the device name (the machine's hostname), and the default browser opens the URL automatically (use `--no-open` to skip). Besides the terminal rendering, the QR code is also saved as a PNG file (the path is printed in the startup output) — if the QR code doesn't render properly in your terminal, open that file instead.
 
-![Terminal output after starting floyd rc: QR code and connection status](../../media/floyd-rc-banner.jpg)
+![Terminal output after starting f7 rc: QR code and connection status](../../media/floyd-rc-banner.jpg)
 
 ::: warning Note
 The Remote Control link is a remote control entry point to this machine — anyone who has it may control your sessions and files. Do not share it with others or post it anywhere public.
@@ -53,7 +53,7 @@ Remote Control is a foreground process; how you stop it depends on whether you c
 - **Can't find the terminal**: the single-instance lock file `~/.floyd-code/server/rc.json` records the process pid and the link in use (the error from starting a second instance prints both as well) — run `kill <pid>`
 - **The process already died** (power loss, crash, …): the stale lock file is cleaned up automatically on the next start — nothing to delete by hand
 
-To start a fresh instance, stop the old one in any of the ways above and run `floyd rc` again — there is no dedicated restart command. The device ID is derived from the machine's data directory, so the device and its access URL stay the same. The web-side device management and revocation UI is subject to the final release.
+To start a fresh instance, stop the old one in any of the ways above and run `f7 rc` again — there is no dedicated restart command. The device ID is derived from the machine's data directory, so the device and its access URL stay the same. The web-side device management and revocation UI is subject to the final release.
 
 ## What you can do in a remote session
 
@@ -95,7 +95,7 @@ Remote Control is only a remote window — all computation and file operations s
 | | Floyd Code Web | Remote Control |
 | --- | --- | --- |
 | Access scope | `localhost`, or the LAN with `--host` | Any device on the public internet (via the Floyd relay) |
-| How to start | Run `floyd web` in a terminal | `floyd rc`, `floyd web --remote-control`, or `/remote-control` in the CLI |
+| How to start | Run `f7 web` in a terminal | `f7 rc`, `f7 web --remote-control`, or `/remote-control` in the CLI |
 | Authentication | Local token | Log in with the same Floyd account |
 | Where data and execution live | Your machine | Your machine (the web page is just a remote window) |
 | Typical scenario | GUI in a local browser | Following up remotely from a phone, tablet, or another computer |
@@ -116,7 +116,7 @@ The access URL itself contains no session data or local token — everything is 
 
 ### The link won't open from inside WeChat — what do I do?
 
-WeChat's in-app browser restricts some external webpages under its own security policies, so the Remote Control access URL (`https://code-rc.floyd.com/…`) opened directly in WeChat may be blocked with a "web page access stopped" notice.
+WeChat's in-app browser restricts some external webpages under its own security policies, so the Remote Control access URL opened directly in WeChat may be blocked with a "web page access stopped" notice.
 
 The fix: tap the "…" menu in the top-right corner and open the page in your default browser, or copy the link and paste it into a system browser such as Safari or Chrome. The same applies when scanning the startup QR code with WeChat's scanner — open it in a browser to get the full session functionality.
 
@@ -140,7 +140,7 @@ Check in this order:
 2. **Network connectivity**: can the machine reach the internet
 3. **Process status**: is the Remote Control process running on the machine
 4. **Account match**: is the web side logged in with the same Floyd account
-5. **Firewall and proxy**: is your corporate network or proxy blocking `code-rc.floyd.com`
+5. **Firewall and proxy**: is your corporate network or proxy blocking the Remote Control relay host
 
 ## Next steps
 

@@ -4,12 +4,12 @@ Floyd Code CLI 支持通过 [Agent Client Protocol (ACP)](https://agentclientpro
 
 ## 前置准备
 
-在配置 IDE 之前，请确保已安装 Floyd Code CLI 并完成登录配置。
+在配置 IDE 之前，请确保已安装 Floyd Code CLI，并已配置好至少一个供应商和默认模型。
 
-ACP server 以子命令 `floyd acp` 暴露，IDE 通过子进程方式启动它，并在标准输入/输出上跑 JSON-RPC。每次 IDE 创建会话时，CLI 会复用它的鉴权状态——不需要重复登录。
+ACP server 以子命令 `f7 acp` 暴露，IDE 通过子进程方式启动它，并在标准输入/输出上跑 JSON-RPC。每次 IDE 创建会话时，CLI 会复用已有的供应商配置，无需重复设置。
 
 ::: tip 路径提示
-macOS 下从 IDE GUI 启动的子进程通常**不会**继承终端 shell 的 `PATH`，所以如果 `floyd` 不在 `/usr/local/bin` 这类系统目录里，IDE 配置中要使用绝对路径。终端里运行 `which floyd` 可以查到当前生效的路径。
+macOS 下从 IDE GUI 启动的子进程通常**不会**继承终端 shell 的 `PATH`，所以如果 `f7` 不在 `/usr/local/bin` 这类系统目录里，IDE 配置中要使用绝对路径。终端里运行 `which f7` 可以查到当前生效的路径。
 :::
 
 ## 在 Zed 中使用
@@ -23,7 +23,7 @@ macOS 下从 IDE GUI 启动的子进程通常**不会**继承终端 shell 的 `P
   "agent_servers": {
     "Floyd Code CLI": {
       "type": "custom",
-      "command": "floyd",
+      "command": "f7",
       "args": ["acp"],
       "env": {}
     }
@@ -34,11 +34,11 @@ macOS 下从 IDE GUI 启动的子进程通常**不会**继承终端 shell 的 `P
 配置说明：
 
 - `type`：固定值 `"custom"`
-- `command`：Floyd Code CLI 的可执行路径。如果 `floyd` 不在 PATH 中，请使用完整路径（例如 `/Users/you/.local/bin/floyd`）。
+- `command`：Floyd Code CLI 的可执行路径。如果 `f7` 不在 PATH 中，请使用完整路径（例如 `/Users/you/.local/bin/f7`）。
 - `args`：启动参数。`acp` 子命令切换到 ACP 模式。
 - `env`：附加环境变量，通常留空即可。Zed 会自动注入一份默认环境。
 
-保存配置后，在 Zed 的 Agent 面板里新建一次对话，就会以你刚才配置的 `Floyd Code CLI` 启动一个 ACP 子进程。Zed 在 `agent_servers` 这层声明的 MCP 服务也会通过 ACP 协议转发到 floyd 这一侧。
+保存配置后，在 Zed 的 Agent 面板里新建一次对话，就会以你刚才配置的 `Floyd Code CLI` 启动一个 ACP 子进程。Zed 在 `agent_servers` 这层声明的 MCP 服务也会通过 ACP 协议转发到 CLI 这一侧。
 
 ## 在 JetBrains IDE 中使用
 
@@ -52,7 +52,7 @@ JetBrains 系列 IDE（IntelliJ IDEA、PyCharm、WebStorm 等）通过 AI 聊天
 {
   "agent_servers": {
     "Floyd Code CLI": {
-      "command": "~/.local/bin/floyd",
+      "command": "~/.local/bin/f7",
       "args": ["acp"],
       "env": {}
     }
@@ -60,7 +60,7 @@ JetBrains 系列 IDE（IntelliJ IDEA、PyCharm、WebStorm 等）通过 AI 聊天
 }
 ```
 
-JetBrains 这一侧对 `command` 字段处理较严格——务必填写**绝对路径**，可以在终端执行 `which floyd` 拿到。保存后，AI 聊天的 Agent 选择器里就会出现 `Floyd Code CLI`。
+JetBrains 这一侧对 `command` 字段处理较严格——务必填写**绝对路径**，可以在终端执行 `which f7` 拿到。保存后，AI 聊天的 Agent 选择器里就会出现 `Floyd Code CLI`。
 
 ## 在 Paseo 中使用
 
@@ -75,22 +75,22 @@ JetBrains 这一侧对 `command` 字段处理较严格——务必填写**绝对
       "floyd": {
         "extends": "acp",
         "label": "Floyd Code CLI",
-        "command": ["floyd", "acp"]
+        "command": ["f7", "acp"]
       }
     }
   }
 }
 ```
 
-Paseo 的通用 ACP 适配层不会帮你走登录流程，所以请先完成终端登录（见[前置准备](#前置准备)）——否则创建会话会以 `Authentication required` 失败。
+Paseo 的通用 ACP 适配层不会执行 CLI 自身的配置流程，所以请先在终端里配置好供应商和默认模型（见[前置准备](#前置准备)）——否则创建会话会以 `Authentication required` 失败。
 
 ## 故障排查
 
-- **会话立刻被中断 / IDE 提示 "agent exited"**：通常是 `command` 路径不对或 floyd 没登录。先在终端跑一次 `floyd acp` 验证：如果阻塞等待标准输入则说明 CLI 本身没问题，问题在 IDE 配置；如果立刻报错则按报错提示处理（多数是没 `/login`）。
-- **IDE 显示 "auth required"**：表示 CLI 没有可用的鉴权令牌。退出 IDE，在终端执行 `floyd` 完成登录后再启动 IDE 即可。
-- **MCP 工具看不到**：参考 [`floyd acp`](../reference/floyd-acp.md) 中的能力表确认 IDE 配的 MCP 传输类型是否被支持。当前 Floyd Code CLI 的 ACP server 支持 `http`、`stdio` 与 `sse` 三种传输方式；`acp` 传输的 MCP server 会被静默丢弃并在日志中给出 warn。
+- **会话立刻被中断 / IDE 提示 "agent exited"**：通常是 `command` 路径不对，或者 `f7` 没有可用的供应商凭证。先在终端跑一次 `f7 acp` 验证：如果阻塞等待标准输入则说明 CLI 本身没问题，问题在 IDE 配置；如果立刻报错则按报错提示处理（多数是供应商的 API 密钥无效）。
+- **IDE 显示 "auth required"**：表示 CLI 没有可用的凭证。退出 IDE，在终端用 `f7 provider list` 检查供应商配置后再启动 IDE 即可。
+- **MCP 工具看不到**：参考 [`f7 acp`](../reference/floyd-acp.md) 中的能力表确认 IDE 配的 MCP 传输类型是否被支持。当前 Floyd Code CLI 的 ACP server 支持 `http`、`stdio` 与 `sse` 三种传输方式；`acp` 传输的 MCP server 会被静默丢弃并在日志中给出 warn。
 
 ## 下一步
 
-- [floyd acp 参考](../reference/floyd-acp.md) — ACP 能力矩阵和方法覆盖详情
-- [floyd 命令参考](../reference/floyd-command.md) — 完整子命令列表
+- [`f7 acp` 参考](../reference/floyd-acp.md) — ACP 能力矩阵和方法覆盖详情
+- [`f7` 命令参考](../reference/floyd-command.md) — 完整子命令列表

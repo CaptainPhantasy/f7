@@ -43,7 +43,25 @@ function camelToSnake(str: string): string {
 const DEFAULT_CONFIG_FILE_TEXT = `# ~/.floyd-code/config.toml
 # Runtime settings for Floyd Code.
 # This file starts empty so built-in defaults can apply.
-# Login will populate managed Floyd provider and model entries.
+#
+# No provider is configured yet. Uncomment and adapt the example below to use
+# any OpenAI-compatible or Anthropic-compatible endpoint:
+#
+# [providers.openai]
+# type = "openai"
+# base_url = "https://api.openai.com/v1"
+# api_key = "YOUR_API_KEY"
+#
+# [models.gpt]
+# provider = "openai"
+# model = "YOUR_MODEL_ID"
+# max_context_size = 262144
+#
+# default_model = "gpt"
+#
+# Alternatively, set FLOYD_MODEL_NAME, FLOYD_MODEL_API_KEY and
+# FLOYD_MODEL_BASE_URL in the environment to define a temporary provider
+# without editing this file.
 `;
 
 export async function ensureConfigFile(filePath: string): Promise<void> {

@@ -1,6 +1,7 @@
 import fsSync from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { readFile, rm } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Worker } from 'node:worker_threads';
@@ -78,8 +79,54 @@ const BACKOFF_CAP_MS = 10_000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 60_000;
 const DEFAULT_SYNC_TIMEOUT_MS = 30 * 60_000;
 const ORPHAN_LOCK_GRACE_MS = 250;
+const TRANSFORM_TYPES_FLAG = '--experimental-transform-types';
+const DEV_HOOKS_MODULE = new URL('./register-dev-hooks.mjs', import.meta.url).href;
 
 const liveLockTokens = new Set<string>();
+
+function devTransformLoaderSource(typescript: string): string {
+  return `import { registerHooks } from 'node:module';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import ts from ${JSON.stringify(typescript)};
+
+const compilerOptions = {
+  module: ts.ModuleKind.ESNext,
+  target: ts.ScriptTarget.ESNext,
+  isolatedModules: true,
+  inlineSourceMap: true,
+};
+
+registerHooks({
+  load(url, context, nextLoad) {
+    if (!url.startsWith('file:') || !url.endsWith('.ts')) return nextLoad(url, context);
+    const text = readFileSync(fileURLToPath(url), 'utf8');
+    const output = ts.transpileModule(text, { compilerOptions, fileName: url }).outputText;
+    return { format: 'module', shortCircuit: true, source: output };
+  },
+});
+`;
+}
+
+function resolveDevTransformLoader(): string | undefined {
+  try {
+    const typescript = pathToFileURL(createRequire(import.meta.url).resolve('typescript')).href;
+    const encoded = Buffer.from(devTransformLoaderSource(typescript)).toString('base64');
+    return `data:text/javascript;base64,${encoded}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function devWorkerExecArgv(): string[] {
+  if (process.allowedNodeEnvironmentFlags.has(TRANSFORM_TYPES_FLAG)) {
+    return [TRANSFORM_TYPES_FLAG, '--disable-warning=ExperimentalWarning', '--import', DEV_HOOKS_MODULE];
+  }
+  const transform = resolveDevTransformLoader();
+  return transform === undefined
+    ? ['--disable-warning=DEP0205', '--import', DEV_HOOKS_MODULE]
+    : ['--disable-warning=DEP0205', '--import', transform, '--import', DEV_HOOKS_MODULE];
+}
 
 export function noteLiveLockToken(token: string): void {
   liveLockTokens.add(token);
@@ -293,15 +340,7 @@ export class SearchWorkerHost {
     const source = new URL('./entry.ts', import.meta.url);
     try {
       if (fsSync.statSync(source).isFile()) {
-        return {
-          url: source,
-          execArgv: [
-            '--experimental-transform-types',
-            '--disable-warning=ExperimentalWarning',
-            '--import',
-            new URL('./register-dev-hooks.mjs', import.meta.url).href,
-          ],
-        };
+        return { url: source, execArgv: devWorkerExecArgv() };
       }
     } catch {
     }

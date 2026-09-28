@@ -9,7 +9,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LegacyAI/floyd-code.git",
+    "url": "git+https://github.com/CaptainPhantasy/f7.git",
     "directory": "apps/vscode"
   },
   "engines": {

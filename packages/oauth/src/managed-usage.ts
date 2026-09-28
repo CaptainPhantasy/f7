@@ -5,8 +5,8 @@ import { isRecord } from './utils';
 
 const MANAGED_PREFIX = 'managed:';
 const FLOYD_CODE_PLATFORM_ID = 'floyd-code';
-export const DEFAULT_FLOYD_CODE_BASE_URL = 'https://api.floyd.com/coding/v1';
-export const GLOBAL_FLOYD_CODE_BASE_URL = 'https://api.floyd.ai/coding/v1';
+export const DEFAULT_FLOYD_CODE_BASE_URL = '';
+export const GLOBAL_FLOYD_CODE_BASE_URL = '';
 
 export function isManagedFloydCode(providerKey?: string | null): boolean {
   if (!providerKey) return false;

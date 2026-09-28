@@ -97,13 +97,13 @@ FLOYD_API_KEY = "sk-test"
 **跳过审批运行批处理任务**：
 
 ```sh
-floyd --yolo -p "批量重命名以下文件..."
+f7 --yolo -p "批量重命名以下文件..."
 ```
 
 **临时进入 Plan 模式**（若想永久生效，在配置文件设 `default_plan_mode = true`）：
 
 ```sh
-floyd --plan
+f7 --plan
 ```
 
 ## 下一步

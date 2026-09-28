@@ -1,8 +1,14 @@
 import { spawn } from 'node:child_process';
 
+import { isLoopbackHost, resolveHost } from '../config';
+
 export interface RevealCommand {
   readonly command: string;
   readonly args: readonly string[];
+}
+
+interface RequestBindings {
+  readonly incoming?: { readonly socket?: { readonly localAddress?: string } };
 }
 
 /** Resolve the platform-specific "reveal in file manager" command for
@@ -18,6 +24,18 @@ export function revealCommandFor(path: string, platform: NodeJS.Platform = proce
     default:
       return { command: 'xdg-open', args: [path] };
   }
+}
+
+/** Whether the request was served over a loopback interface — the local
+ *  socket address that accepted it. Reads the bindings `@hono/node-server`
+ *  hands to `app.fetch`, falling back to the configured bind host when the
+ *  socket is unavailable (Hono's `app.request()` test harness, or a
+ *  connection already torn down). */
+export function isLoopbackBound(bindings: unknown, fallbackHost: string = resolveHost()): boolean {
+  const incoming = (bindings as RequestBindings | undefined)?.incoming;
+  const localAddress = incoming?.socket?.localAddress;
+  const address = localAddress !== undefined && localAddress.length > 0 ? localAddress : fallbackHost;
+  return isLoopbackHost(address);
 }
 
 /** Spawn the OS file manager to reveal `path`. Resolves once the launcher

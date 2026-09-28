@@ -10,95 +10,81 @@ Floyd Code CLI 是一个运行在终端中的 AI Agent，帮助你完成软件�
 - **理解项目**：探索陌生的代码库，解答架构和实现层面的问题
 - **自动化任务**：批量处理文件、运行构建与测试、串联多个脚本
 
-整套 CLI 以 TypeScript 编写，通过 npm 分发，运行在 Node.js 之上。
+整套 CLI 以 TypeScript 编写，运行在 Node.js 之上。
 
 ## 安装
 
-提供两种安装方式：官方安装脚本（推荐，无需预装 Node.js）和 npm 全局安装。
+Floyd Code CLI 从本仓库的检出目录运行：目前还没有发布预编译二进制，也没有发布 npm 包。需要 Node.js 24.15.0 或更高版本，以及 pnpm 10.33.0。
 
 ::: tip 安装之前
 Floyd Code CLI 为全交互式 TUI 应用，推荐在支持真彩色与连字的现代终端中运行以获得最佳体验，例如 [Kitty](https://sw.kovidgoyal.net/kitty/) 或 [Ghostty](https://ghostty.org/)。
 :::
 
-### 脚本安装（推荐）
-
-::: code-group
-
-```sh [macOS / Linux]
-curl -fsSL https://code.floyd.com/floyd-code/install.sh | bash
-```
-
-```powershell [Windows (PowerShell)]
-irm https://code.floyd.com/floyd-code/install.ps1 | iex
-```
-
-:::
-
-> Windows 用户首次启动前还需要安装 [Git for Windows](https://gitforwindows.org/)，Floyd Code CLI 会使用其中的 Git Bash 作为 Shell 环境。如果 Git Bash 安装在非标准路径，请把 `FLOYD_SHELL_PATH` 设为 `bash.exe` 的绝对路径。
-
-脚本会自动下载最新版本、校验 checksum，并把 `floyd` 可执行文件放到你的 `PATH` 中。
-
-### npm 安装
-
-需要 Node.js 22.19.0 或更高版本：
+先确认两个版本：
 
 ```sh
 node --version
+pnpm --version
 ```
 
-::: code-group
+克隆仓库并安装 workspace：
 
-```sh [npm]
-npm install -g @legacy-ai/floyd-code
+```sh
+git clone https://github.com/CaptainPhantasy/f7.git
+cd f7
+pnpm install
 ```
 
-```sh [pnpm]
-pnpm add -g @legacy-ai/floyd-code
-```
+> Windows 用户首次启动前还需要安装 [Git for Windows](https://gitforwindows.org/)，Floyd Code CLI 会使用其中的 Git Bash 作为 Shell 环境。如果 Git Bash 安装在非标准路径，请把 `FLOYD_SHELL_PATH` 设为 `bash.exe` 的绝对路径。
 
-:::
+可执行文件是 `f7`。在检出目录里，`pnpm dev:cli` 启动的是同一个 CLI，因此本页示例中出现的 `f7` 都可以换成它。
 
 ## 第一次启动
 
-进入项目目录后直接运行 `floyd` 启动交互界面：
+进入项目目录后直接运行 `f7` 启动交互界面：
 
 ```sh
 cd your-project
-floyd
+f7
 ```
 
 只想执行一条指令而不进入交互界面时，使用 `-p`：
 
 ```sh
-floyd -p "帮我看一下这个项目的目录结构"
+f7 -p "帮我看一下这个项目的目录结构"
 ```
 
 继续上一次会话加 `-c`：
 
 ```sh
-floyd -c
+f7 -c
 ```
 
-首次启动时需要配置 API 来源。在交互界面中输入 `/login` 进入登录流程：
+Floyd Code CLI 不需要账号，用你想用的任意模型供应商即可。在交互界面里输入 `/provider` 可以跟着引导配置：选一个已知的第三方供应商、粘贴 API 密钥，再选默认模型。也可以自己写进 `~/.floyd-code/config.toml`：
 
+```toml
+default_model = "my-gateway/gpt-4.1"
+
+[providers.my-gateway]
+type = "openai"
+base_url = "https://your-gateway.example/v1"
+api_key = "YOUR_API_KEY"
+
+[models."my-gateway/gpt-4.1"]
+provider = "my-gateway"
+model = "gpt-4.1"
+max_context_size = 1047576
 ```
-/login
-```
 
-`/login` 会弹出平台选择器，支持两种方式：
+任何 OpenAI 兼容端点都可接入，Anthropic API 和 Google Gemini API 同样支持。[平台与模型](../configuration/providers.md)介绍了每种类型，以及如何从 catalog 或 registry 一次性导入供应商，而不必手写这些字段。
 
-- **Floyd Code（OAuth）** — 验证码流程，在任意设备打开链接、登录并输入验证码即可授权
-- **Floyd Platform API 密钥** — 输入来自 `platform.floyd.com` 或 `platform.floyd.ai` 的 API 密钥
-
-需要退出登录时，输入 `/logout` 清除当前凭证。
-
-::: tip 使用其他 AI 供应商
-如果你想接入 Anthropic、OpenAI、Google 等其他供应商，需要直接编辑 `~/.floyd-code/config.toml` 配置 API 密钥，详见[平台与模型](../configuration/providers.md)。配置项完整说明见[配置文件](../configuration/config-files.md)、[环境变量](../configuration/env-vars.md)和[配置覆盖](../configuration/overrides.md)。
+::: tip 凭证存放在哪里
+密钥从 `config.toml` 读取，而不是从 shell 环境变量读取；唯一的例外是 `api_key_env`，它指向一个由你指定的变量名。详见[环境变量](../configuration/env-vars.md)、[配置文件](../configuration/config-files.md)和[配置覆盖](../configuration/overrides.md)。
 :::
 
 ## 第一个对话
 
-登录完成后，用自然语言描述任务即可。先让它熟悉当前项目：
+配置好供应商后，用自然语言描述任务即可。先让它熟悉当前项目：
 
 ```
 帮我看一下这个项目的目录结构，简单介绍一下每个目录是做什么的
@@ -150,23 +136,15 @@ Floyd Code CLI 的本地数据默认保存在 `~/.floyd-code/` 下，包含配�
 
 ## 升级与卸载
 
-安装完成后，验证可执行文件是否就绪：
+安装完成后，验证 CLI 能否启动：
 
 ```sh
-floyd --version
+f7 --version
 ```
 
-**升级**：运行 `floyd upgrade`，CLI 会检查最新版本并展示更新选项。选择 `Install update now` 后根据当前安装来源执行升级；也可以直接用包管理器：
+**升级**：在检出目录里 `git pull` 后重新运行 `pnpm install` 即可。`f7 upgrade` 面向打包安装：它会检查最新版本并展示更新选项。
 
-```sh
-npm install -g @legacy-ai/floyd-code@latest
-```
-
-**卸载**：脚本安装的用户删除 `floyd` 可执行文件即可；npm 安装的用户：
-
-```sh
-npm uninstall -g @legacy-ai/floyd-code
-```
+**卸载**：删除检出目录即可。
 
 ## 下一步
 

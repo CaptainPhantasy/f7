@@ -148,6 +148,11 @@ export function buildWebCommand(
       false,
     )
     .option(
+      '--allow-remote-terminals',
+      'On a non-loopback bind, keep the PTY /api/v1/terminals/* routes enabled (default: disabled → 404). Remote shell is high risk.',
+      false,
+    )
+    .option(
       '--dangerous-bypass-auth',
       'Disable bearer-token auth on every REST and WebSocket route, and advertise it via /api/v1/meta so the web UI connects without a token. Only use on a trusted network or behind your own authenticating proxy.',
       false,
@@ -244,14 +249,16 @@ export async function handleWebCommand(
         if (opts.open === true) deps.openUrl(remoteControl.url);
         return;
       }
+      const bannerOptions: FormatReadyBannerOptions = {
+        token,
+        networkAddresses: deps.networkAddresses,
+        dangerousBypassAuth: parsed.dangerousBypassAuth,
+        allowRemoteTerminals: parsed.allowRemoteTerminals,
+      };
       deps.stdout.write(
         parsed.logLevel === DEFAULT_FOREGROUND_LOG_LEVEL
-          ? formatReadyBanner(origin, parsed.host, {
-              token,
-              networkAddresses: deps.networkAddresses,
-              dangerousBypassAuth: parsed.dangerousBypassAuth,
-            })
-          : formatReadyLine(origin, token, parsed.dangerousBypassAuth),
+          ? formatReadyBanner(origin, parsed.host, bannerOptions)
+          : formatReadyLine(origin, parsed.host, bannerOptions),
       );
       if (opts.open === true) {
         const openOrigin = browserOpenOrigin(origin);
@@ -266,13 +273,35 @@ export async function handleWebCommand(
 
 function formatReadyLine(
   origin: string,
-  token: string | undefined,
-  dangerousBypassAuth = false,
+  host: string,
+  opts: FormatReadyBannerOptions = {},
 ): string {
-  const notice = dangerousBypassAuth
+  const notice = opts.dangerousBypassAuth === true
     ? `${formatDangerNoticeLines().join('\n')}\n`
     : '';
-  return `${notice}Floyd server: ${buildOpenableUrl(origin, token)}\n`;
+  const terminalNotice = formatTerminalNoticeLine(host, opts.allowRemoteTerminals === true);
+  const terminals = terminalNotice === undefined ? '' : `${terminalNotice}\n`;
+  return `${notice}Floyd server: ${buildOpenableUrl(origin, opts.token)}\n${terminals}`;
+}
+
+/**
+ * `Terminal:` availability line. The web UI's integrated terminal is a full
+ * shell on this machine, so it is mounted only on a loopback bind unless the
+ * operator opts in with `--allow-remote-terminals`; a non-loopback bind must
+ * say so and name the flag that brings it back.
+ */
+function formatTerminalNoticeLine(
+  host: string,
+  allowRemoteTerminals: boolean,
+): string | undefined {
+  if (isLoopbackHost(host)) return undefined;
+  const label = (text: string): string => chalk.bold.hex(darkColors.textDim)(text);
+  const muted = (text: string): string => chalk.hex(darkColors.textMuted)(text);
+  const dim = (text: string): string => chalk.hex(darkColors.textDim)(text);
+  const state = allowRemoteTerminals
+    ? `${muted('on')}${dim('   remote shell access allowed by --allow-remote-terminals')}`
+    : `${muted('off')}${dim('  use --allow-remote-terminals to enable')}`;
+  return `  ${label('Terminal: ')}${state}`;
 }
 
 /**
@@ -372,6 +401,7 @@ async function runServerInProcess(
     debugEndpoints: options.debugEndpoints,
     insecureNoTls: options.insecureNoTls,
     allowRemoteShutdown: options.allowRemoteShutdown,
+    allowRemoteTerminals: options.allowRemoteTerminals,
     allowedHosts: options.allowedHosts,
     disableAuth: options.dangerousBypassAuth,
     webTitle: options.webTitle,
@@ -448,6 +478,8 @@ interface FormatReadyBannerOptions {
   networkAddresses?: NetworkAddress[];
   /** When true, render a red danger notice (auth is disabled). */
   dangerousBypassAuth?: boolean;
+  /** When true, the integrated terminal stays enabled off-loopback. */
+  allowRemoteTerminals?: boolean;
 }
 
 export function formatReadyBanner(
@@ -497,6 +529,10 @@ export function formatReadyBanner(
   // On a loopback bind there is no network URL; show how to enable one.
   if (isLoopbackHost(host)) {
     lines.push(`  ${label('Network:  ')}${muted('off')}${dim('  use --host to enable')}`);
+  }
+  const terminalNotice = formatTerminalNoticeLine(host, opts.allowRemoteTerminals === true);
+  if (terminalNotice !== undefined) {
+    lines.push(terminalNotice);
   }
   if (opts.token !== undefined) {
     // Set the token off with surrounding whitespace rather than color, so it is

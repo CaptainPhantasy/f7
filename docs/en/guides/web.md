@@ -1,6 +1,6 @@
 # Using Floyd Code in the browser
 
-Floyd Code Web is the browser-based graphical interface built into Floyd Code CLI: run `floyd web` in a terminal, and you can start sessions, chat, handle approvals, and review file changes in a browser — a friendlier interface, while sessions and data still live entirely on your machine.
+Floyd Code Web is the browser-based graphical interface built into Floyd Code CLI: run `f7 web` in a terminal, and you can start sessions, chat, handle approvals, and review file changes in a browser — a friendlier interface, while sessions and data still live entirely on your machine.
 
 ![Floyd Code Web UI](../../media/floyd-web-ui.jpg)
 
@@ -9,11 +9,11 @@ Floyd Code Web is the browser-based graphical interface built into Floyd Code CL
 <div class="step">
 <span class="step-num">1</span> <strong>Install Floyd Code CLI and log in</strong>
 
-`floyd web` is a built-in CLI command — it isn't available without the CLI. See [Getting started](./getting-started.md) for installation and login.
+`f7 web` is a built-in CLI command — it isn't available without the CLI. See [Getting started](./getting-started.md) for installation and login.
 </div>
 
 <div class="step">
-<span class="step-num">2</span> <strong>Run <code>floyd web</code> in a terminal</strong>
+<span class="step-num">2</span> <strong>Run <code>f7 web</code> in a terminal</strong>
 
 If you're already in the CLI, you can also type `/web` to hand the current session off to the browser.
 </div>
@@ -80,13 +80,13 @@ How the two sides compare:
 ## Security notes
 
 - **Set a parallel credential**: when binding a LAN address, also set the `FLOYD_CODE_PASSWORD` environment variable; the server then rate-limits authentication failures automatically.
-- **Don't disable authentication entirely**: `--dangerous-bypass-auth` turns off all authentication — anyone who can reach the port can control your sessions, file system, and shell. Only use it on trusted networks or behind your own authenticating proxy. See the [floyd command reference](../reference/floyd-command.md#floyd-web).
+- **Don't disable authentication entirely**: `--dangerous-bypass-auth` turns off all authentication — anyone who can reach the port can control your sessions, file system, and shell. Only use it on trusted networks or behind your own authenticating proxy. See the [`f7` command reference](../reference/floyd-command.md#f7-web).
 
 ## FAQ
 
 ### The port is already taken
 
-Nothing to do. `floyd web` automatically retries with the next port (58628, 58629, …) — just use the address printed in the startup banner.
+Nothing to do. `f7 web` automatically retries with the next port (58628, 58629, …) — just use the address printed in the startup banner.
 
 ### The URL won't open in the browser
 
@@ -94,7 +94,7 @@ First check the server is still running in the terminal (it runs in the foregrou
 
 ### How to recover from an invalid token
 
-Run `floyd web rotate-token` to generate a new token, then open the new banner URL. All running instances switch to the new token automatically — no restart needed.
+Run `f7 web rotate-token` to generate a new token, then open the new banner URL. All running instances switch to the new token automatically — no restart needed.
 
 ### Other devices on the same Wi-Fi can't connect
 
@@ -103,5 +103,5 @@ Make sure you started with `--host` (bare is fine), and use the LAN URL from the
 ## Next steps
 
 - [Server API](../reference/server-api.md) — REST / WebSocket APIs for scripts and third-party integrations (experimental)
-- [floyd command](../reference/floyd-command.md#floyd-web) — all `floyd web` command-line options
+- [`f7` command](../reference/floyd-command.md#f7-web) — all `f7 web` command-line options
 - [Remote Control](./remote-control.md) — remotely view and take over local sessions from any device over the public internet

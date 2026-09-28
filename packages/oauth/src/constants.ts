@@ -1,11 +1,11 @@
 import type { OAuthFlowConfig } from './types';
 
-export const DEFAULT_FLOYD_CODE_OAUTH_HOST = 'https://auth.floyd.com';
+export const DEFAULT_FLOYD_CODE_OAUTH_HOST = '';
 
 /** Node-side env override lookup, resolved through `globalThis` so the module
     stays loadable — and typecheckable — in browser bundles that have no
-    `process` global (browser consumers of the ./device entry land on the
-    default host). */
+    `process` global (browser consumers of the ./device entry get the empty
+    default unless they inject the override themselves). */
 function envOverride(key: string): string | undefined {
   const proc = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
   return proc?.env?.[key];

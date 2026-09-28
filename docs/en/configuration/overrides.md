@@ -97,13 +97,13 @@ FLOYD_API_KEY = "sk-test"
 **Skip approval for batch tasks**:
 
 ```sh
-floyd --yolo -p "Batch rename the following files..."
+f7 --yolo -p "Batch rename the following files..."
 ```
 
 **Enter Plan mode temporarily** (to make it permanent, set `default_plan_mode = true` in the config file):
 
 ```sh
-floyd --plan
+f7 --plan
 ```
 
 ## Next steps

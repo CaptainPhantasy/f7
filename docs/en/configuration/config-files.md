@@ -21,37 +21,35 @@ TOML field names always use snake_case, for example `default_model` and `max_con
 The following example covers the most commonly used configuration fields. You can copy it and adjust as needed:
 
 ```toml
-default_model = "floyd-code/k3"
+default_model = "my-gateway/gpt-4.1"
 default_permission_mode = "manual"
 default_plan_mode = false
 merge_all_available_skills = true
 telemetry = true
 
-[providers."managed:floyd-code"]
-type = "floyd"
-base_url = "https://api.floyd.com/coding/v1"
-api_key = ""
+[providers.my-gateway]
+type = "openai"
+base_url = "https://your-gateway.example/v1"
+api_key = "YOUR_API_KEY"
 
-[models."floyd-code/k3"]
-provider = "managed:floyd-code"
-model = "k3"
-max_context_size = 1048576
-capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
-display_name = "K3"
-support_efforts = [ "low", "high", "max" ]
-default_effort = "max"
+[models."my-gateway/gpt-4.1"]
+provider = "my-gateway"
+model = "gpt-4.1"
+max_context_size = 1047576
+capabilities = [ "image_in", "tool_use" ]
+display_name = "GPT-4.1"
 
-[models."floyd-code/floyd-for-coding"]
-provider = "managed:floyd-code"
-model = "floyd-for-coding"
-max_context_size = 262144
-capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
+[models."my-gateway/gpt-4.1-mini"]
+provider = "my-gateway"
+model = "gpt-4.1-mini"
+max_context_size = 1047576
+capabilities = [ "image_in", "tool_use" ]
 
-[models."floyd-code/floyd-for-coding-highspeed"]
-provider = "managed:floyd-code"
-model = "floyd-for-coding-highspeed"
-max_context_size = 262144
-capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
+[models."my-gateway/gpt-4.1-nano"]
+provider = "my-gateway"
+model = "gpt-4.1-nano"
+max_context_size = 1047576
+capabilities = [ "image_in", "tool_use" ]
 
 [thinking]
 enabled = true
@@ -67,12 +65,12 @@ max_running_tasks = 4
 keep_alive_on_exit = false
 
 [services.legacy_search]
-base_url = "https://api.floyd.com/coding/v1/search"
-api_key = ""
+base_url = "https://your-search.example/v1/search"
+api_key = "YOUR_API_KEY"
 
 [services.legacy_fetch]
-base_url = "https://api.floyd.com/coding/v1/fetch"
-api_key = ""
+base_url = "https://your-fetch.example/v1/fetch"
+api_key = "YOUR_API_KEY"
 
 [[permission.rules]]
 decision = "allow"
@@ -132,9 +130,9 @@ Each entry in the `providers` table defines an API provider, keyed by a unique n
 **`env` sub-table**: You can write provider-conventional key names (such as `FLOYD_API_KEY`) inside `[providers.<name>.env]` as a fallback source for `api_key` / `base_url`. This sub-table is **read only from the config file** and does not modify the shell environment:
 
 ```toml
-[providers.floyd.env]
-FLOYD_API_KEY = "sk-xxx"
-FLOYD_BASE_URL = "https://api.legacy.ai/v1"
+[providers.my-gateway.env]
+OPENAI_API_KEY = "YOUR_API_KEY"
+OPENAI_BASE_URL = "https://your-gateway.example/v1"
 ```
 
 Priority: `api_key` or `api_key_env` (mutually exclusive alternatives — set exactly one) > `env` sub-table key (only when neither is present) > if all are absent, startup fails with an error. During a `/models` refresh, a provider whose declared variable is unset or empty is reported as failed without affecting other providers.
@@ -173,14 +171,14 @@ max_context_size = 1047576
 Use `[models."<alias>".overrides]` for user overrides that must survive provider-model refreshes. Runtime consumers read the effective value: the override when present, otherwise the top-level field.
 
 ```toml
-[models."floyd-code/floyd-for-coding"]
-provider = "managed:floyd-code"
-model = "floyd-for-coding"
-max_context_size = 262144
+[models."my-gateway/gpt-4.1"]
+provider = "my-gateway"
+model = "gpt-4.1"
+max_context_size = 1047576
 
-[models."floyd-code/floyd-for-coding".overrides]
+[models."my-gateway/gpt-4.1".overrides]
 max_context_size = 131072
-display_name = "Floyd for Coding (custom)"
+display_name = "GPT-4.1 (short context)"
 ```
 
 `[models."<alias>".overrides]` accepts ordinary model fields such as `max_context_size`, `max_input_size`, `max_output_size`, `capabilities`, `display_name`, `reasoning_key`, `adaptive_thinking`, `support_efforts`, `default_effort`, and `off_effort`. It does not accept identity / routing fields: `provider`, `model`, `protocol`, `beta_api`, and `base_url`.
@@ -199,7 +197,7 @@ The minimal configuration is one line. A lone `default_model` is a pool with a s
 
 ```toml
 [secondary_model]
-default_model = "floyd-code/floyd-for-coding-highspeed"
+default_model = "my-gateway/gpt-4.1-nano"
 ```
 
 | Field | Type | Default | Description |
@@ -221,15 +219,15 @@ Pool aliases reference the current `[models]` table: if a provider is later dele
 
 In the interactive TUI, the [`/secondary-model`](../reference/slash-commands.md) command (alias `/subagent-model`) opens a model selector: the choice is written to `default_model` (when a models table exists and the picked alias is not in it, an entry with an empty description is added), and newly spawned subagents pick up the new default immediately, no session restart needed.
 
-A configured pool (an explicit `models` table or a lone `default_model`) enables model selection: the `Agent` / `AgentSwarm` tools gain a `model` parameter, and the tool description lists the pool (the default marked `[default]`) so the main agent can choose per spawn. Pool keys can only reference configured [`[models]`](#models) entries. The `floyd-code/*` aliases below are provisioned by `/login`:
+A configured pool (an explicit `models` table or a lone `default_model`) enables model selection: the `Agent` / `AgentSwarm` tools gain a `model` parameter, and the tool description lists the pool (the default marked `[default]`) so the main agent can choose per spawn. Pool keys can only reference configured [`[models]`](#models) entries — the pool below points at the aliases declared in that table:
 
 ```toml
 [secondary_model]
-default_model = "floyd-code/floyd-for-coding-highspeed"
+default_model = "my-gateway/gpt-4.1-nano"
 [secondary_model.models]
-"floyd-code/k3" = "Pick this for hard problems. Strong at complex reasoning, algorithm design, deep debugging, math, and systematic challenges."
-"floyd-code/floyd-for-coding-highspeed" = "Fast but priced higher. Good for latency-sensitive tasks: daily refactoring, code explanation, small edits, and summaries."
-"floyd-code/floyd-for-coding" = "A balanced coding workhorse. Good for most feature development and code-change tasks."
+"my-gateway/gpt-4.1" = "Pick this for hard problems. Strong at complex reasoning, algorithm design, deep debugging, math, and systematic challenges."
+"my-gateway/gpt-4.1-nano" = "Fast and cheap. Good for latency-sensitive tasks: daily refactoring, code explanation, small edits, and summaries."
+"my-gateway/gpt-4.1-mini" = "A balanced coding workhorse. Good for most feature development and code-change tasks."
 ```
 
 A spawn resolves the subagent's model in this order:
@@ -249,7 +247,7 @@ To take the choice away from the main agent and run every subagent on one fixed 
 
 ```toml
 [secondary_model]
-default_model = "floyd-code/floyd-for-coding-highspeed"
+default_model = "my-gateway/gpt-4.1-nano"
 force = true
 ```
 
@@ -263,28 +261,28 @@ Binding a pool alias lands the subagent on the bound model's default effort. You
 2. List both the original alias and the variant alias in the pool.
 
 ```toml
-# "floyd-code/k3" is provisioned by /login (default: high); this registers
-# a max-effort variant of the same model
-[models.k3-max]
-provider = "managed:floyd-code"
-model = "k3"
-max_context_size = 1048576
-capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
-support_efforts = [ "low", "high", "max" ]
+# "my-gateway/gpt-4.1" is declared above; this registers a variant of the
+# same model pinned to the lowest thinking effort
+[models.gpt-4.1-low-effort]
+provider = "my-gateway"
+model = "gpt-4.1"
+max_context_size = 1047576
+capabilities = [ "image_in", "tool_use" ]
+support_efforts = [ "low", "medium", "high" ]
 
-[models.k3-max.overrides]
-default_effort = "max"
+[models.gpt-4.1-low-effort.overrides]
+default_effort = "low"
 
 [secondary_model]
-default_model = "floyd-code/k3"
+default_model = "my-gateway/gpt-4.1"
 [secondary_model.models]
-"floyd-code/k3" = "Default high effort. Good for most implementation, analysis, and multi-turn interaction tasks."
-k3-max = "The same model at max thinking effort. Good for the hardest subtasks."
+"my-gateway/gpt-4.1" = "The default effort. Good for most implementation, analysis, and multi-turn interaction tasks."
+gpt-4.1-low-effort = "The same model at the lowest thinking effort. Good for the fastest subtasks."
 ```
 
 Two prerequisites:
 
-- The underlying model must declare `support_efforts` (under `managed:floyd-code` only the k3 family currently declares effort levels).
+- The underlying model must declare `support_efforts`; model entries that do not list any effort levels cannot be pinned to one.
 - The variant is a standalone entry and does not inherit fields from the entry it points at: copy `capabilities`, `support_efforts`, and the other metadata over in full, otherwise `default_effort` has no effect (it must be a member of `support_efforts`).
 
 Note the asymmetry between the main agent and pool-bound subagents: for the main agent, a configured global `[thinking].effort` overrides the variant's `default_effort`; for subagents the variant's `default_effort` wins over the global value, and only `[secondary_model].default_effort` outranks it. Value and fallback rules follow the [`[models]` entry's `default_effort`](#models).
@@ -359,7 +357,7 @@ Retries only apply to transient failures: connection errors, timeouts, HTTP 429 
 
 `keep_alive_on_exit` can be overridden by the `FLOYD_CODE_BACKGROUND_KEEP_ALIVE_ON_EXIT` environment variable, `max_running_tasks` by `FLOYD_CODE_BACKGROUND_MAX_RUNNING_TASKS`, `bash_task_timeout_s` by `FLOYD_CODE_BACKGROUND_BASH_TASK_TIMEOUT_S`, and `print_background_mode`, `print_wait_ceiling_s`, and `print_max_turns` by `FLOYD_CODE_BACKGROUND_PRINT_BACKGROUND_MODE`, `FLOYD_CODE_BACKGROUND_PRINT_WAIT_CEILING_S`, and `FLOYD_CODE_BACKGROUND_PRINT_MAX_TURNS`; all take higher priority than `config.toml`.
 
-In print mode (`floyd -p "<prompt>"`), Floyd Code stays alive after the main agent's turn as long as background tasks are still pending: each completion is fed back to the main agent as a synthetic user message, steering it into a new turn (`print_background_mode = "steer"` by default), and the run exits once a turn ends with nothing pending. The loop is bounded by `print_wait_ceiling_s` and `print_max_turns`, both effectively unbounded by default. Background work is never killed by a wall-clock cap in print mode either: background `Bash` tasks default to no timeout (`bash_task_timeout_s = 0`), and subagents run without a timeout (`[subagent] timeout_ms` and `[swarm] timeout_ms` both default to `0` unless explicitly set), so only the model itself stops a task. Set `print_background_mode` to `"drain"` to wait for tasks without feeding results back, or `"exit"` to end the run as soon as the main agent finishes.
+In print mode (`f7 -p "<prompt>"`), Floyd Code stays alive after the main agent's turn as long as background tasks are still pending: each completion is fed back to the main agent as a synthetic user message, steering it into a new turn (`print_background_mode = "steer"` by default), and the run exits once a turn ends with nothing pending. The loop is bounded by `print_wait_ceiling_s` and `print_max_turns`, both effectively unbounded by default. Background work is never killed by a wall-clock cap in print mode either: background `Bash` tasks default to no timeout (`bash_task_timeout_s = 0`), and subagents run without a timeout (`[subagent] timeout_ms` and `[swarm] timeout_ms` both default to `0` unless explicitly set), so only the model itself stops a task. Set `print_background_mode` to `"drain"` to wait for tasks without feeding results back, or `"exit"` to end the run as soon as the main agent finishes.
 
 ## `subagent`
 
@@ -507,11 +505,11 @@ Both values must be positive integers. A call's `max_chars` overrides the defaul
 
 ```toml
 [services.legacy_search]
-base_url = "https://api.legacy.cn/v1/search"
+base_url = "https://your-search.example/v1/search"
 api_key = "sk-xxx"
 
 [services.legacy_fetch]
-base_url = "https://api.legacy.cn/v1/fetch"
+base_url = "https://your-fetch.example/v1/fetch"
 api_key = "sk-xxx"
 ```
 

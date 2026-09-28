@@ -1,39 +1,30 @@
 # Floyd Code CLI
 
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://legacyai.github.io/floyd-code/en/) <br>
-[Documentation](https://legacyai.github.io/floyd-code/en/) · [Issues](https://github.com/LegacyAI/floyd-code/issues) · [中文](README.zh-CN.md)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) <br>
+[Documentation](docs/en/index.md) · [Issues](https://github.com/CaptainPhantasy/f7/issues) · [中文](README.zh-CN.md)
 
 ![Demo of using Floyd Code](./docs/media/intro.gif)
 
 ## What is Floyd Code CLI
 
-Floyd Code CLI is an AI coding agent that runs in your terminal — it can read and edit code, run shell commands, search files, fetch web pages, and choose the next step based on the feedback it receives. It works out of the box with Legacy AI’s Floyd models and can also be configured to use other compatible providers.
+Floyd Code CLI is an AI coding agent that runs in your terminal — it can read and edit code, run shell commands, search files, fetch web pages, and choose the next step based on the feedback it receives. It runs against any model provider you configure, so you can point it at the API you already use.
 
 ## Install
 
-Install with the official script. No Node.js required.
-
-- **macOS or Linux**:
+No prebuilt binary or npm package is published for Floyd Code yet — install it by building from source. Node.js 24.15.0 or later and pnpm 10.33.0 are required.
 
 ```sh
-curl -fsSL https://code.floyd.com/floyd-code/install.sh | bash
+git clone https://github.com/CaptainPhantasy/f7.git
+cd f7
+pnpm install
+pnpm dev:cli
 ```
 
-- **Windows (PowerShell)**:
+> On Windows, install [Git for Windows](https://gitforwindows.org/) before first launch because Floyd Code CLI uses Git Bash as its shell environment. If Git Bash is installed in a custom location, set `FLOYD_SHELL_PATH` to the absolute path of `bash.exe`.
 
-```powershell
-irm https://code.floyd.com/floyd-code/install.ps1 | iex
-```
+The CLI executable is `f7`. In a source checkout use `pnpm dev:cli` wherever the examples below use `f7`; see [Develop](#develop) for the full set of build commands.
 
-> On Windows, install [Git for Windows](https://gitforwindows.org/) before first launch because Floyd Code CLI uses the bundled Git Bash as its shell environment. If Git Bash is installed in a custom location, set `FLOYD_SHELL_PATH` to the absolute path of `bash.exe`.
-
-Then, run it with a new shell session:
-
-```sh
-floyd --version
-```
-
-For npm install, upgrade, uninstall, see [Getting Started](https://legacyai.github.io/floyd-code/en/guides/getting-started).
+For provider configuration and usage, see the [documentation](docs/en/index.md).
 
 ## Quick Start
 
@@ -41,10 +32,10 @@ Open a project and start the interactive UI:
 
 ```sh
 cd your-project
-floyd
+f7
 ```
 
-On first launch, run `/login` inside Floyd Code CLI and choose either Floyd Code OAuth or a Legacy AI Open Platform API key. After login, try your first task:
+On first launch, point Floyd Code CLI at the provider you want to use by adding a `[providers.*]` entry to `~/.floyd-code/config.toml`, or run `/provider` inside the TUI to add one interactively. Then try your first task:
 
 ```
 Take a look at this project and explain its main directories.
@@ -52,7 +43,6 @@ Take a look at this project and explain its main directories.
 
 ## Key Features
 
-- **Single-binary distribution.** Install with one command: no Node.js setup, PATH gymnastics, or global module conflicts.
 - **Blazing-fast startup.** The TUI is ready in milliseconds, so starting a session never feels heavy.
 - **Purpose-built TUI.** A carefully tuned interface, optimized end to end for long, focused agent sessions.
 - **Video input.** Drop a screen recording or demo clip into the chat and let the agent watch what is hard to describe in words — turn a reference clip into a LUT, a long video into a short, a screen recording into working code, and more.
@@ -60,11 +50,11 @@ Take a look at this project and explain its main directories.
 - **Rich plugin ecosystem.** Install skills, MCP servers, and data sources from the marketplace or any GitHub repo, with each install's trust level surfaced up front.
 - **Subagents for focused, parallel work.** Dispatch built-in `coder`, `explore`, and `plan` subagents in isolated contexts while keeping the main conversation clean.
 - **Lifecycle hooks.** Run local commands at key points to gate risky tool calls, audit decisions, trigger desktop notifications, or connect to your own automation.
-- **Editor & IDE integration (ACP).** Drive a Floyd Code CLI session straight from Zed, JetBrains, or any [Agent Client Protocol](https://agentclientprotocol.com/) client with `floyd acp`.
+- **Editor & IDE integration (ACP).** Drive a Floyd Code CLI session straight from Zed, JetBrains, or any [Agent Client Protocol](https://agentclientprotocol.com/) client with `f7 acp`.
 
 ## Use it in your editor (ACP)
 
-Floyd Code CLI speaks the [Agent Client Protocol](https://agentclientprotocol.com/), so ACP-compatible editors and IDEs (Zed, JetBrains, …) can drive a session over stdio. Log in once, then point your editor at the `floyd acp` subcommand — no extra login needed.
+Floyd Code CLI speaks the [Agent Client Protocol](https://agentclientprotocol.com/), so ACP-compatible editors and IDEs (Zed, JetBrains, …) can drive a session over stdio. Point your editor at the `f7 acp` subcommand.
 
 For Zed, add this to `~/.config/zed/settings.json`:
 
@@ -73,7 +63,7 @@ For Zed, add this to `~/.config/zed/settings.json`:
   "agent_servers": {
     "Floyd Code CLI": {
       "type": "custom",
-      "command": "floyd",
+      "command": "f7",
       "args": ["acp"],
       "env": {}
     }
@@ -81,24 +71,24 @@ For Zed, add this to `~/.config/zed/settings.json`:
 }
 ```
 
-Then open a new conversation in Zed's Agent panel. See [Using in IDEs](https://legacyai.github.io/floyd-code/en/guides/ides) for JetBrains setup and troubleshooting, and the [`floyd acp` reference](https://legacyai.github.io/floyd-code/en/reference/floyd-acp) for the full capability matrix.
+Then open a new conversation in Zed's Agent panel. See [Using in IDEs](docs/en/guides/ides.md) for JetBrains setup and troubleshooting, and the [`f7 acp` reference](docs/en/reference/floyd-acp.md) for the full capability matrix.
 
 ## Docs
 
-- [Getting Started](https://legacyai.github.io/floyd-code/en/guides/getting-started)
-- [Interaction and approvals](https://legacyai.github.io/floyd-code/en/guides/interaction)
-- [Sessions](https://legacyai.github.io/floyd-code/en/guides/sessions)
-- [Using in IDEs (ACP)](https://legacyai.github.io/floyd-code/en/guides/ides)
-- [Configuration](https://legacyai.github.io/floyd-code/en/configuration/config-files)
-- [Command reference](https://legacyai.github.io/floyd-code/en/reference/floyd-command)
+- [Getting Started](docs/en/guides/getting-started.md)
+- [Interaction and approvals](docs/en/guides/interaction.md)
+- [Sessions](docs/en/guides/sessions.md)
+- [Using in IDEs (ACP)](docs/en/guides/ides.md)
+- [Configuration](docs/en/configuration/config-files.md)
+- [Command reference](docs/en/reference/floyd-command.md)
 
 ## Develop
 
 Requirements: Node.js ≥ 24.15.0, pnpm 10.33.0.
 
 ```sh
-git clone https://github.com/LegacyAI/floyd-code.git
-cd floyd-code
+git clone https://github.com/CaptainPhantasy/f7.git
+cd f7
 pnpm install
 ```
 
@@ -114,7 +104,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide.
 
 ## Community
 
-- [Issues](https://github.com/LegacyAI/floyd-code/issues)
+- [Issues](https://github.com/CaptainPhantasy/f7/issues)
 - For security vulnerabilities, see [SECURITY.md](SECURITY.md).
 
 ## Acknowledgements

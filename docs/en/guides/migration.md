@@ -1,5 +1,7 @@
 # Migrating from floyd-cli
 
+`floyd-cli` is the legacy command — a separate Python/uv program that keeps its data in `~/.floyd/`. Floyd Code CLI is its successor: the `f7` command, rebuilt on Node.js, with its own data directory at `~/.floyd-code/`. The two are different programs, so installing the new one leaves the old one exactly as it was.
+
 ::: info
 Floyd Code CLI has gone through a major version upgrade — moving from Python/uv to Node.js, bringing a simpler install experience, faster startup, and a redesigned terminal UI. The legacy version will gradually be phased out, so we recommend upgrading as soon as possible.
 :::
@@ -17,12 +19,12 @@ If you are migrating from the legacy version, follow the steps below — a singl
 
 There are two ways to migrate.
 
-The **first time you run `floyd`** after installing floyd-code, it automatically checks whether floyd-cli data exists under `~/.floyd/`. If it finds any, a migration prompt appears, and you can choose to migrate now, do it later, or never be asked again.
+The **first time you run `f7`** after installing floyd-code, it automatically checks whether floyd-cli data exists under `~/.floyd/`. If it finds any, a migration prompt appears, and you can choose to migrate now, do it later, or never be asked again.
 
 You can also **run it manually at any time**:
 
 ```sh
-floyd migrate
+f7 migrate
 ```
 
 You can choose whether to migrate chat sessions as well. If you don't need the history yet, pick **Config only**; otherwise pick **Config + N sessions** to bring everything across in one go. A summary is printed at the end.
@@ -31,7 +33,7 @@ You can choose whether to migrate chat sessions as well. If you don't need the h
 
 **What gets migrated**: configuration (`config.toml`), MCP server configuration, input history, and whichever chat sessions you chose to migrate.
 
-**What does not get migrated**: OAuth login credentials and MCP service authorizations are not copied, so you will need to run `/login` again and re-authorize MCP servers after migrating. floyd-cli plugins are also out of scope.
+**What does not get migrated**: credentials that live outside `config.toml` — a managed-account login and MCP service authorizations — are not copied, so re-authorize MCP servers after migrating. Providers you configured with an API key in `config.toml` carry over unchanged. floyd-cli plugins are also out of scope.
 
 ::: tip
 Migration **never modifies or deletes** any of the old data under `~/.floyd/`. floyd-cli keeps working as before, and the two do not interfere with each other. Migration can also be run repeatedly — sessions that have already been migrated are not imported again.

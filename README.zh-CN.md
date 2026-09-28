@@ -1,8 +1,8 @@
 # Floyd Code CLI
 
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://legacyai.github.io/floyd-code/zh/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-[Documentation](https://legacyai.github.io/floyd-code/zh/) · [Issues](https://github.com/LegacyAI/floyd-code/issues) · [English](README.md)
+[文档](docs/zh/index.md) · [Issues](https://github.com/CaptainPhantasy/f7/issues) · [English](README.md)
 
 
 ![Floyd Code 的使用演示](./docs/media/intro.gif)
@@ -10,33 +10,24 @@
 
 ## 什么是 Floyd Code CLI
 
-Floyd Code CLI 是一个运行在终端里的 AI 编程 agent，可以帮你读写代码、执行 shell 命令、检索文件、抓取网页，并根据反馈自主决定下一步动作。开箱即用对接 Legacy AI 的 Floyd 模型，也可指向其他兼容厂商。
+Floyd Code CLI 是一个运行在终端里的 AI 编程 agent，可以帮你读写代码、执行 shell 命令、检索文件、抓取网页，并根据反馈自主决定下一步动作。它会对接你配置的模型供应商，可以直接指向你已经在用的 API。
 
 ## 安装
 
-推荐使用官方安装脚本，不需要提前安装 Node.js。
-
-- **macOS / Linux**：
+Floyd Code 目前没有预编译二进制或 npm 包，需要通过源码构建安装。环境要求：Node.js 24.15.0 及以上版本，pnpm 10.33.0。
 
 ```sh
-curl -fsSL https://code.floyd.com/floyd-code/install.sh | bash
-```
-
-- **Windows（PowerShell）**：
-
-```powershell
-irm https://code.floyd.com/floyd-code/install.ps1 | iex
+git clone https://github.com/CaptainPhantasy/f7.git
+cd f7
+pnpm install
+pnpm dev:cli
 ```
 
 > Windows 用户首次启动前还需要安装 [Git for Windows](https://gitforwindows.org/)，Floyd Code CLI 会使用其中的 Git Bash 作为 Shell 环境。如果 Git Bash 安装在非标准路径，请把 `FLOYD_SHELL_PATH` 设为 `bash.exe` 的绝对路径。
 
-随后在新的终端会话中运行：
+CLI 可执行文件名是 `f7`。在源码仓库里，把下文示例中的 `f7` 换成 `pnpm dev:cli` 即可；完整的构建命令见[本地开发](#本地开发)。
 
-```sh
-floyd --version
-```
-
-npm 安装、升级、卸载方式，见[快速上手](https://legacyai.github.io/floyd-code/zh/guides/getting-started)。
+供应商配置与日常用法见[文档](docs/zh/index.md)。
 
 ## 快速开始
 
@@ -44,10 +35,10 @@ npm 安装、升级、卸载方式，见[快速上手](https://legacyai.github.i
 
 ```sh
 cd your-project
-floyd
+f7
 ```
 
-首次启动时，在 Floyd Code CLI 里输入 `/login`，选择 Floyd Code OAuth 或 Legacy AI Open Platform API 密钥登录。登录完成后，可以先让它熟悉项目：
+首次启动时，在 `~/.floyd-code/config.toml` 里添加 `[providers.*]` 配置项指向要使用的供应商，或在 TUI 里输入 `/provider` 交互式添加。配置完成后，可以先让它熟悉项目：
 
 ```
 帮我看一下这个项目的目录结构，简单介绍一下每个目录是做什么的
@@ -55,7 +46,6 @@ floyd
 
 ## 核心特性
 
-- **二进制发行，零环境依赖** 一行命令安装，不需要预装 Node.js，不用折腾 PATH，也不会和全局模块冲突。
 - **极速启动** TUI 在毫秒级就绪，开一个新会话没有任何心智负担。
 - **精致的 TUI 体验** 端到端打磨的交互界面，专为长时间、专注的 Agent 会话优化。
 - **视频也能输入** 把屏幕录像、演示视频拖进对话，让 Agent 看那些难以用文字描述的东西——把参考片段做成 LUT、把长视频剪成短视频、把录屏变成代码，等等。
@@ -63,12 +53,12 @@ floyd
 - **丰富的插件生态** 从插件市场或任意 GitHub 仓库安装 skills、MCP 服务器和数据源，每次安装都会标明来源的信任级别。
 - **子 Agent 聚焦并行工作** 内置 `coder`、`explore`、`plan` 子 Agent 在隔离上下文中处理子任务，主对话保持清爽。
 - **生命周期 hooks** 在关键节点执行本地命令：拦截高风险工具调用、审计决策、发送桌面通知，或对接你自己的自动化脚本。
-- **编辑器 / IDE 集成（ACP）** 用 `floyd acp` 让 Zed、JetBrains 等任意 [Agent Client Protocol](https://agentclientprotocol.com/) 客户端直接驱动会话。
+- **编辑器 / IDE 集成（ACP）** 用 `f7 acp` 让 Zed、JetBrains 等任意 [Agent Client Protocol](https://agentclientprotocol.com/) 客户端直接驱动会话。
 
 
 ## 在编辑器里使用（ACP）
 
-Floyd Code CLI 支持 [Agent Client Protocol](https://agentclientprotocol.com/)，ACP 兼容的编辑器 / IDE（Zed、JetBrains……）可以通过 stdio 直接驱动会话。登录一次后，把编辑器指向 `floyd acp` 子命令即可，无需重复登录。
+Floyd Code CLI 支持 [Agent Client Protocol](https://agentclientprotocol.com/)，ACP 兼容的编辑器 / IDE（Zed、JetBrains……）可以通过 stdio 直接驱动会话。把编辑器指向 `f7 acp` 子命令即可。
 
 以 Zed 为例，在 `~/.config/zed/settings.json` 中加入：
 
@@ -77,7 +67,7 @@ Floyd Code CLI 支持 [Agent Client Protocol](https://agentclientprotocol.com/)�
   "agent_servers": {
     "Floyd Code CLI": {
       "type": "custom",
-      "command": "floyd",
+      "command": "f7",
       "args": ["acp"],
       "env": {}
     }
@@ -85,24 +75,24 @@ Floyd Code CLI 支持 [Agent Client Protocol](https://agentclientprotocol.com/)�
 }
 ```
 
-随后在 Zed 的 Agent 面板新建对话即可。JetBrains 配置与排障见[在 IDE 中使用](https://legacyai.github.io/floyd-code/zh/guides/ides)，完整能力矩阵见 [`floyd acp` 参考](https://legacyai.github.io/floyd-code/zh/reference/floyd-acp)。
+随后在 Zed 的 Agent 面板新建对话即可。JetBrains 配置与排障见[在 IDE 中使用](docs/zh/guides/ides.md)，完整能力矩阵见 [`f7 acp` 参考](docs/zh/reference/floyd-acp.md)。
 
 ## 文档
 
-- [快速上手](https://legacyai.github.io/floyd-code/zh/guides/getting-started)
-- [交互与审批](https://legacyai.github.io/floyd-code/zh/guides/interaction)
-- [会话](https://legacyai.github.io/floyd-code/zh/guides/sessions)
-- [在 IDE 中使用（ACP）](https://legacyai.github.io/floyd-code/zh/guides/ides)
-- [配置](https://legacyai.github.io/floyd-code/zh/configuration/config-files)
-- [命令参考](https://legacyai.github.io/floyd-code/zh/reference/floyd-command)
+- [快速上手](docs/zh/guides/getting-started.md)
+- [交互与审批](docs/zh/guides/interaction.md)
+- [会话](docs/zh/guides/sessions.md)
+- [在 IDE 中使用（ACP）](docs/zh/guides/ides.md)
+- [配置](docs/zh/configuration/config-files.md)
+- [命令参考](docs/zh/reference/floyd-command.md)
 
 ## 本地开发
 
 环境要求：Node.js ≥ 24.15.0，pnpm 10.33.0。
 
 ```sh
-git clone https://github.com/LegacyAI/floyd-code.git
-cd floyd-code
+git clone https://github.com/CaptainPhantasy/f7.git
+cd f7
 pnpm install
 ```
 
@@ -118,7 +108,7 @@ pnpm build      # 构建所有包
 
 ## 社区
 
-- [Issues](https://github.com/LegacyAI/floyd-code/issues)
+- [Issues](https://github.com/CaptainPhantasy/f7/issues)
 - 安全漏洞反馈，请见 [SECURITY.md](SECURITY.md)。
 
 ## 致谢

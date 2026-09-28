@@ -5,8 +5,6 @@ import { fileURLToPath } from 'node:url';
 
 import { gt, valid } from 'semver';
 
-export const FLOYD_CODE_PLUGIN_MARKETPLACE_URL =
-  'https://code.floyd.com/floyd-code/plugins/marketplace.json';
 export const FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV = 'FLOYD_CODE_PLUGIN_MARKETPLACE_URL';
 
 export const PLUGIN_MARKETPLACE_TIERS = ['official', 'curated'] as const;
@@ -43,7 +41,7 @@ export interface MarketplaceLocation {
 }
 
 export interface ReadPluginMarketplaceOptions {
-  readonly source: string;
+  readonly source?: string;
   readonly workDir: string;
   readonly fetchImpl?: typeof fetch;
   readonly sourceCheckoutLocation?: () => Promise<MarketplaceLocation | undefined>;
@@ -85,8 +83,21 @@ export function resolveMarketplaceLocation(source: string, workDir: string): Mar
 export async function readPluginMarketplace(
   options: ReadPluginMarketplaceOptions,
 ): Promise<{ raw: string; location: MarketplaceLocation }> {
-  const location = resolveMarketplaceLocation(options.source, options.workDir);
   const fetchImpl = options.fetchImpl ?? fetch;
+  const source = options.source?.trim();
+  if (source === undefined || source.length === 0) {
+    const checkout =
+      options.sourceCheckoutLocation !== undefined
+        ? await options.sourceCheckoutLocation()
+        : undefined;
+    if (checkout === undefined) {
+      throw new Error(
+        `Plugin marketplace is not configured. Set ${FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV} to a marketplace URL or local path.`,
+      );
+    }
+    return { raw: await readMarketplaceText(checkout, fetchImpl), location: checkout };
+  }
+  const location = resolveMarketplaceLocation(source, options.workDir);
   try {
     return { raw: await readMarketplaceText(location, fetchImpl), location };
   } catch (error) {

@@ -4,12 +4,12 @@ Floyd Code CLI supports integration into IDEs via the [Agent Client Protocol (AC
 
 ## Prerequisites
 
-Before configuring your IDE, make sure Floyd Code CLI is installed and you have completed the login setup.
+Before configuring your IDE, make sure Floyd Code CLI is installed and that you have configured at least one provider with a default model.
 
-The ACP server is exposed as the `floyd acp` subcommand. The IDE launches it as a child process and communicates over stdin/stdout using JSON-RPC. Each time the IDE creates a session, the CLI reuses its existing authentication state — no need to log in again.
+The ACP server is exposed as the `f7 acp` subcommand. The IDE launches it as a child process and communicates over stdin/stdout using JSON-RPC. Each time the IDE creates a session, the CLI reuses its existing provider configuration — there is nothing to set up again.
 
 ::: tip Path note
-Child processes launched from an IDE GUI on macOS typically do **not** inherit the terminal shell's `PATH`. If `floyd` is not in a system directory like `/usr/local/bin`, use the absolute path in your IDE configuration. Run `which floyd` in a terminal to find the active path.
+Child processes launched from an IDE GUI on macOS typically do **not** inherit the terminal shell's `PATH`. If `f7` is not in a system directory like `/usr/local/bin`, use the absolute path in your IDE configuration. Run `which f7` in a terminal to find the active path.
 :::
 
 ## Using Floyd Code CLI in Zed
@@ -23,7 +23,7 @@ Add the following to Zed's config file at `~/.config/zed/settings.json`:
   "agent_servers": {
     "Floyd Code CLI": {
       "type": "custom",
-      "command": "floyd",
+      "command": "f7",
       "args": ["acp"],
       "env": {}
     }
@@ -34,11 +34,11 @@ Add the following to Zed's config file at `~/.config/zed/settings.json`:
 Configuration fields:
 
 - `type`: fixed value `"custom"`
-- `command`: path to the Floyd Code CLI executable. If `floyd` is not on `PATH`, use the full path (e.g. `/Users/you/.local/bin/floyd`).
+- `command`: path to the Floyd Code CLI executable. If `f7` is not on `PATH`, use the full path (e.g. `/Users/you/.local/bin/f7`).
 - `args`: startup arguments. The `acp` subcommand switches the CLI into ACP mode.
 - `env`: additional environment variables; usually leave this empty. Zed injects a default environment automatically.
 
-After saving, open a new conversation in Zed's Agent panel and it will launch a `Floyd Code CLI` ACP subprocess using the configuration above. MCP servers declared in Zed's `agent_servers` section are also forwarded to the floyd side via the ACP protocol.
+After saving, open a new conversation in Zed's Agent panel and it will launch a `Floyd Code CLI` ACP subprocess using the configuration above. MCP servers declared in Zed's `agent_servers` section are also forwarded to the CLI side via the ACP protocol.
 
 ## Using Floyd Code CLI in JetBrains IDEs
 
@@ -52,7 +52,7 @@ In the AI chat panel menu, click **Configure ACP agents** and add the following 
 {
   "agent_servers": {
     "Floyd Code CLI": {
-      "command": "~/.local/bin/floyd",
+      "command": "~/.local/bin/f7",
       "args": ["acp"],
       "env": {}
     }
@@ -60,7 +60,7 @@ In the AI chat panel menu, click **Configure ACP agents** and add the following 
 }
 ```
 
-JetBrains is strict about the `command` field — always use an **absolute path**, which you can get by running `which floyd` in a terminal. After saving, `Floyd Code CLI` will appear in the AI chat's agent selector.
+JetBrains is strict about the `command` field — always use an **absolute path**, which you can get by running `which f7` in a terminal. After saving, `Floyd Code CLI` will appear in the AI chat's agent selector.
 
 ## Using Floyd Code CLI in Paseo
 
@@ -75,22 +75,22 @@ Pick **Floyd Code CLI** from Paseo's built-in ACP provider catalog, or add a cus
       "floyd": {
         "extends": "acp",
         "label": "Floyd Code CLI",
-        "command": ["floyd", "acp"]
+        "command": ["f7", "acp"]
       }
     }
   }
 }
 ```
 
-Paseo's generic ACP adapter does not drive the login flow, so complete the terminal login first (see [Prerequisites](#prerequisites)) — otherwise session creation fails with `Authentication required`.
+Paseo's generic ACP adapter does not run the CLI's own setup, so configure a provider and a default model first (see [Prerequisites](#prerequisites)) — otherwise session creation fails with `Authentication required`.
 
 ## Troubleshooting
 
-- **Session disconnects immediately / IDE shows "agent exited"**: usually a wrong `command` path or a missing login. Run `floyd acp` in a terminal first to verify — if it blocks waiting for stdin, the CLI itself is fine and the problem is in the IDE configuration; if it exits immediately with an error, follow the error message (most commonly you need to run `/login`).
-- **IDE shows "auth required"**: the CLI has no usable authentication token. Exit the IDE, run `floyd` in a terminal to complete login, then restart the IDE.
-- **MCP tools not visible**: check the [`floyd acp` reference](../reference/floyd-acp.md) capability table to confirm that the MCP transport type configured in your IDE is supported. The Floyd Code CLI ACP server currently supports `http`, `stdio`, and `sse` transports; `acp` transport MCP servers are silently dropped and a warning is written to the log.
+- **Session disconnects immediately / IDE shows "agent exited"**: usually a wrong `command` path or no usable provider credentials. Run `f7 acp` in a terminal first to verify — if it blocks waiting for stdin, the CLI itself is fine and the problem is in the IDE configuration; if it exits immediately with an error, follow the error message (most commonly the configured provider has no valid API key).
+- **IDE shows "auth required"**: the CLI has no usable credentials. Exit the IDE and check the provider configuration with `f7 provider list` in a terminal, then restart the IDE.
+- **MCP tools not visible**: check the [`f7 acp` reference](../reference/floyd-acp.md) capability table to confirm that the MCP transport type configured in your IDE is supported. The Floyd Code CLI ACP server currently supports `http`, `stdio`, and `sse` transports; `acp` transport MCP servers are silently dropped and a warning is written to the log.
 
 ## Next steps
 
-- [floyd acp reference](../reference/floyd-acp.md) — ACP capability matrix and method coverage details
-- [floyd command reference](../reference/floyd-command.md) — full subcommand list
+- [`f7 acp` reference](../reference/floyd-acp.md) — ACP capability matrix and method coverage details
+- [`f7` command reference](../reference/floyd-command.md) — full subcommand list

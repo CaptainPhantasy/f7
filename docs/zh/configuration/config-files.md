@@ -21,37 +21,35 @@ TOML 字段名一律用下划线（snake_case），如 `default_model`、`max_co
 以下示例覆盖最常用的配置项，可直接复制后按需修改：
 
 ```toml
-default_model = "floyd-code/k3"
+default_model = "my-gateway/gpt-4.1"
 default_permission_mode = "manual"
 default_plan_mode = false
 merge_all_available_skills = true
 telemetry = true
 
-[providers."managed:floyd-code"]
-type = "floyd"
-base_url = "https://api.floyd.com/coding/v1"
-api_key = ""
+[providers.my-gateway]
+type = "openai"
+base_url = "https://your-gateway.example/v1"
+api_key = "YOUR_API_KEY"
 
-[models."floyd-code/k3"]
-provider = "managed:floyd-code"
-model = "k3"
-max_context_size = 1048576
-capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
-display_name = "K3"
-support_efforts = [ "low", "high", "max" ]
-default_effort = "max"
+[models."my-gateway/gpt-4.1"]
+provider = "my-gateway"
+model = "gpt-4.1"
+max_context_size = 1047576
+capabilities = [ "image_in", "tool_use" ]
+display_name = "GPT-4.1"
 
-[models."floyd-code/floyd-for-coding"]
-provider = "managed:floyd-code"
-model = "floyd-for-coding"
-max_context_size = 262144
-capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
+[models."my-gateway/gpt-4.1-mini"]
+provider = "my-gateway"
+model = "gpt-4.1-mini"
+max_context_size = 1047576
+capabilities = [ "image_in", "tool_use" ]
 
-[models."floyd-code/floyd-for-coding-highspeed"]
-provider = "managed:floyd-code"
-model = "floyd-for-coding-highspeed"
-max_context_size = 262144
-capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
+[models."my-gateway/gpt-4.1-nano"]
+provider = "my-gateway"
+model = "gpt-4.1-nano"
+max_context_size = 1047576
+capabilities = [ "image_in", "tool_use" ]
 
 [thinking]
 enabled = true
@@ -67,12 +65,12 @@ max_running_tasks = 4
 keep_alive_on_exit = false
 
 [services.legacy_search]
-base_url = "https://api.floyd.com/coding/v1/search"
-api_key = ""
+base_url = "https://your-search.example/v1/search"
+api_key = "YOUR_API_KEY"
 
 [services.legacy_fetch]
-base_url = "https://api.floyd.com/coding/v1/fetch"
-api_key = ""
+base_url = "https://your-fetch.example/v1/fetch"
+api_key = "YOUR_API_KEY"
 
 [[permission.rules]]
 decision = "allow"
@@ -132,9 +130,9 @@ timeout = 5
 **`env` 子表**：可以把供应商惯用的键名（如 `FLOYD_API_KEY`）写在 `[providers.<name>.env]` 里，作为 `api_key` / `base_url` 的备用来源。这个子表**只在配置文件里读取**，不会修改 shell 环境：
 
 ```toml
-[providers.floyd.env]
-FLOYD_API_KEY = "sk-xxx"
-FLOYD_BASE_URL = "https://api.legacy.ai/v1"
+[providers.my-gateway.env]
+OPENAI_API_KEY = "YOUR_API_KEY"
+OPENAI_BASE_URL = "https://your-gateway.example/v1"
 ```
 
 优先级：`api_key` 或 `api_key_env`（互斥替代项，只能设置其中一个）> `env` 子表键（两者都不存在时才读）> 全部缺失时启动报错。刷新 `/models` 时，声明的变量未设置或为空的供应商会被记为失败，不影响其他供应商。
@@ -173,14 +171,14 @@ max_context_size = 1047576
 如果某些用户覆盖需要在 provider-model 刷新后保留，请写到 `[models."<alias>".overrides]`。运行时读取的是 effective 值：有 override 时用 override，否则用顶层字段。
 
 ```toml
-[models."floyd-code/floyd-for-coding"]
-provider = "managed:floyd-code"
-model = "floyd-for-coding"
-max_context_size = 262144
+[models."my-gateway/gpt-4.1"]
+provider = "my-gateway"
+model = "gpt-4.1"
+max_context_size = 1047576
 
-[models."floyd-code/floyd-for-coding".overrides]
+[models."my-gateway/gpt-4.1".overrides]
 max_context_size = 131072
-display_name = "Floyd for Coding (custom)"
+display_name = "GPT-4.1 (short context)"
 ```
 
 `[models."<alias>".overrides]` 接受普通模型字段，例如 `max_context_size`、`max_input_size`、`max_output_size`、`capabilities`、`display_name`、`reasoning_key`、`adaptive_thinking`、`support_efforts`、`default_effort` 和 `off_effort`。不接受身份 / 路由字段：`provider`、`model`、`protocol`、`beta_api` 和 `base_url`。
@@ -199,7 +197,7 @@ subagent 默认继承 main agent 正在运行的模型。`[secondary_model]` 节
 
 ```toml
 [secondary_model]
-default_model = "floyd-code/floyd-for-coding-highspeed"
+default_model = "my-gateway/gpt-4.1-nano"
 ```
 
 | 字段 | 类型 | 默认值 | 说明 |
@@ -221,15 +219,15 @@ default_model = "floyd-code/floyd-for-coding-highspeed"
 
 在交互式 TUI 中，也可以用 [`/secondary-model`](../reference/slash-commands.md) 命令（别名 `/subagent-model`）打开模型选择器：选择后写入 `default_model`（已有 models 表而所选别名不在其中时，会一并补一条空描述条目），之后派生的 subagent 立即按新默认值绑定，无需重启会话。
 
-配置了模型池（显式的 `models` 表或隐式的单条目池）即启用模型选择：`Agent` / `AgentSwarm` 工具会获得 `model` 参数，工具描述中列出模型池（默认模型标注 `[default]`），main agent 可按次派生选择模型。池 key 只能引用已配置的 [`[models]`](#models) 条目。下面的 `floyd-code/*` 别名由 `/login` 自动提供：
+配置了模型池（显式的 `models` 表或隐式的单条目池）即启用模型选择：`Agent` / `AgentSwarm` 工具会获得 `model` 参数，工具描述中列出模型池（默认模型标注 `[default]`），main agent 可按次派生选择模型。池 key 只能引用已配置的 [`[models]`](#models) 条目——下面的模型池指向的就是这张表里声明的别名：
 
 ```toml
 [secondary_model]
-default_model = "floyd-code/floyd-for-coding-highspeed"
+default_model = "my-gateway/gpt-4.1-nano"
 [secondary_model.models]
-"floyd-code/k3" = "难题选它。擅长复杂推理、算法设计、深度调试、数学和系统性难题。"
-"floyd-code/floyd-for-coding-highspeed" = "速度快但单价较高。适合日常重构、代码解释、小改动、总结等看重响应速度的任务。"
-"floyd-code/floyd-for-coding" = "均衡的编码主力。适合大多数功能开发和代码修改任务。"
+"my-gateway/gpt-4.1" = "难题选它。擅长复杂推理、算法设计、深度调试、数学和系统性难题。"
+"my-gateway/gpt-4.1-nano" = "速度快、成本低。适合日常重构、代码解释、小改动、总结等看重响应速度的任务。"
+"my-gateway/gpt-4.1-mini" = "均衡的编码主力。适合大多数功能开发和代码修改任务。"
 ```
 
 派生时按以下顺序解析 subagent 的模型：
@@ -249,7 +247,7 @@ default_model = "floyd-code/floyd-for-coding-highspeed"
 
 ```toml
 [secondary_model]
-default_model = "floyd-code/floyd-for-coding-highspeed"
+default_model = "my-gateway/gpt-4.1-nano"
 force = true
 ```
 
@@ -263,27 +261,27 @@ force = true
 2. 把原别名和变体别名都放进模型池。
 
 ```toml
-# "floyd-code/k3" 由 /login 提供（默认 high 档）；这里为同一模型注册一个 max 档位变体
-[models.k3-max]
-provider = "managed:floyd-code"
-model = "k3"
-max_context_size = 1048576
-capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
-support_efforts = [ "low", "high", "max" ]
+# "my-gateway/gpt-4.1" 已在上文声明；这里为同一模型注册最低档位变体
+[models.gpt-4.1-low-effort]
+provider = "my-gateway"
+model = "gpt-4.1"
+max_context_size = 1047576
+capabilities = [ "image_in", "tool_use" ]
+support_efforts = [ "low", "medium", "high" ]
 
-[models.k3-max.overrides]
-default_effort = "max"
+[models.gpt-4.1-low-effort.overrides]
+default_effort = "low"
 
 [secondary_model]
-default_model = "floyd-code/k3"
+default_model = "my-gateway/gpt-4.1"
 [secondary_model.models]
-"floyd-code/k3" = "默认 high 档位。适合大多数实现、分析和多轮交互任务。"
-k3-max = "同一模型的 max Thinking 档位。适合最难的子任务。"
+"my-gateway/gpt-4.1" = "默认档位。适合大多数实现、分析和多轮交互任务。"
+gpt-4.1-low-effort = "同一模型的最低 Thinking 档位。适合最快的子任务。"
 ```
 
 两个前提：
 
-- 底层模型必须声明了 `support_efforts`（`managed:floyd-code` 下目前只有 k3 系列声明了档位）。
+- 底层模型必须声明 `support_efforts`；未列出任何档位的模型条目无法被固定到某一档。
 - 变体是独立条目，不会继承被指向条目的字段：`capabilities`、`support_efforts` 等元数据要完整照抄，否则 `default_effort` 不生效（它必须是 `support_efforts` 列表中的值）。
 
 另外注意 main agent 与 subagent 的不对称：对 main agent，全局 `[thinking].effort` 一旦设置就压过变体的 `default_effort`；对绑定池内别名的 subagent，变体的 `default_effort` 优先于全局值，只有 `[secondary_model].default_effort` 的优先级更高。取值与回落规则同 [`[models]` 条目的 `default_effort`](#models)。
@@ -358,7 +356,7 @@ k3-max = "同一模型的 max Thinking 档位。适合最难的子任务。"
 
 `keep_alive_on_exit` 可被环境变量 `FLOYD_CODE_BACKGROUND_KEEP_ALIVE_ON_EXIT` 覆盖，`max_running_tasks` 可被 `FLOYD_CODE_BACKGROUND_MAX_RUNNING_TASKS` 覆盖，`bash_task_timeout_s` 可被 `FLOYD_CODE_BACKGROUND_BASH_TASK_TIMEOUT_S` 覆盖，`print_background_mode`、`print_wait_ceiling_s`、`print_max_turns` 可分别被 `FLOYD_CODE_BACKGROUND_PRINT_BACKGROUND_MODE`、`FLOYD_CODE_BACKGROUND_PRINT_WAIT_CEILING_S`、`FLOYD_CODE_BACKGROUND_PRINT_MAX_TURNS` 覆盖，优先级均高于配置文件。
 
-在 print 模式（`floyd -p "<prompt>"`）下，只要还有未决的后台任务，Floyd Code 在 main agent 的 turn 结束后不会退出：每个任务完成都会以合成 user 消息回馈给 main agent，steer 出新的 turn（默认 `print_background_mode = "steer"`），直到某 turn 结束时没有任何未决任务才退出。该循环受 `print_wait_ceiling_s` 与 `print_max_turns` 约束，默认值都近似不设限。print 模式下后台工作也不会被墙钟超时杀掉：后台 `Bash` 任务默认无超时（`bash_task_timeout_s = 0`），subagent 默认无超时（`[subagent] timeout_ms` 与 `[swarm] timeout_ms` 未显式设置时均为 `0`），只有模型自己能停止任务。将 `print_background_mode` 设为 `"drain"` 可等待任务结束但不回馈结果，设为 `"exit"` 则在 main agent 结束后立即退出。
+在 print 模式（`f7 -p "<prompt>"`）下，只要还有未决的后台任务，Floyd Code 在 main agent 的 turn 结束后不会退出：每个任务完成都会以合成 user 消息回馈给 main agent，steer 出新的 turn（默认 `print_background_mode = "steer"`），直到某 turn 结束时没有任何未决任务才退出。该循环受 `print_wait_ceiling_s` 与 `print_max_turns` 约束，默认值都近似不设限。print 模式下后台工作也不会被墙钟超时杀掉：后台 `Bash` 任务默认无超时（`bash_task_timeout_s = 0`），subagent 默认无超时（`[subagent] timeout_ms` 与 `[swarm] timeout_ms` 未显式设置时均为 `0`），只有模型自己能停止任务。将 `print_background_mode` 设为 `"drain"` 可等待任务结束但不回馈结果，设为 `"exit"` 则在 main agent 结束后立即退出。
 
 ## `subagent`
 
@@ -506,11 +504,11 @@ max_chars = 500000
 
 ```toml
 [services.legacy_search]
-base_url = "https://api.legacy.cn/v1/search"
+base_url = "https://your-search.example/v1/search"
 api_key = "sk-xxx"
 
 [services.legacy_fetch]
-base_url = "https://api.legacy.cn/v1/fetch"
+base_url = "https://your-fetch.example/v1/fetch"
 api_key = "sk-xxx"
 ```
 

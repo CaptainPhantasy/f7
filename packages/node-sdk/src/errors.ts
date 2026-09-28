@@ -285,7 +285,7 @@ export const FLOYD_ERROR_INFO = {
     title: 'Login required',
     retryable: false,
     public: true,
-    action: 'Run the login flow for the provider before retrying.',
+    action: 'Configure a provider in config.toml or via /provider, then retry; use /login only for an OAuth provider.',
   },
 
   'context.overflow': {

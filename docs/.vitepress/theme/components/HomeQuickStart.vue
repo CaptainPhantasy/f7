@@ -5,28 +5,28 @@ import { computed, ref } from 'vue'
 const { lang } = useData()
 const isZh = computed(() => lang.value.startsWith('zh'))
 
-const installMacCommand = 'curl -fsSL https://code.floyd.com/floyd-code/install.sh | bash'
-const installWinCommand = 'irm https://code.floyd.com/floyd-code/install.ps1 | iex'
-const runCommand = 'floyd'
+const installMacCommand = 'git clone https://github.com/CaptainPhantasy/f7.git'
+const installWinCommand = 'cd f7 && pnpm install'
+const runCommand = 'pnpm dev:cli'
 
 const copy = computed(() => isZh.value
   ? {
-      title: '一行命令开始',
-      lede: '装好之后跑 floyd，立刻在你当前的项目里开聊。',
-      macLabel: 'macOS / Linux',
-      winLabel: 'Windows (PowerShell)',
-      runLabel: '在任意目录运行',
+      title: '从源码开始',
+      lede: '装好之后在任意项目里跑 pnpm dev:cli，立刻开聊。',
+      macLabel: '克隆',
+      winLabel: '安装',
+      runLabel: '在任意项目里运行',
       copyHint: '复制',
       copiedHint: '已复制',
       ctaText: '查看完整安装指南',
       ctaHref: '/zh/guides/getting-started',
     }
   : {
-      title: 'Get started in one line',
-      lede: 'Once installed, run floyd inside any project to start a conversation.',
-      macLabel: 'macOS / Linux',
-      winLabel: 'Windows (PowerShell)',
-      runLabel: 'Run anywhere',
+      title: 'Get started from source',
+      lede: 'Once installed, run pnpm dev:cli inside any project to start a conversation.',
+      macLabel: 'Clone',
+      winLabel: 'Install',
+      runLabel: 'Run in any project',
       copyHint: 'Copy',
       copiedHint: 'Copied',
       ctaText: 'Read the full install guide',
@@ -71,7 +71,7 @@ function copyText(value: string, key: string) {
       <div class="FloydQuick__block">
         <div class="FloydQuick__label">{{ copy.winLabel }}</div>
         <div class="FloydQuick__cmd">
-          <code><span class="FloydQuick__prompt">PS&gt;</span> {{ installWinCommand }}</code>
+          <code><span class="FloydQuick__prompt">$</span> {{ installWinCommand }}</code>
           <button
             type="button"
             class="FloydQuick__copy"

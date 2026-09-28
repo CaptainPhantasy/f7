@@ -16,7 +16,6 @@ export const ENV_MODEL_ALIAS_KEY = '__floyd_env_model__';
 const ALLOWED_TYPES: readonly ProviderType[] = ['floyd', 'anthropic', 'openai'];
 
 const DEFAULT_BASE_URL: Partial<Record<ProviderType, string>> = {
-  floyd: 'https://api.legacy.ai/v1',
   openai: 'https://api.openai.com/v1',
 };
 
@@ -51,6 +50,18 @@ function parseProviderType(raw: string | undefined): ProviderType {
     );
   }
   return normalized;
+}
+
+function resolveBaseUrl(type: ProviderType, explicit: string | undefined): string | undefined {
+  if (explicit !== undefined) return explicit;
+  const fallback = DEFAULT_BASE_URL[type];
+  if (fallback !== undefined) return fallback;
+  if (type === 'floyd') {
+    fail(
+      'FLOYD_MODEL_NAME is set but FLOYD_MODEL_BASE_URL is missing, and provider type "floyd" has no default endpoint. Set FLOYD_MODEL_BASE_URL to your OpenAI-compatible base URL, pick another FLOYD_MODEL_PROVIDER_TYPE (anthropic, openai), or declare the provider under [providers.*] in ~/.floyd-code/config.toml.',
+    );
+  }
+  return undefined;
 }
 
 function parseCapabilities(raw: string | undefined): string[] | undefined {
@@ -88,7 +99,7 @@ export function applyEnvModelConfig(config: FloydConfig, env: Env = process.env)
       : parsePositiveInt(maxContextRaw, 'FLOYD_MODEL_MAX_CONTEXT_SIZE');
 
   const type = parseProviderType(trimmed(env['FLOYD_MODEL_PROVIDER_TYPE']));
-  const baseUrl = trimmed(env['FLOYD_MODEL_BASE_URL']) ?? DEFAULT_BASE_URL[type];
+  const baseUrl = resolveBaseUrl(type, trimmed(env['FLOYD_MODEL_BASE_URL']));
 
   const provider: ProviderConfig = {
     type,

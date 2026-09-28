@@ -1,7 +1,5 @@
 import { ErrorCodes, type HostUiCapability } from '@legacy-ai/floyd-code-sdk';
 
-import { currentFloydProfile } from '#/utils/region';
-
 export const PRODUCT_NAME = 'Floyd Code';
 export const CLI_COMMAND_NAME = 'f7';
 export const PROCESS_NAME = 'floyd-code';
@@ -78,11 +76,13 @@ export const DEFAULT_OAUTH_PROVIDER_NAME = 'managed:floyd-code';
 // auto-propagates instead of silently breaking the startup recovery path.
 export const OAUTH_LOGIN_REQUIRED_CODE = ErrorCodes.AUTH_LOGIN_REQUIRED;
 
-export const FEEDBACK_ISSUE_URL = 'https://github.com/LegacyAI/floyd-code/issues';
-// Sign-up / sign-in page offered to signed-out users so they can create an
-// account and submit feedback through the authenticated channel next time.
+const FLOYD_CODE_REPOSITORY_URL = 'https://github.com/CaptainPhantasy/f7';
+
+export const FEEDBACK_ISSUE_URL = `${FLOYD_CODE_REPOSITORY_URL}/issues`;
+// Entry page offered to signed-out users. This build has no hosted account
+// console, so it points at the project repository.
 export function floydCodeSignupUrl(): string {
-  return `${currentFloydProfile().siteBase}/code`;
+  return FLOYD_CODE_REPOSITORY_URL;
 }
 
 // Sent in the feedback `version` field so the backend can distinguish this
@@ -92,36 +92,38 @@ export const FEEDBACK_VERSION_PREFIX = 'floyd-code-';
 // Telemetry event name; keep stable for dashboard queries.
 export const FEEDBACK_TELEMETRY_EVENT = 'feedback_submitted';
 
-// CDN source of truth: all version checks and native install scripts pull from here.
-// The off-session endpoints derive from the current region profile so a
-// global login points at the .ai deployment; they are resolved per call so
-// a region switch (login/logout + refreshFloydRegion) takes effect immediately.
+// This build ships no vendor CDN, so the base stays empty: no version check,
+// install script, or binary download can reach a host the project does not
+// control, and the update path degrades to "no update available".
 export function floydCodeCdnBase(): string {
-  return currentFloydProfile().cdnBase;
+  return '';
 }
 export function floydCodeCdnLatestUrl(): string {
-  return `${floydCodeCdnBase()}/latest`;
+  const base = floydCodeCdnBase();
+  return base.length === 0 ? '' : `${base}/latest`;
 }
 // Rollout manifest consumed by update checks; the plain-text `/latest` above
 // stays unchanged forever — already-shipped clients hard-fail on non-semver
-// bodies, and the CDN install scripts read it for fresh installs.
+// bodies.
 export function floydCodeCdnLatestJsonUrl(): string {
-  return `${floydCodeCdnBase()}/latest.json`;
+  const base = floydCodeCdnBase();
+  return base.length === 0 ? '' : `${base}/latest.json`;
 }
 // Per-release native artifacts: `/binaries/<version>/manifest.json` +
-// `/binaries/<version>/floyd-code-<target>[.exe]` — the bare platform binary
-// (same layout install.ps1 consumes).
+// `/binaries/<version>/floyd-code-<target>[.exe]` — the bare platform binary.
 export function floydCodeCdnBinariesBase(): string {
-  return `${floydCodeCdnBase()}/binaries`;
+  const base = floydCodeCdnBase();
+  return base.length === 0 ? '' : `${base}/binaries`;
 }
 // The marketplace env override name lives in the shared agent-core-v2 plugin
 // domain (kap-server consumes it from there). Deep-path import: this module is
 // evaluated on every CLI invocation, so it must not pull in the engine root.
 export { FLOYD_CODE_PLUGIN_MARKETPLACE_URL_ENV } from '@legacy-ai/agent-core-v2/app/plugin/marketplace';
-// The CLI-side default catalog derives from the current region profile; the
-// env override above takes priority at the call site.
+// The env override above takes priority at the call site; with none set the
+// catalog URL is empty and the marketplace falls back to built-in entries.
 export function floydCodePluginMarketplaceUrl(): string {
-  return `${floydCodeCdnBase()}/plugins/marketplace.json`;
+  const base = floydCodeCdnBase();
+  return base.length === 0 ? '' : `${base}/plugins/marketplace.json`;
 }
 // Bound on each background "latest release" lookup when the TUI fills in
 // marketplace versions. Without it a stalled connection to github.com hangs
@@ -132,21 +134,23 @@ export const INTERACTIVE_UPDATE_CHECK_TIMEOUT_MS = 10_000;
 // one of these shows a quota note after the install result.
 export const QUOTA_CONSUMING_PLUGIN_IDS: readonly string[] = ['floyd-datasource'];
 export function floydCodeInstallShUrl(): string {
-  return `${floydCodeCdnBase()}/install.sh`;
+  const base = floydCodeCdnBase();
+  return base.length === 0 ? '' : `${base}/install.sh`;
 }
 export function floydCodeInstallPs1Url(): string {
-  return `${floydCodeCdnBase()}/install.ps1`;
+  const base = floydCodeCdnBase();
+  return base.length === 0 ? '' : `${base}/install.ps1`;
 }
 // Official download page, referenced by prompt copy that steers users away
 // from third-party install sources.
 export function floydCodeOfficialInstallUrl(): string {
-  return `${currentFloydProfile().siteBase}/code`;
+  return FLOYD_CODE_REPOSITORY_URL;
 }
 
-// Native install commands, split by platform. Use these for prompt copy and spawn calls only; do not assemble the strings elsewhere.
+// Install commands, split by platform. Use these for prompt copy and spawn calls only; do not assemble the strings elsewhere.
 export function nativeInstallCommandUnix(): string {
-  return `curl -fsSL ${floydCodeInstallShUrl()} | bash`;
+  return `npm install -g ${NPM_PACKAGE_NAME}`;
 }
 export function nativeInstallCommandWin(): string {
-  return `irm ${floydCodeInstallPs1Url()} | iex`;
+  return `npm install -g ${NPM_PACKAGE_NAME}`;
 }

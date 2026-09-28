@@ -139,7 +139,7 @@ disallowedTools:
 
 ### 选择 main agent
 
-两个 CLI flag 用于选择驱动新会话的 Agent，在 print 模式（`floyd -p`）和交互式 TUI 中均可使用：
+两个 CLI flag 用于选择驱动新会话的 Agent，在 print 模式（`f7 -p`）和交互式 TUI 中均可使用：
 
 - **`--agent <name>`**：以指定 Agent 作为 main agent 启动会话。名称可以指向内置 Agent 或任何已发现的文件；名称不存在时会报错，并列出可用的 Agent。
 - **`--agent-file <path>`**：以最高优先级加载一个 Agent 文件（仅本次启动）并以其启动。该 flag 只接受一个文件：不可重复传入，也不能与 `--agent` 同时使用。
@@ -149,8 +149,8 @@ disallowedTools:
 例如：
 
 ```sh
-floyd --agent reviewer
-floyd -p --agent reviewer "审查这个分支上的改动"
+f7 --agent reviewer
+f7 -p --agent reviewer "审查这个分支上的改动"
 ```
 
 绑定的 Agent 即会话的身份，在会话首次绑定后即固定，之后不可切换。在 TUI 中，这些 flag 只绑定启动时的会话；之后在同一进程内新建的会话（例如通过 `/new`）使用默认 Agent。

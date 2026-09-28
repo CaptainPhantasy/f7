@@ -1,11 +1,12 @@
 /**
- * Region profiles for the mainland-China (.com) and global (.ai)
- * Floyd Code deployments, plus the resolver that decides which region a
- * client belongs to.
+ * Region profiles for the mainland-China and global deployment slots, plus
+ * the resolver that decides which region a client belongs to.
  *
  * A region is a bundle of endpoints (OAuth host, managed API base URL, CDN,
- * site, telemetry). The OAuth client_id is shared across regions and stays
- * in `./constants`.
+ * site, telemetry). No deployment is baked in: every endpoint starts empty
+ * and is filled in by the env overrides, so an unconfigured client never
+ * reaches a host at all. The OAuth client_id is shared across regions and
+ * stays in `./constants`.
  *
  * Resolution order (first match wins):
  *   1. env override (`FLOYD_CODE_OAUTH_HOST` / `FLOYD_OAUTH_HOST`)
@@ -50,16 +51,16 @@ export const FLOYD_REGION_PROFILES: Record<FloydRegion, FloydRegionProfile> = {
   'mainland-cn': {
     oauthHost: DEFAULT_FLOYD_CODE_OAUTH_HOST,
     baseUrl: DEFAULT_FLOYD_CODE_BASE_URL,
-    cdnBase: 'https://code.floyd.com/floyd-code',
-    siteBase: 'https://www.floyd.com',
-    telemetryEndpoint: 'https://telemetry-logs.floyd.com/v1/event',
+    cdnBase: '',
+    siteBase: '',
+    telemetryEndpoint: '',
   },
   global: {
-    oauthHost: 'https://auth.floyd.ai',
-    baseUrl: 'https://api.floyd.ai/coding/v1',
-    cdnBase: 'https://code.floyd.ai/floyd-code',
-    siteBase: 'https://www.floyd.ai',
-    telemetryEndpoint: 'https://telemetry-logs.floyd.ai/v1/event',
+    oauthHost: '',
+    baseUrl: '',
+    cdnBase: '',
+    siteBase: '',
+    telemetryEndpoint: '',
   },
 };
 
@@ -69,25 +70,23 @@ export function floydRegionProfile(region: FloydRegion): FloydRegionProfile {
 
 /**
  * Content-CDN URL builder (tips banner, WebBridge / Computer-Use binaries).
- * International mirror coverage of cdn.floyd.ai for these payloads is still
- * being confirmed, so both regions currently share the .com host — funnel
- * every content URL through here so flipping later touches one function.
+ * No content-CDN host ships with the client, so the result is a root-relative
+ * path — funnel every content URL through here so pointing at a real CDN
+ * later touches one function.
  */
 export function floydCdnContentUrl(path: string): string {
-  return `https://cdn.floyd.com/${path.replace(/^\/+/, '')}`;
+  return `/${path.replace(/^\/+/, '')}`;
 }
 
 /**
  * Login hosts for an explicit region choice, or `undefined` when an env
  * override (`FLOYD_CODE_OAUTH_HOST` / `FLOYD_OAUTH_HOST` / `FLOYD_CODE_BASE_URL`)
- * is in play — env keeps full control of endpoints, so a region pick must not
- * smuggle profile hosts past it (requested hosts outrank env in
- * `resolveFloydCodeLoginAuth`).
+ * is in play or the chosen profile has no endpoints configured — env keeps
+ * full control of endpoints, so a region pick must not smuggle profile hosts
+ * past it (requested hosts outrank env in `resolveFloydCodeLoginAuth`), and an
+ * unconfigured region must not persist an empty host.
  *
- * When returned, both hosts are always set — including for 'mainland-cn',
- * whose values equal the defaults. Passing them explicitly is what lets
- * "switch back to mainland China" override a previously persisted global
- * login in config.toml.
+ * When returned, both hosts are always set.
  */
 export function floydRegionLoginHosts(
   region: FloydRegion,
@@ -97,6 +96,7 @@ export function floydRegionLoginHosts(
     return undefined;
   }
   const profile = floydRegionProfile(region);
+  if (profile.oauthHost.length === 0 || profile.baseUrl.length === 0) return undefined;
   return { oauthHost: profile.oauthHost, baseUrl: profile.baseUrl };
 }
 
@@ -139,7 +139,8 @@ function normalizeHost(value: string): string {
 function regionForOAuthHost(oauthHost: string): FloydRegion | undefined {
   const normalized = normalizeHost(oauthHost);
   for (const region of Object.keys(FLOYD_REGION_PROFILES) as FloydRegion[]) {
-    if (normalizeHost(FLOYD_REGION_PROFILES[region].oauthHost) === normalized) return region;
+    const profileHost = normalizeHost(FLOYD_REGION_PROFILES[region].oauthHost);
+    if (profileHost.length > 0 && profileHost === normalized) return region;
   }
   return undefined;
 }

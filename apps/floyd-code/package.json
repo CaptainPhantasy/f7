@@ -23,7 +23,8 @@
     "tui"
   ],
   "bin": {
-    "f7": "dist/main.mjs"
+    "f7": "dist/main.mjs",
+    "floyd-code": "dist/main.mjs"
   },
   "files": [
     "dist",

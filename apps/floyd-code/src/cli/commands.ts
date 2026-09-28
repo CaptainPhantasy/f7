@@ -36,7 +36,7 @@ export function createProgram(
     .configureHelp({ helpWidth: 100 })
     .helpOption('-h, --help', 'Show help.')
     .usage('[options] [command]')
-    .addHelpText('after', '\nDocumentation:        https://legacyai.github.io/floyd-code/\n');
+    .addHelpText('after', '\nDocumentation:        https://github.com/CaptainPhantasy/f7\n');
 
   program
     .addOption(

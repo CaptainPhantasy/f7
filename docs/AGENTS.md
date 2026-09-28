@@ -53,7 +53,7 @@ Both groups share the same behavior: they arrive with a specific goal, scan head
 
 ## Wording conventions
 
-- Do not change H1 titles or nav/sidebar labels.
+- Do not change H1 titles or nav/sidebar labels, except where a title or label names the executable: those follow the real binary name (`f7`).
 - English H2+ headings use sentence case (only the first word capitalized unless it is a proper noun). Treat "Wire", "Plan mode", "Thinking mode", and the permission mode names "Always Ask", "Ask When Needed", and "Never Ask" as proper nouns; do not treat "agent" as a proper noun.
 - Chinese H2+ headings keep English words in sentence case; preserve proper nouns listed in the term table below.
 - Use `API key` in English and `API 密钥` in Chinese; keep `JSON`, `JSONL`, `OAuth`, `macOS`, `Node.js`, `npm`, `pnpm`, and `TypeScript` as-is.
@@ -105,21 +105,22 @@ Term mapping (Chinese <-> English, and proper noun handling):
 | Prompt Flow | Prompt Flow | yes | yes |
 | Diff | diff | yes | no |
 
-### Floyd platform rules
+### Endpoints and examples
 
-Two distinct platforms exist and must never be mixed:
+No vendor endpoint in this fork is reachable: the managed hosts baked into `packages/oauth`, `packages/kosong`, and `packages/remote-control` (`api.floyd.com`, `api.floyd.ai`, `api.legacy.ai`, `auth.floyd.com`, `code.floyd.com`, `cdn.floyd.com`, `code-rc.floyd.com`, `telemetry-logs.floyd.com`, `api.legacy.cn`) either do not resolve or do not accept connections, `www.floyd.ai` is a domain-sale page, and `legacyai.github.io` is not this project's documentation site. Never document any of them as a usable endpoint, install source, download, or console.
 
-| | Floyd Code platform | Floyd Open Platform |
-|---|---|---|
-| Audience | Individual developers, subscription-based | Enterprise / product integration, pay-per-token |
-| OpenAI-compatible base URL | `https://api.floyd.com/coding/v1` | `https://api.legacy.cn/v1` |
-| Anthropic-compatible base URL | `https://api.floyd.com/coding/` | Not supported |
-| API key entry | [Floyd Code console](https://www.floyd.com/code/console) | [platform.floyd.com](https://platform.floyd.com) |
+| What you are documenting | Use instead |
+|---|---|
+| A provider the reader can call | `[providers.<name>]` with `type = "openai"`, `base_url = "https://your-gateway.example/v1"`, `api_key = "YOUR_API_KEY"` |
+| A model the reader can select | an alias declared on that endpoint, e.g. `my-gateway/gpt-4.1` |
+| Installation | build from a checkout: `git clone … && pnpm install`, then `pnpm dev:cli` — no binary or npm package is published yet |
+| A link to another page | a relative link (`../configuration/config-files.md#anchor`), never an absolute site URL |
 
 Rules:
-- When documenting Floyd Code CLI or VS Code: always use `api.floyd.com/coding/…`. Never write `api.legacy.cn` in this context.
-- When documenting Open Platform integration: use `api.legacy.cn/v1`.
-- Distinguish context explicitly: "in Floyd Code CLI / VS Code" vs "in third-party tools / your own product".
+
+- The CLI needs no account and no login. Never present `/login` as a required first step; it and the managed-service variables (`FLOYD_CODE_BASE_URL`, `FLOYD_OAUTH_HOST`) matter only to accounts on the vendor's managed service.
+- Provider *type* names (`floyd`, `anthropic`, `openai`, …) are code identifiers. Keep them spelled exactly as the code does, even though they are not hosts.
+- The executable is `f7` (`CLI_COMMAND_NAME` in `apps/floyd-code/src/constant/app.ts`); the npm package name is `@legacy-ai/floyd-code`, which is not published yet, so installation docs describe the source checkout (`git clone` + `pnpm install`, then `pnpm dev:cli`); data lives in `~/.floyd-code` (override with `FLOYD_CODE_HOME`). The `floyd-cli` of `guides/migration.md` is the separate legacy Python/uv tool, whose data lives in `~/.floyd` — keep that distinction explicit.
 - Product full names: **Floyd Code CLI** and **Floyd Code for VS Code**. Do not abbreviate to "Floyd CLI".
 
 ## Typography
@@ -306,12 +307,11 @@ Run through this before marking any doc change ready for review.
 
 Before shipping, verify these values match the rest of the docs:
 
-- **Base URL**: matches the [Floyd platform rules](#floyd-platform-rules) table above
+- **Endpoint**: only `https://your-gateway.example/v1`-style placeholders — see [Endpoints and examples](#endpoints-and-examples)
+- **Command name**: `f7` wherever it is used as a command, never `floyd`
 - **Upgrade command**: matches `guides/getting-started.md`
-- **Model ID**: use `floyd-for-coding`, not a versioned model name
-- **Login command**: `/login`, not `/setup`
+- **Model ID**: an alias declared in the same example, e.g. `my-gateway/gpt-4.1` — never a managed-tier name such as `floyd-for-coding` or `k3`
 - **Product full name**: **Floyd Code CLI** or **Floyd Code for VS Code** — never "Floyd CLI"
-- **Platform URLs**: `api.floyd.com/coding/…` for Floyd Code platform; `api.legacy.cn/v1` for Open Platform — never mix the two
 
 ## Build and preview
 

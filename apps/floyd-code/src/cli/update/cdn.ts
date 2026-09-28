@@ -66,8 +66,7 @@ export async function fetchLatestVersionFromCdn(
   const response = await fetchWithTimeout(fetchImpl, floydCodeCdnLatestUrl(), timeoutMs);
   if (!response.ok) {
     throw new Error(`CDN /latest returned HTTP ${response.status}`);
-  }
-  const raw = (await response.text()).trim();
+  }  const raw = (await response.text()).trim();
   if (valid(raw) === null) {
     throw new Error(`CDN /latest returned invalid semver: ${JSON.stringify(raw)}`);
   }

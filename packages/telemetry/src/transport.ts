@@ -13,12 +13,14 @@ import { join } from 'node:path';
 import type { EnrichedTelemetryEvent, TelemetryPrimitive } from './types';
 import { isTelemetryPrimitive } from './types';
 
-// Mainland-China telemetry endpoint, mirroring
-// `FLOYD_REGION_PROFILES['mainland-cn'].telemetryEndpoint` in
-// `@legacy-ai/floyd-code-oauth` (the region source of truth). This package
-// deliberately has no dependency on it — region-aware callers pass `endpoint`
-// explicitly (e.g. through `initializeTelemetry`).
-export const TELEMETRY_ENDPOINT = 'https://telemetry-logs.floyd.com/v1/event';
+export const TELEMETRY_ENDPOINT_ENV = 'FLOYD_CODE_TELEMETRY_ENDPOINT';
+
+export function resolveTelemetryEndpoint(env: NodeJS.ProcessEnv = process.env): string {
+  const value = env[TELEMETRY_ENDPOINT_ENV];
+  return value === undefined ? '' : value.trim();
+}
+
+export const TELEMETRY_ENDPOINT = resolveTelemetryEndpoint();
 export const SERVER_EVENT_PREFIX = 'kfc_';
 export const USER_ID_PREFIX = 'kfc_device_id_';
 export const DISK_EVENT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -70,6 +72,8 @@ export class AsyncTransport {
 
   async send(events: readonly EnrichedTelemetryEvent[], signal?: AbortSignal): Promise<void> {
     if (events.length === 0) return;
+    const endpoint = this.resolveEndpoint();
+    if (endpoint === undefined) return;
     let savedToDisk = false;
     const saveEventsToDisk = (): void => {
       if (savedToDisk) return;
@@ -129,6 +133,7 @@ export class AsyncTransport {
   }
 
   async retryDiskEvents(): Promise<void> {
+    if (this.resolveEndpoint() === undefined) return;
     let entries: string[];
     try {
       entries = readdirSync(this.telemetryDir());
@@ -176,6 +181,8 @@ export class AsyncTransport {
   }
 
   private async sendHttp(payload: TelemetryPayload, signal?: AbortSignal): Promise<void> {
+    const endpoint = this.resolveEndpoint();
+    if (endpoint === undefined) return;
     const token = this.getAccessToken === null ? null : await this.getAccessToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -184,10 +191,10 @@ export class AsyncTransport {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await this.post(payload, headers, signal);
+    const response = await this.post(payload, headers, endpoint, signal);
     if (response.status === 401 && headers['Authorization'] !== undefined) {
       delete headers['Authorization'];
-      const retry = await this.post(payload, headers, signal);
+      const retry = await this.post(payload, headers, endpoint, signal);
       handleStatus(retry.status);
       return;
     }
@@ -197,10 +204,10 @@ export class AsyncTransport {
   private async post(
     payload: TelemetryPayload,
     headers: Record<string, string>,
+    endpoint: string,
     signal?: AbortSignal,
   ): Promise<Response> {
     try {
-      const endpoint = typeof this.endpoint === 'function' ? this.endpoint() : this.endpoint;
       return await fetchWithTimeout(
         this.fetchImpl,
         endpoint,
@@ -216,6 +223,12 @@ export class AsyncTransport {
       if (signal?.aborted === true || isAbortError(error)) throw error;
       throw new TransientTelemetryError(String(error));
     }
+  }
+
+  private resolveEndpoint(): string | undefined {
+    const endpoint = typeof this.endpoint === 'function' ? this.endpoint() : this.endpoint;
+    const value = endpoint.trim();
+    return value.length === 0 ? undefined : value;
   }
 
   private telemetryDir(): string {

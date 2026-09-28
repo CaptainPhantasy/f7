@@ -1,13 +1,13 @@
 /**
- * Deprecated `floyd server` shim.
+ * Deprecated `f7 server` shim.
  *
- * The `floyd server` command tree was replaced by `floyd web` (a foreground
- * server opened in the browser). Any `floyd server …` invocation — bare or
+ * The `f7 server` command tree was replaced by `f7 web` (a foreground
+ * server opened in the browser). Any `f7 server …` invocation — bare or
  * with any legacy subcommand/flags — lands here, prints the deprecation
  * notice, and exits 1. The shim itself is scheduled for removal in the next
  * major version of Floyd Code.
  *
- * One subcommand stays functional: `floyd server kill`, the cleanup path for
+ * One subcommand stays functional: `f7 server kill`, the cleanup path for
  * background servers started by pre-0.28.0 builds (recorded in the legacy
  * single-instance lock, which the instance registry never sees).
  */

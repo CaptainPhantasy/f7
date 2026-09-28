@@ -16,16 +16,15 @@ import { WebSocket, type RawData } from 'ws';
 
 import { acquireRemoteControlLock } from './lock';
 
-export const REMOTE_CONTROL_RELAY_ORIGIN = 'https://code-rc.floyd.com';
-
 export const REMOTE_CONTROL_RELAY_URL_ENV = 'FLOYD_CODE_REMOTE_CONTROL_RELAY_URL';
 
 export function resolveRemoteControlRelayOrigin(
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): string {
-  const value = env[REMOTE_CONTROL_RELAY_URL_ENV]?.trim();
-  return value === undefined || value.length === 0 ? REMOTE_CONTROL_RELAY_ORIGIN : value;
+  return env[REMOTE_CONTROL_RELAY_URL_ENV]?.trim() ?? '';
 }
+
+export const REMOTE_CONTROL_RELAY_ORIGIN = resolveRemoteControlRelayOrigin();
 
 const MAX_HTTP_HEADER_BYTES = 64 * 1024;
 const MAX_HTTP_REQUEST_BYTES = 10 * 1024 * 1024;
@@ -126,6 +125,9 @@ export function buildRemoteControlUrl(
   sessionId?: string,
   relayOrigin = resolveRemoteControlRelayOrigin(),
 ): string {
+  if (relayOrigin.trim().length === 0) {
+    throw new Error(`Remote Control requires a relay origin. Set ${REMOTE_CONTROL_RELAY_URL_ENV}.`);
+  }
   const url = new URL(relayOrigin);
   const relayPath = url.pathname.replace(/\/+$/, '');
   const devicePath = `${relayPath}/devices/${encodeURIComponent(deviceId)}`;

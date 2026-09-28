@@ -24,6 +24,10 @@ const DEFAULT_MAX_FAILURES = 10;
 const DEFAULT_WINDOW_MS = 60_000;
 const DEFAULT_BAN_MS = 60_000;
 
+export function isTrustProxyEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env['FLOYD_CODE_TRUST_PROXY'] === '1';
+}
+
 export function createAuthFailureLimiter(
   opts?: AuthFailureLimiterOptions,
 ): AuthFailureLimiter {

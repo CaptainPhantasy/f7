@@ -89,8 +89,8 @@ const config = withMermaid(defineConfig({
             {
               text: '参考手册',
               items: [
-                { text: 'floyd 命令', link: '/zh/reference/floyd-command' },
-                { text: 'floyd acp 子命令', link: '/zh/reference/floyd-acp' },
+                { text: 'f7 命令', link: '/zh/reference/floyd-command' },
+                { text: 'f7 acp 子命令', link: '/zh/reference/floyd-acp' },
                 { text: '服务 API', link: '/zh/reference/server-api' },
                 { text: '内置工具', link: '/zh/reference/tools' },
                 { text: '斜杠命令', link: '/zh/reference/slash-commands' },
@@ -168,8 +168,8 @@ const config = withMermaid(defineConfig({
             {
               text: 'Reference',
               items: [
-                { text: 'floyd Command', link: '/en/reference/floyd-command' },
-                { text: 'floyd acp Subcommand', link: '/en/reference/floyd-acp' },
+                { text: 'f7 Command', link: '/en/reference/floyd-command' },
+                { text: 'f7 acp Subcommand', link: '/en/reference/floyd-acp' },
                 { text: 'Server API', link: '/en/reference/server-api' },
                 { text: 'Built-in Tools', link: '/en/reference/tools' },
                 { text: 'Slash Commands', link: '/en/reference/slash-commands' },
@@ -194,7 +194,7 @@ const config = withMermaid(defineConfig({
     outline: [2, 3],
     search: { provider: 'local' },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/LegacyAI/floyd-code' },
+      { icon: 'github', link: 'https://github.com/CaptainPhantasy/f7' },
     ],
   },
 

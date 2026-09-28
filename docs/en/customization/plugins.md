@@ -168,7 +168,7 @@ Look up national (GB), industry, local, and association standards by number or t
 
 ### Floyd Browser Extension <Badge type="tip" text="v1.11.4" />
 
-Floyd Browser Extension lets AI drive your browser directly: not an emulator, not a crawler, but the browser you use every day, with your login sessions and cookies. AI can open pages, read content, click buttons, fill in forms, and take screenshots just like you do, taking repetitive web operations off your hands. See the [Floyd Browser Extension site](https://www.floyd.com/features/webbridge) for a product overview.
+Floyd Browser Extension lets AI drive your browser directly: not an emulator, not a crawler, but the browser you use every day, with your login sessions and cookies. AI can open pages, read content, click buttons, fill in forms, and take screenshots just like you do, taking repetitive web operations off your hands.
 
 #### Install the browser extension
 
@@ -180,9 +180,9 @@ Open the [Chrome Web Store](https://chromewebstore.google.com/detail/floyd-webbr
 
 **Option 2: Install manually**
 
-Use this when you can't reach the stores:
+Use this when you can't reach the stores and already have the extension package on disk:
 
-1. [Download the extension package](https://floyd-web-img.legacy.cn/webbridge/latest/extension/floyd-webbridge-extension.zip) and unzip it
+1. Unzip the extension package and note the folder it extracts to
 2. Type `chrome://extensions/` in the address bar to open the extensions page, then turn on **Developer mode** in the top-right corner
 
    ![Turn on Developer mode](../../media/webbridge-dev-mode.jpeg)
@@ -222,7 +222,7 @@ The first time you use Floyd Computer Use after installation, it shows an author
 
 #### Notes for the Windows version
 
-The Windows version (WinCU) installs differently from the macOS one: run `/plugins install https://cdn.floyd.com/floyd-computer-use-windows/latest/floyd-cu-win-plugin.zip` in Floyd Code, then restart after installation. A few things to know before using it:
+The Windows version (WinCU) installs differently from the macOS one: run `/plugins install` with the path or URL of the Windows plugin package (`floyd-cu-win-plugin.zip`) in Floyd Code, then restart after installation. A few things to know before using it:
 
 - **It may briefly take over your mouse and keyboard**: Unlike the macOS version, the Windows version cannot reliably inject input in the background; it may briefly activate the target window and use your real mouse and keyboard while performing actions
 - **System requirements**: Windows 10 version 1903 (Build 18362) or later, or Windows 11, x64; a real interactive desktop session is required, and Windows Server needs Desktop Experience
@@ -313,7 +313,7 @@ Each field (the inline `systemPrompt` and the `systemPromptPath` file) is limite
 
 ### Differences between the two engines
 
-System-prompt contributions take effect on every Floyd Code surface: the interactive TUI, `floyd -p`, and `floyd web` all run on the v2 engine.
+System-prompt contributions take effect on every Floyd Code surface: the interactive TUI, `f7 -p`, and `f7 web` all run on the v2 engine.
 
 <details>
 <summary>Instruction refresh behavior under the two engines</summary>

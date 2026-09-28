@@ -179,10 +179,12 @@ describe('PluginUpdateNotifier', () => {
   });
 
   it('resolves plugin tools whose qualified name core truncated before the separator', async () => {
-    // Server part exactly 50 chars: the 64-char truncation cuts the whole
-    // `__` separator and tool name, leaving `mcp__<server>_<hash>`.
-    const serverName = `plugin-floyd-datasource:${'s'.repeat(27)}`;
-    const sanitized = `plugin-floyd-datasource_${'s'.repeat(27)}`;
+    // Server sanitizes to exactly 50 chars, so the 55-char truncation head
+    // (64 - 8 hash - 1 underscore) cuts the whole `__` separator and tool
+    // name, leaving `mcp__<server>_<hash>`.
+    const serverSuffix = 's'.repeat(26);
+    const serverName = `plugin-floyd-datasource:${serverSuffix}`;
+    const sanitized = `plugin-floyd-datasource_${serverSuffix}`;
     expect(`mcp__${sanitized}`.length).toBe(55);
     const truncatedToolName = `mcp__${sanitized}_a1b2c3d4`;
 

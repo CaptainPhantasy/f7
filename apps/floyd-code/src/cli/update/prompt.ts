@@ -14,7 +14,8 @@ import {
 
 import { type InstallSource, type UpdateTarget } from './types';
 
-export const CHANGELOG_URL = 'https://legacyai.github.io/floyd-code/en/release-notes/changelog.html';
+export const CHANGELOG_URL =
+  'https://github.com/CaptainPhantasy/f7/blob/main/docs/en/release-notes/changelog.md';
 
 export type InstallPromptChoiceValue = 'install' | 'skip';
 

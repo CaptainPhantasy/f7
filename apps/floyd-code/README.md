@@ -2,51 +2,26 @@
 
 > The Starting Point for Next-Gen Agents
 
-[![npm](https://img.shields.io/npm/v/@legacy-ai/floyd-code)](https://www.npmjs.com/package/@legacy-ai/floyd-code) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)  [![Docs](https://img.shields.io/badge/docs-online-blue)](https://legacyai.github.io/floyd-code/en/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ## What is Floyd Code CLI
 
-Floyd Code CLI is an AI coding agent that runs in your terminal. It can read and edit code, run shell commands, search files, fetch web pages, and choose the next step based on the feedback it receives. It works out of the box with Legacy AI's Floyd models and can also be configured to use other compatible providers.
+Floyd Code CLI is an AI coding agent that runs in your terminal. It can read and edit code, run shell commands, search files, fetch web pages, and choose the next step based on the feedback it receives. It runs against any model provider you configure, so you can point it at the API you already use.
 
 ## Install
 
-The recommended install path is the official script. It does not require Node.js to be installed first.
-
-- **macOS / Linux**:
+No prebuilt binary or npm package is published for Floyd Code yet — install it by building from source. Node.js 24.15.0 or later and pnpm 10.33.0 are required.
 
 ```sh
-curl -fsSL https://code.floyd.com/floyd-code/install.sh | bash
+git clone https://github.com/CaptainPhantasy/f7.git
+cd f7
+pnpm install
+pnpm dev:cli
 ```
 
-- **Windows (PowerShell)**:
+> On Windows, install [Git for Windows](https://gitforwindows.org/) before first launch because Floyd Code CLI uses Git Bash as its shell environment. If Git Bash is installed in a custom location, set `FLOYD_SHELL_PATH` to the absolute path of `bash.exe`.
 
-```powershell
-irm https://code.floyd.com/floyd-code/install.ps1 | iex
-```
-
-> On Windows, install [Git for Windows](https://gitforwindows.org/) before first launch because Floyd Code CLI uses the bundled Git Bash as its shell environment. If Git Bash is installed in a custom location, set `FLOYD_SHELL_PATH` to the absolute path of `bash.exe`.
-
-Then run it with a new Terminal session:
-
-```sh
-floyd --version
-```
-
-### Alternative: npm
-
-If you prefer npm, use Node.js 22.19.0 or later:
-
-```sh
-npm install -g @legacy-ai/floyd-code
-```
-
-Or with pnpm:
-
-```sh
-pnpm add -g @legacy-ai/floyd-code
-```
-
-For upgrade and uninstall instructions, see the [Getting Started guide](https://legacyai.github.io/floyd-code/en/guides/getting-started).
+The CLI executable is `f7`. In a source checkout use `pnpm dev:cli` wherever the examples below use `f7`; the full set of build commands is in the [main repository README](https://github.com/CaptainPhantasy/f7#develop).
 
 ## Quick Start
 
@@ -54,10 +29,10 @@ Open a project and start the interactive UI:
 
 ```sh
 cd your-project
-floyd
+f7
 ```
 
-On first launch, run `/login` inside Floyd Code CLI and choose either Floyd Code OAuth or a Floyd Platform API key. After login, try a first task:
+On first launch, point Floyd Code CLI at the provider you want to use by adding a `[providers.*]` entry to `~/.floyd-code/config.toml`, or run `/provider` inside the TUI to add one interactively. Then try a first task:
 
 ```
 Take a look at this project and explain the main directories.
@@ -65,7 +40,6 @@ Take a look at this project and explain the main directories.
 
 ## Key Features
 
-- **Single-binary distribution.** Install with one command — no Node.js setup, no PATH gymnastics, no global module conflicts.
 - **Blazing-fast startup.** The TUI is ready in milliseconds, so opening a session never feels heavy.
 - **Polished TUI.** A carefully tuned interface designed for long, focused agent sessions.
 - **Video input.** Drop a screen recording or demo clip into the chat — let the agent watch instead of typing out what's hard to describe in words.
@@ -75,14 +49,14 @@ Take a look at this project and explain the main directories.
 
 ## Documentation
 
-- Full docs: https://legacyai.github.io/floyd-code/en/
-- 中文文档: https://legacyai.github.io/floyd-code/zh/
-- Getting Started: https://legacyai.github.io/floyd-code/en/guides/getting-started
+- Full docs: https://github.com/CaptainPhantasy/f7/blob/main/docs/en/index.md
+- 中文文档: https://github.com/CaptainPhantasy/f7/blob/main/docs/zh/index.md
+- Getting Started: https://github.com/CaptainPhantasy/f7/blob/main/docs/en/guides/getting-started.md
 
 ## Repository & Issues
 
-- Source: https://github.com/LegacyAI/floyd-code
-- Issues: https://github.com/LegacyAI/floyd-code/issues
+- Source: https://github.com/CaptainPhantasy/f7
+- Issues: https://github.com/CaptainPhantasy/f7/issues
 - Security: see SECURITY.md in the main repository
 
 ## License

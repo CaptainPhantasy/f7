@@ -20,7 +20,7 @@ Overrides the data root directory; the default is `~/.floyd-code`. Once set, the
 export FLOYD_CODE_HOME="/path/to/custom/floyd-code"
 ```
 
-> Make sure the directory is writable. Multiple `floyd` instances sharing the same `FLOYD_CODE_HOME` will share config and credential files.
+> Make sure the directory is writable. Multiple `f7` instances sharing the same `FLOYD_CODE_HOME` will share config and credential files.
 
 For the complete data directory structure, see [Data locations](./data-locations.md).
 
@@ -61,9 +61,9 @@ These conventional names are fixed per provider type. If you would rather keep t
 This design lets you keep familiar key name conventions while centralizing secret management in the config file:
 
 ```toml
-[providers.floyd.env]
-FLOYD_API_KEY = "sk-xxx"
-FLOYD_BASE_URL = "https://api.legacy.ai/v1"
+[providers.my-gateway.env]
+OPENAI_API_KEY = "YOUR_API_KEY"
+OPENAI_BASE_URL = "https://your-gateway.example/v1"
 ```
 
 Key names per provider:
@@ -97,6 +97,8 @@ This group of variables redirects OAuth authentication and managed service endpo
 | `FLOYD_OAUTH_HOST` | OAuth auth host; fallback for `FLOYD_CODE_OAUTH_HOST` | Falls back to `https://auth.floyd.com` when unset |
 | `FLOYD_CODE_BASE_URL` | Managed API base URL used after OAuth login | `https://api.floyd.com/coding/v1` |
 
+Both variables address the vendor's managed service, and neither has to be set: the CLI requires no account, and a provider configured in `config.toml` supplies the endpoint on its own.
+
 ::: warning
 `FLOYD_CODE_BASE_URL` (OAuth-managed service, targeting `floyd.com`) and `FLOYD_BASE_URL` (direct API key connection, targeting `legacy.ai`) are two distinct variables. Use each one in its appropriate context.
 :::
@@ -106,12 +108,12 @@ This group of variables redirects OAuth authentication and managed service endpo
 Want to switch models for testing without touching `config.toml`? When `FLOYD_MODEL_NAME` is set, the CLI synthesizes a temporary provider and model alias from the `FLOYD_MODEL_*` variables in memory; nothing is written back to the config file. These variables take priority over `default_model` in `config.toml`, but the `-m <alias>` option at startup still has the highest priority.
 
 ```sh
-export FLOYD_MODEL_NAME="floyd-for-coding"
+export FLOYD_MODEL_NAME="gpt-4.1"
 export FLOYD_MODEL_API_KEY="YOUR_API_KEY"
 export FLOYD_MODEL_BASE_URL="https://api.example.com/v1"
 export FLOYD_MODEL_MAX_CONTEXT_SIZE="262144"
 export FLOYD_MODEL_CAPABILITIES="image_in,thinking"
-floyd
+f7
 ```
 
 Complete variable list:
@@ -139,11 +141,11 @@ Switches that control the behavior of subsystems such as telemetry, background t
 | Variable | Purpose | Valid values |
 | --- | --- | --- |
 | `FLOYD_DISABLE_TELEMETRY` | Disable anonymous telemetry reporting | `1`, `true`, `yes`, `y` (case-insensitive) |
-| `FLOYD_CODE_PASSWORD` | Parallel auth credential for `floyd web`, recommended when binding beyond loopback (see [Security notes](../guides/web.md#security-notes)) | Any non-empty string; when unset, only the token is valid |
+| `FLOYD_CODE_PASSWORD` | Parallel auth credential for `f7 web`, recommended when binding beyond loopback (see [Security notes](../guides/web.md#security-notes)) | Any non-empty string; when unset, only the token is valid |
 | `FLOYD_CODE_BACKGROUND_KEEP_ALIVE_ON_EXIT` | Keep background tasks when the session closes; higher priority than `config.toml` (default: stop them on exit) | Truthy: `1`/`true`/`yes`/`on`; falsy: `0`/`false`/`no`/`off` |
 | `FLOYD_CODE_BACKGROUND_MAX_RUNNING_TASKS` | Cap on concurrently running background tasks; higher priority than `[background] max_running_tasks` (unset = no cap) | Positive integer; invalid values are ignored |
 | `FLOYD_CODE_BACKGROUND_BASH_TASK_TIMEOUT_S` | Default timeout (seconds) for background `Bash` tasks, also used to re-arm foreground commands moved to the background; higher priority than `[task] bash_task_timeout_s` (`0` = no timeout) | Non-negative integer; invalid values are ignored |
-| `FLOYD_CODE_BACKGROUND_PRINT_BACKGROUND_MODE` | What `floyd -p` does while background tasks are still pending after the main turn; higher priority than `[task] print_background_mode` | `exit`, `drain`, or `steer`; invalid values are ignored |
+| `FLOYD_CODE_BACKGROUND_PRINT_BACKGROUND_MODE` | What `f7 -p` does while background tasks are still pending after the main turn; higher priority than `[task] print_background_mode` | `exit`, `drain`, or `steer`; invalid values are ignored |
 | `FLOYD_CODE_BACKGROUND_PRINT_WAIT_CEILING_S` | Wall-clock ceiling (seconds) for the print-mode drain/steer wait; higher priority than `[task] print_wait_ceiling_s` | Positive integer; invalid values are ignored |
 | `FLOYD_CODE_BACKGROUND_PRINT_MAX_TURNS` | Max number of new turns triggered by background-task completions in print mode; higher priority than `[task] print_max_turns` | Positive integer; invalid values are ignored |
 | `FLOYD_IMAGE_MAX_EDGE_PX` | Longest-edge ceiling (px) for image compression; higher priority than `[image] max_edge_px` (default `2000`) | Positive integer; invalid values are ignored |

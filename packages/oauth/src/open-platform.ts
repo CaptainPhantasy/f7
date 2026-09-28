@@ -22,16 +22,14 @@ export interface OpenPlatformDefinition {
 export const OPEN_PLATFORMS: readonly OpenPlatformDefinition[] = [
   {
     id: 'legacy-cn',
-    name: 'Floyd Platform (API key · platform.floyd.com)',
-    baseUrl: 'https://api.legacy.cn/v1',
-    consoleUrl: 'https://platform.floyd.com',
+    name: 'Floyd Platform (API key · mainland CN)',
+    baseUrl: '',
     allowedPrefixes: ['floyd-k'],
   },
   {
     id: 'legacy-ai',
-    name: 'Floyd Platform (API key · platform.floyd.ai)',
-    baseUrl: 'https://api.legacy.ai/v1',
-    consoleUrl: 'https://platform.floyd.ai',
+    name: 'Floyd Platform (API key · global)',
+    baseUrl: '',
     allowedPrefixes: ['floyd-k'],
   },
 ];
@@ -114,7 +112,11 @@ export async function fetchOpenPlatformModels(
   fetchImpl: typeof fetch = fetch,
   signal?: AbortSignal,
 ): Promise<ManagedFloydCodeModelInfo[]> {
-  const res = await fetchImpl(`${platform.baseUrl.replace(/\/+$/, '')}/models`, {
+  const baseUrl = platform.baseUrl.replace(/\/+$/, '');
+  if (baseUrl.length === 0) {
+    throw new Error(`No base URL configured for platform "${platform.id}".`);
+  }
+  const res = await fetchImpl(`${baseUrl}/models`, {
     headers: {
       ...parseFloydCodeCustomHeaders(),
       Authorization: `Bearer ${apiKey}`,

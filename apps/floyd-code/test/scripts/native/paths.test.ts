@@ -43,13 +43,13 @@ describe('targetTriple', () => {
 });
 
 describe('executableName', () => {
-  it('returns floyd.exe on win32', () => {
-    expect(executableName('win32')).toBe('floyd.exe');
+  it('returns f7.exe on win32', () => {
+    expect(executableName('win32')).toBe('f7.exe');
   });
 
-  it('returns floyd on other platforms', () => {
-    expect(executableName('darwin')).toBe('floyd');
-    expect(executableName('linux')).toBe('floyd');
+  it('returns f7 on other platforms', () => {
+    expect(executableName('darwin')).toBe('f7');
+    expect(executableName('linux')).toBe('f7');
   });
 });
 
@@ -64,10 +64,10 @@ describe('path helpers', () => {
 
   it('returns absolute bin path with executable name', () => {
     expect(nativeBinPath('darwin-arm64', 'darwin')).toBe(
-      p('dist-native/bin/darwin-arm64/floyd'),
+      p('dist-native/bin/darwin-arm64/f7'),
     );
     expect(nativeBinPath('win32-x64', 'win32')).toBe(
-      p('dist-native/bin/win32-x64/floyd.exe'),
+      p('dist-native/bin/win32-x64/f7.exe'),
     );
   });
 

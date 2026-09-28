@@ -36,11 +36,11 @@
 | `/undo [<count>]` | — | 从当前上下文撤销最近的提示词。不带数量时打开选择器；带数量时撤销对应条数。最后一次上下文压缩之前的提示词不能撤销。撤销会一并回滚这些提示词产生的 todo 列表和计划模式状态（不回滚代码改动） | 否 |
 | `/init` | — | 分析当前代码库并生成 `AGENTS.md` | 否 |
 | `/export-md [<path>]` | `/export` | 将当前会话导出为 Markdown 文件 | 否 |
-| `/export-debug-zip` | — | 将当前会话导出为调试用 ZIP 压缩包（与 [`floyd export`](./floyd-command.md#floyd-export) 行为一致） | 否 |
+| `/export-debug-zip` | — | 将当前会话导出为调试用 ZIP 压缩包（与 [`f7 export`](./floyd-command.md#f7-export) 行为一致） | 否 |
 | `/copy` | — | 将最后一条 AI 回复复制到剪贴板 | 否 |
 | `/add-dir [<path>]` | — | 为当前会话添加额外的工作目录。不带路径（或传入 `list`）运行时列出已配置的目录。添加时可选择是否将目录记入项目的 `.floyd-code/local.toml` | 否 |
-| `/web` | — | 在 web UI 中打开当前会话：选择一个运行中的实例进行连接，或在 TUI 退出后新开一个前台服务器。参见 [`floyd web`](./floyd-command.md#floyd-web) | 是 |
-| `/desktop` | `/install-desktop` | 在浏览器中打开 Floyd Code 桌面端页面（地址随当前区域而定：`https://www.floyd.com/code` 或 `https://www.floyd.ai/code`）。参见 [`floyd install-desktop`](./floyd-command.md#floyd-install-desktop) | 是 |
+| `/web` | — | 在 web UI 中打开当前会话：选择一个运行中的实例进行连接，或在 TUI 退出后新开一个前台服务器。参见 [`f7 web`](./floyd-command.md#f7-web) | 是 |
+| `/desktop` | `/install-desktop` | 在浏览器中打开 Floyd Code 桌面端页面（地址随当前区域而定）。参见 [`f7 install-desktop`](./floyd-command.md#f7-install-desktop) | 是 |
 
 ## 模式与运行控制
 
@@ -91,10 +91,10 @@
 在非交互式 prompt 模式中，只有创建形式会启动目标模式：
 
 ```sh
-floyd -p "/goal 修复 checkout 测试失败"
+f7 -p "/goal 修复 checkout 测试失败"
 ```
 
-Prompt 模式在目标完成时以退出码 `0` 退出，在目标阻塞时以 `3` 退出，在目标暂停时以 `6` 退出。其它 `/goal` 子命令，包括 `next`，都是 TUI 控制命令，不由 `floyd -p` 处理。
+Prompt 模式在目标完成时以退出码 `0` 退出，在目标阻塞时以 `3` 退出，在目标暂停时以 `6` 退出。其它 `/goal` 子命令，包括 `next`，都是 TUI 控制命令，不由 `f7 -p` 处理。
 
 ## 信息与状态
 

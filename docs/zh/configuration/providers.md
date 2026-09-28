@@ -1,6 +1,6 @@
 # 平台与模型
 
-Floyd Code CLI 支持同时接入多家模型供应商服务，模型在供应商之上声明自己的名称、上下文长度和能力。本页介绍如何在 `config.toml` 里配置各种供应商。
+Floyd Code CLI 支持同时接入多家模型供应商服务，用哪家完全由你决定，也不需要注册我们的账号。最常见的接入方式是一个 OpenAI 兼容端点：自建网关、托管 API 或者本机服务都可以，Anthropic 或 Google 的 API 密钥同理。模型在供应商之上声明自己的名称、上下文长度和能力。本页介绍如何在 `config.toml` 里配置各种供应商。
 
 ## 支持的供应商类型
 
@@ -8,7 +8,7 @@ Floyd Code CLI 支持同时接入多家模型供应商服务，模型在供应�
 
 | 类型 | 协议 | 典型用途 |
 | --- | --- | --- |
-| [`floyd`](#floyd) | OpenAI 兼容 | Floyd Code 托管服务、Floyd Platform API 密钥 |
+| [`floyd`](#floyd) | OpenAI 兼容 | Legacy AI 托管服务；支持视频上传 |
 | [`anthropic`](#anthropic) | Anthropic Messages | Claude 系列模型 |
 | [`openai`](#openai) | OpenAI Chat Completions | OpenAI 及兼容服务、DeepSeek、Qwen 等 |
 | [`openai_responses`](#openai_responses) | OpenAI Responses API | OpenAI 较新的 Responses 接口 |
@@ -40,24 +40,24 @@ Floyd Code CLI 支持同时接入多家模型供应商服务，模型在供应�
 通过 `/login` 登录的 Floyd Code OAuth 托管账号不会在 `/provider` 里显示，请用 `/login` 和 `/logout` 管理。
 :::
 
-非交互环境下也可以用 shell 命令完成同样操作：[`floyd provider`](../reference/floyd-command.md#floyd-provider)。
+非交互环境下也可以用 shell 命令完成同样操作：[`f7 provider`](../reference/floyd-command.md#f7-provider)。
 
 ## `floyd`
 
-用于对接 Legacy AI 的 OpenAI 兼容接口，包括 Floyd Code 托管服务和 Floyd Platform API 密钥。
+Legacy AI 托管服务使用的 OpenAI 兼容协议，额外支持视频上传。如果你没有 Legacy AI 托管账号，请改用 [`openai`](#openai)——协议相同，而且端点由你自己指定，写起来更直白。
 
-- 默认 `base_url`：`https://api.legacy.ai/v1`
+- 默认 `base_url`：托管服务自己的端点；想指向自有网关，请显式设置 `base_url`
 - 凭证键名：`FLOYD_API_KEY`、`FLOYD_BASE_URL`
 - 额外能力：支持视频上传
 
 ```toml
 [providers.floyd]
 type = "floyd"
-base_url = "https://api.legacy.ai/v1"
-api_key = "sk-xxxxx"
+base_url = "https://your-gateway.example/v1"
+api_key = "YOUR_API_KEY"
 ```
 
-> 使用 Floyd Code 托管服务时，`/login` 登录后会自动配置 `base_url` 和凭证，无需手动填写。
+> 使用托管账号时，`base_url` 和凭证会自动写入，这一节无需手动配置。
 
 ## `anthropic`
 
@@ -93,6 +93,22 @@ max_context_size = 200000
 type = "openai"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-xxxxx"
+```
+
+其他兼容该协议的服务写法相同——把 `base_url` 指向它的端点，并按它实际提供的模型 id 声明 `models`：
+
+```toml
+default_model = "my-gateway/gpt-4.1"
+
+[providers.my-gateway]
+type = "openai"
+base_url = "https://your-gateway.example/v1"
+api_key = "YOUR_API_KEY"
+
+[models."my-gateway/gpt-4.1"]
+provider = "my-gateway"
+model = "gpt-4.1"
+max_context_size = 1047576
 ```
 
 ## `openai_responses`
@@ -149,7 +165,7 @@ GOOGLE_CLOUD_LOCATION = "us-central1"
 
 ```sh
 gcloud auth application-default login   # 一次性完成认证
-floyd
+f7
 ```
 
 如需让 Vertex 请求走自定义（如代理）端点，可设置 `base_url`（或 `GOOGLE_VERTEX_BASE_URL` 环境变量）；不填时使用 SDK 默认的区域化 `*-aiplatform.googleapis.com` 地址。与 `google-genai` 一样，只填主机根地址。SDK 会自行追加 `/v1beta1/publishers/google/models/…`。

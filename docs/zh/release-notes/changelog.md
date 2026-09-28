@@ -14,17 +14,17 @@ outline: 2
 - 供应商可通过 `config.toml` 中的 [`api_key_env`](../configuration/providers.md) 从指定的环境变量读取 API 密钥。
 - 工作区文件监听不再无上限地扫描项目根目录，并新增 `[watch] enabled` 配置与 `FLOYD_CODE_WATCH` 环境变量，可完全关闭文件监听，详见 [`watch`](../configuration/config-files.md#watch)。
 - 「必要时询问」权限模式下，无法静态分析的 bash 命令不再触发审批请求。
-- `floyd install-app` 子命令更名为 `floyd install-desktop`，旧名称仍作为隐藏别名可用。
+- `f7 install-app` 子命令更名为 `f7 install-desktop`，旧名称仍作为隐藏别名可用。
 
 ### 修复
 
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 2.0.0（2026-09-17）
 
 ### 新功能
 
-- 新增 `/desktop` 斜杠命令（别名 `/install-desktop`）与 `floyd install-app` 子命令。
+- 新增 `/desktop` 斜杠命令（别名 `/install-desktop`）与 `f7 install-app` 子命令。
 - Mermaid 代码块现在会在终端中渲染为图表；可在 `/settings` → Mermaid diagrams 中关闭，或在 tui.toml 的 `[markdown]` 配置段中设置 `mermaid = "off"`。
 
 ### 优化
@@ -33,7 +33,7 @@ outline: 2
 
 ### 修复
 
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.43.1（2026-09-15）
 
@@ -60,8 +60,8 @@ outline: 2
 
 - Web 版会话的 AI 标题功能默认开启：首轮对话后自动生成标题，并可在重命名输入框中重新生成。
 - 会话选择器中可删除会话：在目标会话上按 `Ctrl-X`，再按 `y` 确认。
-- `floyd upgrade`（别名 `floyd update`）新增 `-y, --yes` 选项，跳过确认提示直接安装更新。
-- 新增 `loop_control.compaction_max_attempts` 配置项，可设置压缩请求失败后的最大总尝试次数（默认 5 次），详见 [`loop_control`](../configuration/config-files.md#loop_control)。
+- `f7 upgrade`（别名 `f7 update`）新增 `-y, --yes` 选项，跳过确认提示直接安装更新。
+- 新增 `loop_control.compaction_max_attempts` 配置项，可设置压缩请求失败后的最大总尝试次数（默认 5 次），详见 [`loop_control`](../configuration/config-files.md#loop-control)。
 
 ### 优化
 
@@ -72,13 +72,13 @@ outline: 2
 
 ### 修复
 
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.42.0（2026-09-09）
 
 ### 新功能
 
-- Remote Control 由实验性转为正式，无需再设置 `FLOYD_CODE_EXPERIMENTAL_REMOTE_CONTROL` 实验开关。详见 [Remote Control](https://legacyai.github.io/floyd-code/zh/guides/remote-control.html)。
+- Remote Control 由实验性转为正式，无需再设置 `FLOYD_CODE_EXPERIMENTAL_REMOTE_CONTROL` 实验开关。详见 [Remote Control](../guides/remote-control.md)。
 - Web 版支持从会话行的右键菜单永久删除会话，删除前会要求确认。
 - `/btw` 侧边聊天的 subagent 新增只读工具。
 - Web 版输入框新增可排序的媒体预览栏，可在文本中按需引用图片和视频，排队与发送后预览仍然保留。
@@ -89,12 +89,12 @@ outline: 2
 - 消息记录中已完成的工具调用现折叠为标题加一行结果摘要：短输出完整展示，隐藏内容以 `N more lines`、`+N more` 计数并按 `Ctrl-O` 展开，页脚会在可用时提示。
 - 符合条件的用户的默认思考强度升级为推荐级别。
 - 子 Agent 模型池（`[secondary_model]`）现已始终开启，实验开关与 `FLOYD_CODE_EXPERIMENTAL_SECONDARY_MODEL` 退出选项已移除。
-- `Read` 新增可配置的字符上限，长行文件可续读，输出不再被反复截断。详见 [`read`](https://legacyai.github.io/floyd-code/zh/configuration/config-files.html#read)。
-- minidb 会话索引读模型与全局搜索 worker 现已始终开启，实验开关由 `[database]` 配置段与 `FLOYD_CODE_PERSISTENCE_MINIDB_READMODEL` / `FLOYD_CODE_SEARCH_WORKER` 环境变量取代。详见 [`database`](https://legacyai.github.io/floyd-code/zh/configuration/config-files.html#database)。
+- `Read` 新增可配置的字符上限，长行文件可续读，输出不再被反复截断。详见 [`read`](../configuration/config-files.md#read)。
+- minidb 会话索引读模型与全局搜索 worker 现已始终开启，实验开关由 `[database]` 配置段与 `FLOYD_CODE_PERSISTENCE_MINIDB_READMODEL` / `FLOYD_CODE_SEARCH_WORKER` 环境变量取代。详见 [`database`](../configuration/config-files.md#database)。
 
 ### 修复
 
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.41.0（2026-09-04）
 
@@ -116,14 +116,14 @@ outline: 2
 
 ### 修复
 
-- 修复 `floyd -p` 在出错或收到终止信号退出时丢失会话记录的问题。
-- 修复 `floyd -p` 忽略 `FLOYD_DISABLE_TELEMETRY` 环境变量的问题。
+- 修复 `f7 -p` 在出错或收到终止信号退出时丢失会话记录的问题。
+- 修复 `f7 -p` 忽略 `FLOYD_DISABLE_TELEMETRY` 环境变量的问题。
 - 修复 tower 模式（实验）在 config.toml 中通过 `[experimental] tower = true` 启用时不生效的问题；`/tower` 现可在非 git 仓库目录使用；启用失败时报错会指明具体原因。
 - 修复后台提问在 Agent 回合结束即被取消的问题。
 - 修复会话在新进程重开后无法按 agent id 恢复子 Agent 的问题；恢复的子 Agent 遵循当前权限模式。
 - 修复一轮中多次编辑同一文件时，每轮改动预览出现从未真实存在的增删行且行数统计不准的问题；改动卡片现只展示精确统计。
 - 修复设置中默认思考强度无法设为最高档（Max）的问题。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.40.1（2026-09-02）
 
@@ -137,7 +137,7 @@ outline: 2
 
 - Web 版设置新增「插件」面板：可浏览插件市场并安装、启停、移除插件。
 - 支持在一条消息中同时激活多个技能。
-- 新增 `floyd session list` 命令，可在命令行直接列出会话。
+- 新增 `f7 session list` 命令，可在命令行直接列出会话。
 - Tower 模式（实验性）行为调整：agent 不再自行进入，需用 `/tower on` 或 `/tower <base-branch>` 显式开启。
 - 子代理设置（`[secondary_model]`）功能由实验性转为正式。
 - 新增危险命令护栏：Auto 模式直接拦截 shutdown、reboot、rm -rf 等危险命令，Manual 与 YOLO 模式执行前必定询问；可用 `[permission] dangerous_command_guard = false` 或 `FLOYD_CODE_DANGEROUS_COMMAND_GUARD=false` 关闭。
@@ -147,13 +147,13 @@ outline: 2
 - 更新配置时完整保留 config.toml 的注释、键顺序与格式。
 - Bash 工具的 cwd 参数不再限制在工作区内。
 - 工作区信任弹窗默认选中「Trust this folder」。
-- `floyd acp` 子命令不再识别 `FLOYD_CODE_LEGACY_FLAG`，始终运行在默认 agent 引擎。
+- `f7 acp` 子命令不再识别 `FLOYD_CODE_LEGACY_FLAG`，始终运行在默认 agent 引擎。
 - Web 版 Diff 面板新增代码折行开关，并精简了面板头部。
 
 ### 修复
 
 - 修复实验开关优先级：config.toml 中显式设为 `false` 的 `[experimental]` 条目现在稳定优先于 `FLOYD_CODE_EXPERIMENTAL_FLAG` 总开关（单项 `FLOYD_CODE_EXPERIMENTAL_<NAME>` 变量仍覆盖两者）。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.39.1（2026-08-28）
 
@@ -163,13 +163,13 @@ outline: 2
 - 修复登录相关问题
 - 修复点击输入框占位提示后，输入法或键盘首个字符被吞的问题
 - 修复新会话中附件上传完成后仍显示"上传中"的问题
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.39.0（2026-08-27）
 
 ### 新功能
 
-- 新增实验性远程控制功能：可远程访问本地的 web 会话，设置 `FLOYD_CODE_EXPERIMENTAL_REMOTE_CONTROL=1` 后运行 `floyd rc`、`floyd web --remote-control` 或 `/remote-control` 启动。
+- 新增实验性远程控制功能：可远程访问本地的 web 会话，设置 `FLOYD_CODE_EXPERIMENTAL_REMOTE_CONTROL=1` 后运行 `f7 rc`、`f7 web --remote-control` 或 `/remote-control` 启动。
 - 新增实验性 tower 多 Agent 编排模式：设置 `FLOYD_CODE_EXPERIMENTAL_TOWER=1` 后运行 `/tower on` 和 `/tower <objective>` 启动。
 - subagent 与 swarm 工具新增可选 `fork` 参数，子 Agent 以调用方当前对话历史的快照启动；设置 `FLOYD_CODE_EXPERIMENTAL_SUBAGENT_FORK=1` 或在 `config.toml` 的 `[experimental]` 下写 `subagent_fork = true` 启用。
 - web: 运行卡片新增 "转到后台" 按钮，可把正在前台运行的 Bash 命令或子 Agent 转为后台运行。
@@ -186,7 +186,7 @@ outline: 2
 ### 修复
 
 - 修复 Windows 上文件工具与 Shell 工作目录无法解析 Git Bash 路径（如 /c/Users、/tmp）的问题。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.38.0（2026-08-20）
 
@@ -206,14 +206,14 @@ outline: 2
 ### 修复
 
 - 修复 config.toml 在存在语法错误或在应用外被编辑时条目丢失的问题。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.37.2（2026-08-19）
 
 ### 优化
 
 - web: 设置页新增 「实验室」标签页，上线「多标签侧边栏开关」功能；开启后侧边栏显示 Open / Done / Workspaces 标签页。
-- 做了若干细节优化和内部改进。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 做了若干细节优化和内部改进。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.37.1（2026-08-18）
 
@@ -245,7 +245,7 @@ outline: 2
 - web: 修复 macOS 上输入框中 Ctrl+K 误打开会话搜索的问题，会话搜索现仅响应 Cmd+K。
 - web: 修复 Background Agent 面板显示数量和状态不对的问题。
 - web: 修复把复制的文件夹粘贴进输入框会导致上传报连接错误的问题，现在文件夹会被直接跳过。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.36.1（2026-08-14）
 
@@ -259,7 +259,7 @@ outline: 2
 
 ### 修复
 
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.36.0（2026-08-13）
 
@@ -282,7 +282,7 @@ outline: 2
     "floyd-code/k3" = "擅长复杂推理与深度调试，难题选它。"
     ```
 
-  详见 [子 Agent 模型池文档](https://legacyai.github.io/floyd-code/zh/configuration/config-files.html#subagent-模型池)。
+  详见 [子 Agent 模型池文档](../configuration/config-files.md)#subagent-模型池)。
 - 新增实验性全屏 TUI 模式，设置 `FLOYD_CODE_TUI_FULL_SCREEN=1` 环境变量即可启用。
 - TUI 支持渲染 LaTeX 数学公式（`$…$` 与 `$$…$$`），消息中的公式会显示为 Unicode 公式。
 
@@ -291,7 +291,7 @@ outline: 2
 - 修复未信任工作区可在信任确认前植入同名 `fd`/`stty` 可执行文件的风险；信任提示现在展示项目 MCP 的启动目标，并默认拒绝信任。
 - 修复在严格的 OpenAI 兼容供应商（如 DeepSeek）下，模型思考阶段打断轮次后，后续每轮请求都报 400 错误的问题。
 - 修复 API 请求失败自动重试期间按 Ctrl+C 无反应的问题。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.35.0（2026-08-12）
 
@@ -305,7 +305,7 @@ outline: 2
 - 修复 coder 子 Agent 默认可继续派生子 Agent 的问题。
 - 修复压缩后 token 数显示偏低的问题，现在与会话中看到的数字一致。
 - 修复 Windows 上的两处二进制植入风险。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md)。
 
 ## 0.34.0（2026-08-06）
 
@@ -313,7 +313,7 @@ outline: 2
 
 - web: 侧边栏会话列表新增平铺视图。
 - Floyd Computer Use 插件新增 Windows x64 支持，通过 `/plugins` 安装。
-- 会话空闲过久后恢复或发送消息时，现将会弹出缓存过期提醒。将 [cache_expiry_hint](https://legacyai.github.io/floyd-code/zh/configuration/config-files.html#tui-toml) 设为 `false` 可关闭。
+- 会话空闲过久后恢复或发送消息时，现将会弹出缓存过期提醒。将 [cache_expiry_hint](../configuration/config-files.md#tui-toml) 设为 `false` 可关闭。
 
 ### 优化
 
@@ -334,7 +334,7 @@ outline: 2
 - web: 修复重命名时拖动选择文本会移动整个列表项的问题。
 - web: 修复计划审批对话框展开时后台任务与待办标签跳到窗口顶部的问题。
 - web: 修复变更文件摘要卡片 "show less" 按钮箭头方向错误。
-- 修复 `floyd -p` 未等待后台任务与子 Agent 完成就退出的问题。
+- 修复 `f7 -p` 未等待后台任务与子 Agent 完成就退出的问题。
 - `/feedback` 不再受当前模型限制，所有已登录用户可用；未登录用户显示注册页与 GitHub Issues 链接。
 - 修复移除 MCP 服务会破坏进行中会话的问题：工具保留但调用返回移除提示。
 - 修复服务器重启后丢失回合结束状态的问题，会话列表与恢复的会话现在能正确标记失败的回合。
@@ -369,18 +369,18 @@ outline: 2
 
 ### 重构
 
-- CLI 各界面（交互式 TUI、`floyd -p`、`floyd acp` 等）默认运行在 agent-core-v2 引擎上；设置 `FLOYD_CODE_LEGACY_FLAG=1` 可回退旧引擎。
+- CLI 各界面（交互式 TUI、`f7 -p`、`f7 acp` 等）默认运行在 agent-core-v2 引擎上；设置 `FLOYD_CODE_LEGACY_FLAG=1` 可回退旧引擎。
 
 ## 0.32.0（2026-08-04）
 
 ### 新功能
 
-- 新增四个 hook 事件：`TurnStarted`、`UserPromptQueued`、`TaskStarted` 和 `SessionHeartbeat`。在 `config.toml` 的 `[[hooks]]` 下配置，详见 [Hooks](https://legacyai.github.io/floyd-code/zh/customization/hooks.html)。
+- 新增四个 hook 事件：`TurnStarted`、`UserPromptQueued`、`TaskStarted` 和 `SessionHeartbeat`。在 `config.toml` 的 `[[hooks]]` 下配置，详见 [Hooks](../customization/hooks.md)。
 
 ### 优化
 
-- `[loop_control]` 两个配置键改名：`max_retries_per_step` → `max_attempts_per_step`、`max_steps_per_run` → `max_steps_per_turn`；旧键不再生效，启动时会有改名警告，详见 [loop_control](https://legacyai.github.io/floyd-code/zh/configuration/config-files.html#loop-control)。
-- 新增 `[token_counting]` 配置节：供应商不上报 token 用量时，可将上下文大小显示切换为本地估算，详见 [token_counting](https://legacyai.github.io/floyd-code/zh/configuration/config-files.html#token-counting)。
+- `[loop_control]` 两个配置键改名：`max_retries_per_step` → `max_attempts_per_step`、`max_steps_per_run` → `max_steps_per_turn`；旧键不再生效，启动时会有改名警告，详见 [loop_control](../configuration/config-files.md#loop-control)。
+- 新增 `[token_counting]` 配置节：供应商不上报 token 用量时，可将上下文大小显示切换为本地估算，详见 [token_counting](../configuration/config-files.md#token-counting)。
 
 ### 修复
 
@@ -402,7 +402,7 @@ outline: 2
 
 ### 修复
 
-- 修复启动 floyd web 时偶发的 “model is not configured” 错误。
+- 修复启动 f7 web 时偶发的 “model is not configured” 错误。
 - web: 修复新会话显示思考等级（如 Max）但首条消息实际未开启思考的问题。
 - web: 修复新会话草稿状态下（发送首条消息前）@ 文件提及不可用的问题。
 - web: 修复 Markdown 渲染器升级后聊天代码块以 UI 字体、错误字号渲染的问题，加载回退与高亮块对齐。
@@ -465,9 +465,9 @@ outline: 2
 
 ### 新功能
 
-- web: 支持 Markdown 文件定义 agent，声明 system prompt、名称、描述和工具权限。[查看文档](https://legacyai.github.io/floyd-code/en/customization/agents.html#agent-file-format)
-- web: 可通过 SYSTEM.md 永久覆盖主 agent 的系统提示。[查看文档](https://legacyai.github.io/floyd-code/en/customization/agents.html#overriding-the-main-agent-s-system-prompt-with-system-md)
-- web: 可通过 config.toml 在所有会话中统一启用/禁用工具。[查看文档](https://legacyai.github.io/floyd-code/en/configuration/config-files.html#tools)
+- web: 支持 Markdown 文件定义 agent，声明 system prompt、名称、描述和工具权限。[查看文档](../customization/agents.md#agent-文件格式)
+- web: 可通过 SYSTEM.md 永久覆盖主 agent 的系统提示。[查看文档](../customization/agents.md#用-system-md-覆盖-main-agent-的系统提示词)
+- web: 可通过 config.toml 在所有会话中统一启用/禁用工具。[查看文档](../configuration/config-files.md#tools)
 - 附加到提示词的视频现在会随提示词一起送达模型，无需额外的工具轮次。
 - ACP 客户端现支持选择思考强度。
 - 新增 Agent 循环与后台任务限制的环境变量覆盖：`FLOYD_LOOP_MAX_STEPS_PER_TURN`、`FLOYD_LOOP_MAX_RETRIES_PER_STEP` 和 `FLOYD_CODE_BACKGROUND_MAX_RUNNING_TASKS`。
@@ -490,7 +490,7 @@ outline: 2
 - 修复当供应商没有文件上传通道时 `ReadMediaFile` 处理视频失败的问题。
 - 修复恢复会话时目标模式续行提示词泄漏到对话记录中的问题。
 - web: 在透明图片下方显示棋盘格画布。
-- 移除定时任务工具描述中对不存在的 `floyd resume` 命令的引用。
+- 移除定时任务工具描述中对不存在的 `f7 resume` 命令的引用。
 
 ## 0.28.1（2026-07-20）
 
@@ -500,7 +500,7 @@ outline: 2
 
 ### 优化
 
-- `floyd web` 服务器改为全程前台运行：`/web` 斜杠命令现在总是启动新服务器，`floyd web kill` 与 `floyd web ps` 子命令已移除，前台服务器按 Ctrl+C 即可停止。`floyd server kill` 保留为废弃回退，仅能停止 0.28.0 之前版本启动的服务器。
+- `f7 web` 服务器改为全程前台运行：`/web` 斜杠命令现在总是启动新服务器，`f7 web kill` 与 `f7 web ps` 子命令已移除，前台服务器按 Ctrl+C 即可停止。`f7 server kill` 保留为废弃回退，仅能停止 0.28.0 之前版本启动的服务器。
 
 ### 修复
 
@@ -511,8 +511,8 @@ outline: 2
 ### 新功能
 
 - **破坏性变更：** 
-  - `floyd server` 命令树已被废弃，请使用 `floyd web` 代替。
-  - `floyd web` 现在在当前终端前台运行并打开浏览器，按 Ctrl+C 停止。
+  - `f7 server` 命令树已被废弃，请使用 `f7 web` 代替。
+  - `f7 web` 现在在当前终端前台运行并打开浏览器，按 Ctrl+C 停止。
 
 ### 优化
 
@@ -546,7 +546,7 @@ outline: 2
 - 修复 web 后端忽略以符号链接形式安装的 AGENTS.md 文件的问题。
 - 修复 /btw 面板打开时，按 Esc 或 Ctrl+C 会取消 compaction 而不是关闭面板的问题。
 - 修复纯空白思考内容在对话记录中渲染成空行的问题。
-- 修复对同一会话重复执行 /export-debug-zip 或 floyd export 会覆盖上一份压缩包的问题；文件名现包含时间戳。
+- 修复对同一会话重复执行 /export-debug-zip 或 f7 export 会覆盖上一份压缩包的问题；文件名现包含时间戳。
 
 ## 0.26.0（2026-07-16）Say hi to the BIIIG DAY!
 
@@ -603,13 +603,13 @@ outline: 2
 
 ### 优化
 
-- 对齐 `floyd -p` 在各引擎的行为：`print_background_mode` 与 `print_max_turns` 生效，`/goal` 会运行到目标结束。
-- `floyd -p` 默认在后台任务未完成时保持运行，等待与轮次实际上不设上限，并把完成结果反馈给主 Agent。如需恢复旧的一轮后退出，可设置 `print_background_mode = "exit"` 或 `"drain"`。
-- `floyd -p` 后台任务和子 Agent 默认不再超时（交互模式不变）；如需恢复限制，可设置 `[background] bash_task_timeout_s` 或 `[subagent] timeout_ms`。
+- 对齐 `f7 -p` 在各引擎的行为：`print_background_mode` 与 `print_max_turns` 生效，`/goal` 会运行到目标结束。
+- `f7 -p` 默认在后台任务未完成时保持运行，等待与轮次实际上不设上限，并把完成结果反馈给主 Agent。如需恢复旧的一轮后退出，可设置 `print_background_mode = "exit"` 或 `"drain"`。
+- `f7 -p` 后台任务和子 Agent 默认不再超时（交互模式不变）；如需恢复限制，可设置 `[background] bash_task_timeout_s` 或 `[subagent] timeout_ms`。
 - 子 Agent 超时统一默认为 2 小时，可通过 `[subagent] timeout_ms` 或 `FLOYD_SUBAGENT_TIMEOUT_MS` 覆盖。
 - 每步 LLM 重试上限从 3 次提高到 10 次，供应商临时失败（429 / 过载）会在轮次失败前自动重试；可通过 `loop_control.max_retries_per_step` 调整。
 - 工作区现在自动保持同步：新会话自动注册，缺失工作区启动时补全，已移除的不再重现。
-- `floyd web` 现在会记录失败请求和关键操作，便于诊断服务问题。
+- `f7 web` 现在会记录失败请求和关键操作，便于诊断服务问题。
 - web: AgentSwarm 卡片在子 Agent 运行时保持展开。
 - web: 最小化的计划审阅与问题卡片改用向上的 chevron 作为展开图标。
 
@@ -689,7 +689,7 @@ outline: 2
 
 ### 重构
 
-- `floyd web` 默认切换到重构后的 Agent 引擎。
+- `f7 web` 默认切换到重构后的 Agent 引擎。
 
 ## 0.23.6（2026-07-12）
 
@@ -702,13 +702,13 @@ outline: 2
 - 导入自定义 registry 时识别 `support_efforts` 和 `default_effort` 字段，这些模型可设置思考强度（thinking effort）级别。
 - 更新 `/plugins` 面板中打开的 WebBridge 安装页链接。
 - 新增 `subagent.timeout_ms` 配置项（或 `FLOYD_SUBAGENT_TIMEOUT_MS` 环境变量），控制单个子代理的超时时间，默认从 30 分钟提高到 2 小时。
-- 新增 print 模式后台策略：设置 `[background].print_background_mode = "steer"` 后，`floyd -p` 在后台任务完成后保持运行，继续引导主 Agent 进入后续轮次。
+- 新增 print 模式后台策略：设置 `[background].print_background_mode = "steer"` 后，`f7 -p` 在后台任务完成后保持运行，继续引导主 Agent 进入后续轮次。
 
 ### 修复
 
 - web: 修复断线重连后会话卡在发送状态的问题，断线期间完成的轮次现在能正常结束加载状态并发送下一条消息。
 - web: 修复启动或更新 web UI 后首次访问时，初始鉴权检查失败跳转到登录页的问题；现在停留在连接界面，显示连接错误并持续重试。
-- 修复 `floyd -p` 在目标仍活跃或有定时任务待触发时主轮次结束即退出的问题，目标续跑与定时任务触发现在能正常执行对应轮次。
+- 修复 `f7 -p` 在目标仍活跃或有定时任务待触发时主轮次结束即退出的问题，目标续跑与定时任务触发现在能正常执行对应轮次。
 - 修复关闭问题提示时默认选中推荐选项的问题，现在视为用户选择不回答。
 - web: 修复恢复或重新加载会话后，ReadMediaFile 结果显示为普通工具卡片而非图片的问题。
 - web: 修复滚动浏览对话历史时聊天视图向下跳动的问题。
@@ -765,7 +765,7 @@ outline: 2
 
 ### 修复
 
-- 修复 `floyd -p` 在轮次失败时仍以退出码 0 退出的问题。
+- 修复 `f7 -p` 在轮次失败时仍以退出码 0 退出的问题。
 - 修复自主目标会被模型上报的状态更新暂停的问题。
 - 修复启动自主目标的轮次未计入其轮次预算的问题。
 - 将图片降采样上限从 2000px 提高到 3000px，并修复 EXIF 旋转（竖拍）照片在压缩说明与媒体读取备注中宽高互换的问题，使区域回读坐标正确对应。
@@ -789,7 +789,7 @@ outline: 2
 
 ### 修复
 
-- 修复 `floyd -p` 会丢弃启动较晚或运行时间较长的后台子 Agent、导致结果无法返回主 Agent 的问题。
+- 修复 `f7 -p` 会丢弃启动较晚或运行时间较长的后台子 Agent、导致结果无法返回主 Agent 的问题。
 - web: 修复后台标签页 WebSocket 失效后聊天流中断、必须刷新页面的问题，现在会自动恢复。
 - 修复一些第三方模型如 Opus 4.8 错误回退到系列默认最大输出 token 数的问题，未收录的次要版本现在会沿用最近的已知较早版本的限制。
 - 修复显式设置的 Anthropic `max_output_size` 被裁剪到内置上限的问题，现在会尊重用户配置。
@@ -854,13 +854,13 @@ outline: 2
 
 ### 修复
 
-- `floyd -p` 会在后台子 Agent 完成并返回结果后再退出，避免提前结束本轮。
+- `f7 -p` 会在后台子 Agent 完成并返回结果后再退出，避免提前结束本轮。
 - web: 修复 web 聊天中已上传视频无法播放的问题。
 - 回退近期 TUI 对话渲染改动，恢复上游原始行为，修复相关渲染问题。
 
 ### 优化
 
-- `floyd server run` 新增 `--dangerous-bypass-auth` 与 `--keep-alive` 选项，可在可信网络中跳过 token 校验运行服务器，并突破空闲超时保持存活。
+- `f7 server run` 新增 `--dangerous-bypass-auth` 与 `--keep-alive` 选项，可在可信网络中跳过 token 校验运行服务器，并突破空闲超时保持存活。
 - web: web 聊天中已上传的图片支持点击放大，点击消息中的图片即可在预览面板打开。
 
 ## 0.22.2（2026-07-03）
@@ -869,7 +869,7 @@ outline: 2
 
 - 修复在一轮对话于工具调用与其结果之间被打断后，后续用户消息被静默丢弃的问题。
 - 修复模型输出重复的工具调用 id 时，请求被严格供应商拒绝的问题。
-- 修复 Windows 上 `floyd upgrade` 在安装新版本时因 spawn 错误而失败的问题。
+- 修复 Windows 上 `f7 upgrade` 在安装新版本时因 spawn 错误而失败的问题。
 - 修复流式输出期间滚动历史中对话内容重复出现的问题。
 - 修复压缩图片的提示词会把内部 `<system>` 压缩说明泄露到可见消息和会话标题中的问题。
 - 修复 Windows 上自动后台更新会弹出控制台窗口的问题。
@@ -881,7 +881,7 @@ outline: 2
 - 将语言匹配规则提升为系统提示词中的独立小节，使回复与推理在面对长篇英文工具输出时仍一致使用用户的语言，同时仓库产物仍遵循项目约定。
 - TUI 新增一项偏好设置：当 bracketed paste 不可用时，避免快速多行粘贴被逐行提交。可在 `tui.toml` 中设置 `disable_paste_burst = true` 关闭该行为。
 - 优化子 Agent 卡片，使其保持固定高度，并在紧凑的双行活动窗口内显示实时状态 spinner。
-- `floyd -p` 运行时，若启用了 `background.keep_alive_on_exit`，退出前会等待后台子 Agent 完成。设置 `keep_alive_on_exit = true` 可让并发的后台子 Agent 执行完毕。
+- `f7 -p` 运行时，若启用了 `background.keep_alive_on_exit`，退出前会等待后台子 Agent 完成。设置 `keep_alive_on_exit = true` 可让并发的后台子 Agent 执行完毕。
 
 ### 重构
 
@@ -965,7 +965,7 @@ outline: 2
 ### 修复
 
 - 修复格式异常的消息历史会在严格供应商（Anthropic）上永久卡死会话的问题。发送前会修复请求：关闭孤立的工具调用、丢弃空白或纯空白文本块；若供应商仍拒绝其结构，则按 wire 协议合规格式重建并重发一次。
-- 强制退出无头运行（`floyd -p`），以免运行残留的引用句柄让已完成的运行一直存活到外部超时；同时为 prompt 清理加上时限，避免某个卡住的关闭步骤拖挂整个关闭流程。
+- 强制退出无头运行（`f7 -p`），以免运行残留的引用句柄让已完成的运行一直存活到外部超时；同时为 prompt 清理加上时限，避免某个卡住的关闭步骤拖挂整个关闭流程。
 - 修复在斜杠命令参数中输入 `@` 文件提及时无法打开的问题。
 - 修复 web UI 中通过路径添加工作区时，daemon 拒绝路径会静默失败的问题；现在会显示错误，而不是生成一个无法使用的工作区。
 - 修复同一文件夹被重复注册时，web 侧边栏显示重复工作区的问题。
@@ -1048,12 +1048,12 @@ outline: 2
 
 - 插件现支持在 `floyd.plugin.json` 中声明生命周期 hooks，在指定阶段运行脚本。详见[插件 Hooks](../customization/plugins.md#插件中的-hooks)。
 - `/feedback` 现支持附加诊断日志与代码库上下文。
-- 新增 `floyd update` 命令，等价于 `floyd upgrade`，可用于升级到最新版本。
-- `floyd web` 新增 `--allowed-host <host>` 选项，可将指定 Host 加入 DNS 重绑定白名单；403 错误会提示如何通过 `--allowed-host` 或 `FLOYD_CODE_ALLOWED_HOSTS` 放行，例如 `floyd web --allowed-host example.com`。
+- 新增 `f7 update` 命令，等价于 `f7 upgrade`，可用于升级到最新版本。
+- `f7 web` 新增 `--allowed-host <host>` 选项，可将指定 Host 加入 DNS 重绑定白名单；403 错误会提示如何通过 `--allowed-host` 或 `FLOYD_CODE_ALLOWED_HOSTS` 放行，例如 `f7 web --allowed-host example.com`。
 
 ### 修复
 
-- 修复 Windows 上 floyd server 首次运行后无法启动的问题。
+- 修复 Windows 上 f7 server 首次运行后无法启动的问题。
 - 修复 `/web` 命令打开的 Web UI 不会自动登录的问题，现在终端会打印访问 token。
 - chat-completions 供应商的 `max_tokens` 现在不超过剩余上下文窗口，避免上下文溢出与无效参数错误。
 
@@ -1070,13 +1070,13 @@ outline: 2
 ### 新功能
 
 - TUI 新增 shell 模式。在输入框中键入 `!` 即可启用。对于长时间运行的命令，按 `Ctrl+B` 可将其移至后台。例如，你可以运行 `!gh auth login` 登录 GitHub CLI，无需打开新的终端。
-- CLI 新增 `--host` 选项，可通过 `floyd web --host` 将服务器暴露到互联网，并加固 token 鉴权、限流等安全措施。
+- CLI 新增 `--host` 选项，可通过 `f7 web --host` 将服务器暴露到互联网，并加固 token 鉴权、限流等安全措施。
 - Web UI 支持渲染 LaTeX 行间公式（`$$…$$`）。
 
 ### 修复
 
 - 修复 Linux 上由未处理的原生剪贴板错误导致的启动崩溃。
-- 修复当 CLI 通过 npm/pnpm 安装或从源码运行时，`floyd web` 和 `/web` 在 Windows 上因 `spawn EFTYPE` 无法启动后台服务器守护进程的问题。官方单二进制安装脚本不受影响。
+- 修复当 CLI 通过 npm/pnpm 安装或从源码运行时，`f7 web` 和 `/web` 在 Windows 上因 `spawn EFTYPE` 无法启动后台服务器守护进程的问题。官方单二进制安装脚本不受影响。
 - 修复终端窗口在 Linux Wayland 上反复失去焦点、导致输入法（IME）输入失效的问题。
 - 不再在 60 秒后自动关闭 web UI 中的问题，使其等待用户的回答。
 - 修复 explore 子 Agent 在 git 命令超时或目录不是仓库时静默丢失 git 上下文的问题。
@@ -1165,7 +1165,7 @@ outline: 2
 
 - 新增添加额外工作区目录的能力：
   - 使用 `/add-dir <path>` 命令将额外工作目录添加到当前会话，或将其记住到项目中。
-  - 使用 `floyd --add-dir <path>` 在启动时添加它们。
+  - 使用 `f7 --add-dir <path>` 在启动时添加它们。
   - 项目级本地配置现在由 `.floyd-code/local.toml` 管理；我们建议将其添加到你的 `.gitignore` 中。
 - 允许使用 `Ctrl+B` 将长时间运行的前台命令和子 Agent 移动到后台任务，并通过 `/tasks` 面板查看它们。
 
@@ -1216,7 +1216,7 @@ outline: 2
 
 ### 修复
 
-- 修复 `floyd web` 命令无法在后台启动的问题。
+- 修复 `f7 web` 命令无法在后台启动的问题。
 - 阻止后台本地服务器锁定启动时所在的目录。
 - 防止点击背景时关闭 web 登录对话框。
 
@@ -1228,7 +1228,7 @@ outline: 2
 
 ### 新功能
 
-- 新增 Floyd Code Web 模式，可通过 `floyd web` 或 CLI 内的 `/web` 启动，在浏览器中的聊天界面继续会话。
+- 新增 Floyd Code Web 模式，可通过 `f7 web` 或 CLI 内的 `/web` 启动，在浏览器中的聊天界面继续会话。
 
 ### 修复
 
@@ -1243,7 +1243,7 @@ outline: 2
 
 ### 新功能
 
-- 新增内置的 `floyd vis` 命令，可在浏览器中启动会话可视化工具，并指向本地会话。支持 `--port`/`--host`、`--no-open` 以及 `floyd vis <sessionId>` 深度链接。
+- 新增内置的 `f7 vis` 命令，可在浏览器中启动会话可视化工具，并指向本地会话。支持 `--port`/`--host`、`--no-open` 以及 `f7 vis <sessionId>` 深度链接。
 
 ### 修复
 
@@ -1496,7 +1496,7 @@ outline: 2
 
 ### 新功能
 
-- 支持 `floyd acp` 子命令：floyd-code 现在可通过 stdio 使用 [Agent Client Protocol 0.23](https://agentclientprotocol.com/)，因此 IDE（Zed、JetBrains AI Chat、自定义客户端）可以直接驱动会话；覆盖矩阵、Zed 配置和破坏性预发布说明见 [floyd acp 子命令页面](https://legacyai.github.io/floyd-code/zh/reference/floyd-acp.html)。
+- 支持 `f7 acp` 子命令：floyd-code 现在可通过 stdio 使用 [Agent Client Protocol 0.23](https://agentclientprotocol.com/)，因此 IDE（Zed、JetBrains AI Chat、自定义客户端）可以直接驱动会话；覆盖矩阵、Zed 配置和破坏性预发布说明见 [`f7 acp` 子命令页面](../reference/floyd-acp.md)。
 - 新增 `/btw`，用于进行不会引导当前主轮次的侧通道对话，并允许 `/btw` 在输入问题前打开侧通道面板。
 
 ### 修复
@@ -1526,11 +1526,11 @@ outline: 2
   /goal Fix the failing checkout test
   ```
   Floyd 会在终端界面中显示目标，并在工作过程中保持进度可见。使用 `/goal status`、`/goal pause`、`/goal resume`、`/goal cancel` 和 `/goal replace <objective>` 来管理该目标。该功能仍处于实验阶段，欢迎试用并反馈改进建议。
-- 新增 `floyd provider` CLI 子命令，支持 `add`、`remove`、`list` 以及 `catalog list` / `catalog add` 操作，可在不启动终端界面的情况下导入和管理来自自定义 registry（api.json）或公开 models.dev 目录的供应商。
+- 新增 `f7 provider` CLI 子命令，支持 `add`、`remove`、`list` 以及 `catalog list` / `catalog add` 操作，可在不启动终端界面的情况下导入和管理来自自定义 registry（api.json）或公开 models.dev 目录的供应商。
 - 新增后台结构化提问，让 Agent 在等待用户回答时也能继续工作。
 - 新增后台自动更新，可在 tui.toml 中关闭。
 - 新增 `/undo` 斜杠命令，用于从对话历史中撤回上一条提示词，并在撤回时保持回放记录同步。
-- 新增 `floyd upgrade` 命令，用于手动检查并升级 Floyd Code CLI。
+- 新增 `f7 upgrade` 命令，用于手动检查并升级 Floyd Code CLI。
 - 新增审批生命周期 hook 事件，用于观察待处理和已完成的权限提示。
 - 允许子 Agent 使用在其父 Agent 上注册的自定义工具。
 - 支持用 glob 搜索显式的绝对路径（工作空间之外）。
@@ -1670,7 +1670,7 @@ outline: 2
 
 ### 其他
 
-- 增强 `floyd export`，在 manifest 中记录更多诊断信息。
+- 增强 `f7 export`，在 manifest 中记录更多诊断信息。
 
 ## 0.3.0（2026-05-26）
 
@@ -1689,7 +1689,7 @@ outline: 2
 - 在会话恢复时，若所有待办均已完成则隐藏待办面板。
 - 在工具返回结果格式错误或缺失时，始终发出配对的工具结果，避免下一次请求因缺少 `tool_call_id` 而失败。
 - 修复 Plan 模式下的会话重置：新会话在 Plan 评审被拒后不再失败，并能在初始化错误后继续接收事件。
-- 在控制终端消失时及时退出。终端界面现在会处理 `SIGHUP` / `SIGTERM` 信号以及 stdout/stderr 的 `EIO` / `EPIPE` / `ENOTCONN` 错误，避免父 shell 或终端复用器异常退出后残留占用 CPU 核心的 `floyd` 进程。
+- 在控制终端消失时及时退出。终端界面现在会处理 `SIGHUP` / `SIGTERM` 信号以及 stdout/stderr 的 `EIO` / `EPIPE` / `ENOTCONN` 错误，避免父 shell 或终端复用器异常退出后残留占用 CPU 核心的 `f7` 进程。
 - 避免本地补全上限过小，导致摘要生成前推理被截断。
 
 ### 重构

@@ -14,17 +14,17 @@ This page documents the changes in each Floyd Code CLI release.
 - Providers can read their API key from a named environment variable via [`api_key_env`](../configuration/providers.md) in `config.toml`.
 - Stop workspace file watchers from scanning an unbounded project root, and add `[watch] enabled` / `FLOYD_CODE_WATCH` to disable watching entirely. See [`watch`](../configuration/config-files.md#watch) for details.
 - Stop asking for approval of bash commands that cannot be statically analyzed in Ask When Needed permission mode.
-- Rename the `floyd install-app` subcommand to `floyd install-desktop`; the old name keeps working as a hidden alias.
+- Rename the `f7 install-app` subcommand to `f7 install-desktop`; the old name keeps working as a hidden alias.
 
 ### Bug Fixes
 
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 2.0.0 (2026-09-17)
 
 ### Features
 
-- Add the `/desktop` slash command (alias `/install-desktop`) and the `floyd install-app` subcommand.
+- Add the `/desktop` slash command (alias `/install-desktop`) and the `f7 install-app` subcommand.
 - Render mermaid code blocks as diagrams in the terminal; turn it off under `/settings` → Mermaid diagrams, or set `mermaid = "off"` in the `[markdown]` section of tui.toml.
 
 ### Polish
@@ -33,7 +33,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Bug Fixes
 
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.43.1 (2026-09-15)
 
@@ -60,8 +60,8 @@ This page documents the changes in each Floyd Code CLI release.
 
 - web: AI session titles are now always on — a title is generated after the first turn and can be regenerated from the rename field, with no experimental flag required.
 - Delete sessions from the session picker: press Ctrl+X on a session, then y to confirm.
-- Add `-y, --yes` to `floyd upgrade` (alias `floyd update`) to skip the confirmation prompt and install the update directly.
-- Add the `loop_control.compaction_max_attempts` config option to set the maximum total attempts for a failing compaction request (default 5). See [`loop_control`](../configuration/config-files.md#loop_control) for details.
+- Add `-y, --yes` to `f7 upgrade` (alias `f7 update`) to skip the confirmation prompt and install the update directly.
+- Add the `loop_control.compaction_max_attempts` config option to set the maximum total attempts for a failing compaction request (default 5). See [`loop_control`](../configuration/config-files.md#loop-control) for details.
 
 ### Polish
 
@@ -72,13 +72,13 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Bug Fixes
 
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.42.0 (2026-09-09)
 
 ### Features
 
-- Remote Control is now always on; the experimental `FLOYD_CODE_EXPERIMENTAL_REMOTE_CONTROL` flag has been removed. See [Remote Control](https://legacyai.github.io/floyd-code/guides/remote-control.html) for details.
+- Remote Control is now always on; the experimental `FLOYD_CODE_EXPERIMENTAL_REMOTE_CONTROL` flag has been removed. See [Remote Control](../guides/remote-control.md) for details.
 - web: Support permanently deleting sessions from the session row context menu, with a confirmation prompt.
 - Add read-only tools to the `/btw` side agent.
 - web: Preview images and videos in a reorderable media rail in the composer, mention them in the text on demand, and keep the previews after queueing and sending.
@@ -89,12 +89,12 @@ This page documents the changes in each Floyd Code CLI release.
 - Collapse finished tool calls in the transcript to a header plus one marked outcome row: short output is shown whole, hidden output is counted (`N more lines`, `+N more`) and revealed by `Ctrl-O`, which the footer advertises while it is available.
 - Upgrade the default thinking effort to the recommended level for eligible users.
 - The subagent model pool (`[secondary_model]`) is now always on; the experimental secondary-model flag and the `FLOYD_CODE_EXPERIMENTAL_SECONDARY_MODEL` opt-out have been removed.
-- Add configurable character limits and resumable long-line file reads without repeated output truncation; see [`read`](https://legacyai.github.io/floyd-code/configuration/config-files.html#read) for details.
-- The minidb session-index read model and global search worker are now always on; the experimental flags have been replaced by the `[database]` config section and the `FLOYD_CODE_PERSISTENCE_MINIDB_READMODEL` / `FLOYD_CODE_SEARCH_WORKER` env vars; see [`database`](https://legacyai.github.io/floyd-code/configuration/config-files.html#database) for details.
+- Add configurable character limits and resumable long-line file reads without repeated output truncation; see [`read`](../configuration/config-files.md#read) for details.
+- The minidb session-index read model and global search worker are now always on; the experimental flags have been replaced by the `[database]` config section and the `FLOYD_CODE_PERSISTENCE_MINIDB_READMODEL` / `FLOYD_CODE_SEARCH_WORKER` env vars; see [`database`](../configuration/config-files.md#database) for details.
 
 ### Bug Fixes
 
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.41.0 (2026-09-04)
 
@@ -116,14 +116,14 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Bug Fixes
 
-- Fix print mode (`floyd -p`) losing session records when the run exits on an error or a termination signal.
-- Fix print mode (`floyd -p`) ignoring the `FLOYD_DISABLE_TELEMETRY` environment variable.
+- Fix print mode (`f7 -p`) losing session records when the run exits on an error or a termination signal.
+- Fix print mode (`f7 -p`) ignoring the `FLOYD_DISABLE_TELEMETRY` environment variable.
 - Tower mode (experimental): fix tower mode never starting when enabled through `[experimental] tower = true` in config.toml instead of the environment variable, and make `/tower` work in directories that are not git repositories; enablement errors now name the actual blocker.
 - Fix background questions being cancelled as soon as the agent finishes its turn.
 - Fix resuming a subagent by its agent id after the session is reopened in a new process; the resumed subagent follows the current permission mode and is matched by its own profile in permission rules.
 - web: Fix per-turn file change previews showing added/removed lines that never existed and inaccurate line counts when the same file is edited multiple times in one turn; change cards now show only exact line statistics.
 - web: Fix the default thinking effort in settings not being settable to the highest level (Max).
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.40.1 (2026-09-02)
 
@@ -137,7 +137,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 - web: Add a Plugins panel to Settings for browsing the plugin marketplace and installing, enabling, disabling, and removing plugins.
 - web: Support activating multiple skills from a single message.
-- Add the `floyd session list` command to list sessions from the command line.
+- Add the `f7 session list` command to list sessions from the command line.
 - Tower mode (experimental, `FLOYD_CODE_EXPERIMENTAL_TOWER=1`): the agent no longer enters tower mode on its own — turn it on with `/tower on` or `/tower <base-branch>`.
 - The subagent model setting (`[secondary_model]`) graduates from experimental to stable.
 - Block dangerous shell commands such as shutdown, reboot, or rm -rf in Auto mode, and always ask before running them in Manual and YOLO modes; disable the guard with `[permission] dangerous_command_guard = false` or `FLOYD_CODE_DANGEROUS_COMMAND_GUARD=false`.
@@ -147,13 +147,13 @@ This page documents the changes in each Floyd Code CLI release.
 - Preserve comments, key order, and formatting in config.toml when configuration values are updated.
 - Remove the workspace restriction on the Bash tool's cwd parameter.
 - Default the workspace trust prompt selection to "Trust this folder" instead of "Don't trust".
-- The `floyd acp` subcommand no longer honors `FLOYD_CODE_LEGACY_FLAG`; it always runs on the default agent engine.
+- The `f7 acp` subcommand no longer honors `FLOYD_CODE_LEGACY_FLAG`; it always runs on the default agent engine.
 - web: Add a code wrap toggle to the diff panel and streamline its header.
 
 ### Bug Fixes
 
 - Honor explicit `[experimental]` config entries over the `FLOYD_CODE_EXPERIMENTAL_FLAG` master switch, so a flag set to `false` in config.toml stays off; per-feature `FLOYD_CODE_EXPERIMENTAL_<NAME>` variables still override both.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.39.1 (2026-08-28)
 
@@ -163,13 +163,13 @@ This page documents the changes in each Floyd Code CLI release.
 - web: Fix signed-in users without a usable model being wrongly asked to sign in (and getting stuck there on web); the send gate now offers picking or configuring a model instead.
 - web: Fix the first IME (or keyboard) character being silently swallowed after clicking the composer placeholder.
 - web: Fix attachments in a newly created session still showing as uploading after the upload has finished.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.39.0 (2026-08-27)
 
 ### Features
 
-- Add Remote Control as an experimental feature for accessing a local web session remotely. Enable it with `FLOYD_CODE_EXPERIMENTAL_REMOTE_CONTROL=1`, then run `floyd rc`, `floyd web --remote-control`, or `/remote-control` to start it.
+- Add Remote Control as an experimental feature for accessing a local web session remotely. Enable it with `FLOYD_CODE_EXPERIMENTAL_REMOTE_CONTROL=1`, then run `f7 rc`, `f7 web --remote-control`, or `/remote-control` to start it.
 - Add experimental tower mode for multi-agent orchestration; set `FLOYD_CODE_EXPERIMENTAL_TOWER=1`, then run `/tower on` and `/tower <objective>` to start.
 - Add an optional `fork` parameter to subagent and swarm tools that starts the subagent with a snapshot of the calling agent's conversation history; set `FLOYD_CODE_EXPERIMENTAL_SUBAGENT_FORK=1` or `subagent_fork = true` under `[experimental]` in config.toml to enable it.
 - web: Allow moving a running foreground Bash command or subagent to the background via the "Move to background" button on the running card.
@@ -186,7 +186,7 @@ This page documents the changes in each Floyd Code CLI release.
 ### Bug Fixes
 
 - Fix file tools and shell working directories failing to resolve Git Bash paths such as /c/Users or /tmp on Windows.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.38.0 (2026-08-20)
 
@@ -206,14 +206,14 @@ This page documents the changes in each Floyd Code CLI release.
 ### Bug Fixes
 
 - Fix config.toml entries being lost when the file had a syntax error or was edited outside the app.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.37.2 (2026-08-19)
 
 ### Polish
 
 - web: Settings gains a Lab tab with a new multi-tab sidebar toggle; when enabled, the sidebar shows the Open / Done / Workspaces tabs.
-- Make several refinements and internal improvements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Make several refinements and internal improvements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.37.1 (2026-08-18)
 
@@ -245,7 +245,7 @@ This page documents the changes in each Floyd Code CLI release.
 - web: Fix Ctrl+K in the composer opening session search on macOS — session search now only answers to Cmd+K.
 - web: Fix the Background Agent panel showing incorrect task counts and statuses.
 - web: Fix pasting a copied folder into the composer failing the upload with a connection error — folders are now skipped instead.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.36.1 (2026-08-14)
 
@@ -259,7 +259,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Bug Fixes
 
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.36.0 (2026-08-13)
 
@@ -282,7 +282,7 @@ This page documents the changes in each Floyd Code CLI release.
     "floyd-code/k3" = "Strong at complex reasoning and deep debugging — pick it for hard problems."
     ```
 
-  See the [subagent model pool docs](https://legacyai.github.io/floyd-code/en/configuration/config-files.html#subagent-model-pool) for details.
+  See the [subagent model pool docs](../configuration/config-files.md#subagent-model-pool) for details.
 - Add an experimental fullscreen TUI mode. Set the `FLOYD_CODE_TUI_FULL_SCREEN=1` environment variable to enable it.
 - Support rendering LaTeX math formulas (`$…$` / `$$…$$`) in TUI messages as Unicode formulas.
 
@@ -291,7 +291,7 @@ This page documents the changes in each Floyd Code CLI release.
 - Show project MCP launch targets in the workspace trust prompt, default to declining trust, and resolve `fd` and `stty` binaries to absolute paths so untrusted workspaces cannot plant bare-name executables before confirmation.
 - Fix sessions failing with a provider 400 error on every follow-up request after a turn is interrupted while the model is still thinking, on strict OpenAI-compatible providers (e.g. DeepSeek).
 - Fix Ctrl+C being ignored during automatic retries of failed API requests.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.35.0 (2026-08-12)
 
@@ -305,7 +305,7 @@ This page documents the changes in each Floyd Code CLI release.
 - Fix coder subagents spawning further subagents by default.
 - Fix the token counts reported after compaction reading far below the real context size; they now match the numbers shown while the session runs.
 - Fix two binary-planting risks on Windows.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/LegacyAI/floyd-code/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/CaptainPhantasy/f7/blob/main/apps/floyd-code/CHANGELOG.md) for more technical entries.
 
 ## 0.34.0 (2026-08-06)
 
@@ -313,7 +313,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 - web: Add a flat view to the sidebar session list.
 - The Floyd Computer Use plugin now supports Windows x64 — install it from `/plugins`.
-- Show a cache-expiry reminder when resuming or sending after a long idle. Set [`cache_expiry_hint`](https://legacyai.github.io/floyd-code/en/configuration/config-files.html#tui-toml) to `false` to disable it.
+- Show a cache-expiry reminder when resuming or sending after a long idle. Set [`cache_expiry_hint`](../configuration/config-files.md#tui-toml) to `false` to disable it.
 
 ### Polish
 
@@ -334,7 +334,7 @@ This page documents the changes in each Floyd Code CLI release.
 - web: Fix dragging to select text while renaming moving the whole list item.
 - web: Fix the background-tasks and todos pills jumping to the top when the plan approval dialog expands.
 - web: Fix the chevron direction on the "show less" button of the changed-files summary card.
-- Fix `floyd -p` exiting before background tasks and subagents finish.
+- Fix `f7 -p` exiting before background tasks and subagents finish.
 - `/feedback` now works for signed-in users on any model; signed-out users see the sign-up page and GitHub Issues links.
 - Fix removing an MCP server breaking open sessions: its tools stay visible but calls fail with a removal notice.
 - Fix the last turn's outcome being lost across server restarts — failed turns now stay flagged in session lists and resumed sessions.
@@ -369,18 +369,18 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Refactors
 
-- Run the CLI surfaces (interactive TUI, `floyd -p`, `floyd acp`, `floyd export`, `floyd provider`) on the agent-core-v2 engine by default. Set `FLOYD_CODE_LEGACY_FLAG=1` to fall back to the legacy engine.
+- Run the CLI surfaces (interactive TUI, `f7 -p`, `f7 acp`, `f7 export`, `f7 provider`) on the agent-core-v2 engine by default. Set `FLOYD_CODE_LEGACY_FLAG=1` to fall back to the legacy engine.
 
 ## 0.32.0 (2026-08-04)
 
 ### Features
 
-- Add four hook events: `TurnStarted`, `UserPromptQueued`, `TaskStarted`, and `SessionHeartbeat`. Configure them under `[[hooks]]` in `config.toml` — see [Hooks](https://legacyai.github.io/floyd-code/en/customization/hooks.html) for details.
+- Add four hook events: `TurnStarted`, `UserPromptQueued`, `TaskStarted`, and `SessionHeartbeat`. Configure them under `[[hooks]]` in `config.toml` — see [Hooks](../customization/hooks.md) for details.
 
 ### Polish
 
-- Rename two `[loop_control]` keys: `max_retries_per_step` → `max_attempts_per_step` and `max_steps_per_run` → `max_steps_per_turn`; the old keys stop working with a rename warning at startup — see [loop_control](https://legacyai.github.io/floyd-code/en/configuration/config-files.html#loop-control).
-- Add a `[token_counting]` config section: when a provider doesn't report token usage, switch the context-size display to local estimates — see [token_counting](https://legacyai.github.io/floyd-code/en/configuration/config-files.html#token-counting).
+- Rename two `[loop_control]` keys: `max_retries_per_step` → `max_attempts_per_step` and `max_steps_per_run` → `max_steps_per_turn`; the old keys stop working with a rename warning at startup — see [loop_control](../configuration/config-files.md#loop-control).
+- Add a `[token_counting]` config section: when a provider doesn't report token usage, switch the context-size display to local estimates — see [token_counting](../configuration/config-files.md#token-counting).
 
 ### Bug Fixes
 
@@ -402,7 +402,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Bug Fixes
 
-- Fix sporadic "model is not configured" errors when starting floyd web, caused by the background provider-model refresh transiently clearing the model catalog while the first session was being created.
+- Fix sporadic "model is not configured" errors when starting f7 web, caused by the background provider-model refresh transiently clearing the model catalog while the first session was being created.
 - web: Fix new sessions showing the thinking level (e.g. Max) while the first message actually ran with thinking off.
 - web: Make the @ file mention work in a new-session draft, before the first prompt creates the session.
 - web: Fix chat code blocks rendering in the proportional UI font at the wrong size after the markdown renderer upgrade, and align the loading fallback with the highlighted block.
@@ -465,9 +465,9 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Features
 
-- web: Support defining agents in Markdown files, declaring system prompt, name, description, and tool permissions. [Details](https://legacyai.github.io/floyd-code/en/customization/agents.html#agent-file-format)
-- web: Permanently override the main agent's system prompt with SYSTEM.md. [Details](https://legacyai.github.io/floyd-code/en/customization/agents.html#overriding-the-main-agent-s-system-prompt-with-system-md)
-- web: Globally enable or disable tools across all sessions via config.toml. [Details](https://legacyai.github.io/floyd-code/en/configuration/config-files.html#tools)
+- web: Support defining agents in Markdown files, declaring system prompt, name, description, and tool permissions. [Details](../customization/agents.md#agent-file-format)
+- web: Permanently override the main agent's system prompt with SYSTEM.md. [Details](../customization/agents.md#overriding-the-main-agent-s-system-prompt-with-system-md)
+- web: Globally enable or disable tools across all sessions via config.toml. [Details](../configuration/config-files.md#tools)
 - Videos attached to a prompt now reach the model together with the prompt, with no extra tool round trip.
 - Support selecting a thinking effort level from ACP clients.
 - Add environment variable overrides for agent loop and background task limits.
@@ -490,7 +490,7 @@ This page documents the changes in each Floyd Code CLI release.
 - Fix ReadMediaFile failing on videos when the provider has no file upload channel.
 - Fix goal mode continuation prompts leaking into the transcript when resuming a session.
 - web: Show transparent images over a checkerboard canvas.
-- Remove references to the non-existent `floyd resume` command from the scheduled-task tool descriptions.
+- Remove references to the non-existent `f7 resume` command from the scheduled-task tool descriptions.
 
 ## 0.28.1 (2026-07-20)
 
@@ -500,7 +500,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Polish
 
-- Run web servers foreground-only end to end: the /web slash command now always starts a new server, and the `floyd web kill` / `floyd web ps` subcommands are removed — foreground servers stop with Ctrl+C. `floyd server kill` remains as a deprecated fallback that only stops servers started by a version before 0.28.0.
+- Run web servers foreground-only end to end: the /web slash command now always starts a new server, and the `f7 web kill` / `f7 web ps` subcommands are removed — foreground servers stop with Ctrl+C. `f7 server kill` remains as a deprecated fallback that only stops servers started by a version before 0.28.0.
 
 ### Bug Fixes
 
@@ -511,8 +511,8 @@ This page documents the changes in each Floyd Code CLI release.
 ### Features
 
 - **Breaking:**
-  - The `floyd server` command tree is deprecated; use `floyd web` instead.
-  - `floyd web` now runs in the foreground of the current terminal and opens the browser; stop it with Ctrl+C.
+  - The `f7 server` command tree is deprecated; use `f7 web` instead.
+  - `f7 web` now runs in the foreground of the current terminal and opens the browser; stop it with Ctrl+C.
 
 ### Polish
 
@@ -546,7 +546,7 @@ This page documents the changes in each Floyd Code CLI release.
 - Fix AGENTS.md files installed as symbolic links being ignored by the web backend.
 - Fix Esc and Ctrl+C cancelling compaction instead of closing an open /btw panel.
 - Fix whitespace-only thinking content rendering as a blank line in the transcript.
-- Fix `/export-debug-zip` and `floyd export` overwriting the previous ZIP on repeated runs for the same session; the default filename now includes a timestamp.
+- Fix `/export-debug-zip` and `f7 export` overwriting the previous ZIP on repeated runs for the same session; the default filename now includes a timestamp.
 
 ## 0.26.0 (2026-07-16) Say hi to the BIIIG DAY!
 
@@ -603,13 +603,13 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Polish
 
-- Align `floyd -p` behavior across engines: `print_background_mode` and `print_max_turns` now apply, and `/goal` runs stay alive until the goal finishes.
-- `floyd -p` now stays alive by default while background tasks are pending, with no effective wait or turn limit, and feeds each completion back to the agent. Set `print_background_mode = "exit"` or `"drain"` to restore the old exit-after-one-turn behavior.
-- `floyd -p` background tasks and subagents no longer time out by default (interactive mode is unchanged); restore limits with `[background] bash_task_timeout_s` or `[subagent] timeout_ms`.
+- Align `f7 -p` behavior across engines: `print_background_mode` and `print_max_turns` now apply, and `/goal` runs stay alive until the goal finishes.
+- `f7 -p` now stays alive by default while background tasks are pending, with no effective wait or turn limit, and feeds each completion back to the agent. Set `print_background_mode = "exit"` or `"drain"` to restore the old exit-after-one-turn behavior.
+- `f7 -p` background tasks and subagents no longer time out by default (interactive mode is unchanged); restore limits with `[background] bash_task_timeout_s` or `[subagent] timeout_ms`.
 - Subagent timeout now defaults to 2 hours everywhere; override with `[subagent] timeout_ms` or `FLOYD_SUBAGENT_TIMEOUT_MS`.
 - The per-step LLM retry limit is raised from 3 to 10 attempts, so transient provider failures (429 / overload) are retried before a turn fails; tune with `loop_control.max_retries_per_step`.
 - Workspaces now stay in sync: new sessions register automatically, missing workspaces are restored at startup, and removed ones stay removed.
-- `floyd web` now logs failed requests and key operations so daemon issues are easier to diagnose.
+- `f7 web` now logs failed requests and key operations so daemon issues are easier to diagnose.
 - web: AgentSwarm cards now stay expanded while subagents are still running.
 - web: Minimized plan review and question cards now use an upward chevron for expand.
 
@@ -689,7 +689,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Refactors
 
-- `floyd web` now runs on the reworked agent engine by default.
+- `f7 web` now runs on the reworked agent engine by default.
 
 ## 0.23.6 (2026-07-12)
 
@@ -702,13 +702,13 @@ This page documents the changes in each Floyd Code CLI release.
 - Recognize the `support_efforts` and `default_effort` fields when importing a custom registry, so thinking effort levels are available for those models.
 - Update the WebBridge install page link opened from the `/plugins` panel.
 - Add a `subagent.timeout_ms` config option (or the `FLOYD_SUBAGENT_TIMEOUT_MS` env var) to control how long a single subagent may run before timing out; the default is raised from 30 minutes to 2 hours.
-- Add a print-mode background policy: set `[background].print_background_mode = "steer"` to keep `floyd -p` alive across background-task completions, so the main agent can be steered into follow-up turns.
+- Add a print-mode background policy: set `[background].print_background_mode = "steer"` to keep `f7 -p` alive across background-task completions, so the main agent can be steered into follow-up turns.
 
 ### Bug Fixes
 
 - web: Fix sessions getting stuck in a sending state after a reconnect; turns that finish while the connection is down now stop the spinner and let the next message send normally.
 - web: Fix the first visit after starting or updating the web UI bouncing to the login page when the initial auth check fails; the connecting screen now stays up, shows the connection error, and retries.
-- Keep `floyd -p` runs alive after a turn ends while a goal is still active or a cron task is pending, so goal continuations and cron fires run their turns instead of being cut off when the main turn finishes.
+- Keep `f7 -p` runs alive after a turn ends while a goal is still active or a cron task is pending, so goal continuations and cron fires run their turns instead of being cut off when the main turn finishes.
 - Treat a dismissed question prompt as the user choosing not to answer, instead of implicitly selecting the recommended option.
 - web: Fix ReadMediaFile results rendering as plain tool cards instead of images after resuming or reloading a session.
 - web: Fix the chat view jumping downward while scrolling through conversation history.
@@ -765,7 +765,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Bug Fixes
 
-- Fix `floyd -p` runs exiting with code 0 when a turn fails.
+- Fix `f7 -p` runs exiting with code 0 when a turn fails.
 - Prevent autonomous goals from being paused by model-reported status updates.
 - Count the turn that starts an autonomous goal toward its turn budget.
 - Raise the image downscale cap from 2000px to 3000px, and fix swapped width/height for EXIF-rotated (portrait) photos in compression captions and media read notes so region readback coordinates map correctly.
@@ -789,7 +789,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Bug Fixes
 
-- Fix `floyd -p` abandoning background subagents that start late or run long, so their results reach the main agent.
+- Fix `f7 -p` abandoning background subagents that start late or run long, so their results reach the main agent.
 - web: Recover chat streaming after a stale background-tab WebSocket instead of requiring a page refresh.
 - Fix some third-party models (e.g. Opus 4.8) falling back to the family default max output tokens; an unrecognized minor now reuses the nearest earlier known version's limit.
 - Honor explicit Anthropic `max_output_size` settings instead of clamping them to built-in ceilings.
@@ -854,13 +854,13 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Bug Fixes
 
-- Wait for background subagents to finish and respond to their results before exiting in `floyd -p`, instead of ending the turn early.
+- Wait for background subagents to finish and respond to their results before exiting in `f7 -p`, instead of ending the turn early.
 - web: Fix uploaded videos failing to play in the web chat.
 - Revert the recent TUI transcript rendering changes to the original upstream behavior and fix related rendering issues.
 
 ### Polish
 
-- Add `--dangerous-bypass-auth` and `--keep-alive` flags to `floyd server run`, so the server can run without a token on trusted networks and stay alive past the idle timeout.
+- Add `--dangerous-bypass-auth` and `--keep-alive` flags to `f7 server run`, so the server can run without a token on trusted networks and stay alive past the idle timeout.
 - web: Add click-to-enlarge for images uploaded in the web chat. Click an image in a message to open it.
 
 ## 0.22.2 (2026-07-03)
@@ -869,7 +869,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 - Fix sessions silently dropping later user messages after a turn was interrupted between a tool call and its result.
 - Fix requests being rejected by strict providers when the model emits duplicate tool call ids.
-- Fix `floyd upgrade` failing on Windows with a spawn error when installing the new version.
+- Fix `f7 upgrade` failing on Windows with a spawn error when installing the new version.
 - Fix duplicated transcript content appearing in scrollback during streaming.
 - Fix compressed-image prompts leaking an internal `<system>` compression note into the visible message and the session title.
 - Keep automatic background updates from flashing a console window on Windows.
@@ -881,7 +881,7 @@ This page documents the changes in each Floyd Code CLI release.
 - Promote the language-matching rule to a dedicated section in the system prompt, so replies and reasoning consistently follow the user's language through long English tool output, while repository artifacts keep project conventions.
 - Add a TUI preference to keep rapid multi-line pastes from submitting line by line when bracketed paste is unavailable. Set `disable_paste_burst = true` in `tui.toml` to turn it off.
 - Keep subagent cards at a stable height and show a live status spinner with a compact two-row activity window.
-- In `floyd -p` runs, wait for background subagents to finish before exiting when `background.keep_alive_on_exit` is enabled. Set `keep_alive_on_exit = true` to let concurrent background subagents complete.
+- In `f7 -p` runs, wait for background subagents to finish before exiting when `background.keep_alive_on_exit` is enabled. Set `keep_alive_on_exit = true` to let concurrent background subagents complete.
 
 ### Refactors
 
@@ -965,7 +965,7 @@ This page documents the changes in each Floyd Code CLI release.
 ### Bug Fixes
 
 - Stop a malformed message history from permanently bricking a session on strict providers (Anthropic). The request is repaired before sending — orphaned tool calls are closed and empty/whitespace-only text blocks dropped — and if the provider still rejects its structure, it is resent once with a wire-compliant rebuild.
-- Force-exit headless runs (`floyd -p`) so a stray ref'd handle left over from the run can't keep a completed run alive until an external timeout, and bound prompt cleanup so a wedged shutdown step can't hang shutdown.
+- Force-exit headless runs (`f7 -p`) so a stray ref'd handle left over from the run can't keep a completed run alive until an external timeout, and bound prompt cleanup so a wedged shutdown step can't hang shutdown.
 - Fix @ file mentions not opening when typed inside a slash command argument.
 - Fix adding a workspace by path in the web UI failing silently when the daemon rejects the path; it now shows an error instead of a broken workspace.
 - Fix duplicate workspaces showing in the web sidebar when the same folder is registered more than once.
@@ -1048,12 +1048,12 @@ This page documents the changes in each Floyd Code CLI release.
 
 - Plugins now support declaring lifecycle hooks in `floyd.plugin.json` to run scripts at specific stages. See [Hooks in Plugins](../customization/plugins.md#hooks-in-plugins).
 - `/feedback` now supports attaching diagnostic logs and codebase context.
-- Add the `floyd update` command, equivalent to `floyd upgrade`, for upgrading to the latest version.
-- `floyd web` adds the `--allowed-host <host>` option to add a specified Host to the DNS-rebinding allowlist; 403 errors now explain how to allow it via `--allowed-host` or `FLOYD_CODE_ALLOWED_HOSTS`, e.g. `floyd web --allowed-host example.com`.
+- Add the `f7 update` command, equivalent to `f7 upgrade`, for upgrading to the latest version.
+- `f7 web` adds the `--allowed-host <host>` option to add a specified Host to the DNS-rebinding allowlist; 403 errors now explain how to allow it via `--allowed-host` or `FLOYD_CODE_ALLOWED_HOSTS`, e.g. `f7 web --allowed-host example.com`.
 
 ### Bug Fixes
 
-- Fix floyd server failing to start on Windows after the first run.
+- Fix f7 server failing to start on Windows after the first run.
 - Fix the Web UI opened by the `/web` command not signing in automatically; the terminal now prints the access token.
 - Cap chat-completions providers' `max_tokens` to the remaining context window, avoiding context overflow and invalid parameter errors.
 
@@ -1070,13 +1070,13 @@ This page documents the changes in each Floyd Code CLI release.
 ### Features
 
 - Add shell mode to the TUI. Type `!` in the input box to enable it. For long-running commands, press Ctrl+B to move them to the background. For example, you can run `!gh auth login` to sign in to the GitHub CLI without opening a new terminal.
-- Add a `--host` CLI option so `floyd web --host` can expose the server to the internet, with hardened token authentication, rate limiting, and other security measures.
+- Add a `--host` CLI option so `f7 web --host` can expose the server to the internet, with hardened token authentication, rate limiting, and other security measures.
 - Render LaTeX display math (`$$…$$`) in the web UI.
 
 ### Bug Fixes
 
 - Fix a startup crash on Linux caused by an unhandled native clipboard error.
-- Fix `floyd web` and `/web` failing to start the background server daemon on Windows with `spawn EFTYPE` when the CLI is installed via npm/pnpm or run from source. The official single-binary install script was not affected.
+- Fix `f7 web` and `/web` failing to start the background server daemon on Windows with `spawn EFTYPE` when the CLI is installed via npm/pnpm or run from source. The official single-binary install script was not affected.
 - Fix the terminal window repeatedly losing focus on Linux Wayland, which broke IME input.
 - Stop auto-dismissing questions in the web UI after 60 seconds so they wait for the user's answer.
 - Fix explore subagents silently losing git context when git commands time out or the directory is not a repository.
@@ -1165,7 +1165,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 - Added the ability to add extra workspace directories:
   - Use the `/add-dir <path>` command to add extra working directories to the current session, or remember them for the project.
-  - Use `floyd --add-dir <path>` to add them on startup.
+  - Use `f7 --add-dir <path>` to add them on startup.
   - Project-level local config is now managed in `.floyd-code/local.toml`; we recommend adding it to your `.gitignore`.
 - Allow long-running foreground commands and subagents to be moved into background tasks with `Ctrl+B`, and inspect them via the `/tasks` panel.
 
@@ -1216,7 +1216,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Bug Fixes
 
-- Fix the `floyd web` command failing to start in the background.
+- Fix the `f7 web` command failing to start in the background.
 - Stop the background local server from locking the directory it was started in.
 - Prevent the web login dialog from closing when clicking the backdrop.
 
@@ -1228,7 +1228,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Features
 
-- Add Floyd Code Web mode, which you can start with `floyd web` or `/web` in the CLI, and continue sessions in a browser chat interface.
+- Add Floyd Code Web mode, which you can start with `f7 web` or `/web` in the CLI, and continue sessions in a browser chat interface.
 
 ### Bug Fixes
 
@@ -1243,7 +1243,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Features
 
-- Add a built-in `floyd vis` command that launches the session visualizer in your browser, pointed at your local sessions. Supports `--port`/`--host`, `--no-open`, and `floyd vis <sessionId>` deep-links.
+- Add a built-in `f7 vis` command that launches the session visualizer in your browser, pointed at your local sessions. Supports `--port`/`--host`, `--no-open`, and `f7 vis <sessionId>` deep-links.
 
 ### Bug Fixes
 
@@ -1497,7 +1497,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Features
 
-- Add the `floyd acp` subcommand: floyd-code now speaks [Agent Client Protocol 0.23](https://agentclientprotocol.com/) over stdio so IDEs (Zed, JetBrains AI Chat, custom clients) can drive sessions directly — coverage matrix, Zed configuration and breaking pre-release notes are in [floyd acp Subcommand Page](https://legacyai.github.io/floyd-code/en/reference/floyd-acp.html).
+- Add the `f7 acp` subcommand: floyd-code now speaks [Agent Client Protocol 0.23](https://agentclientprotocol.com/) over stdio so IDEs (Zed, JetBrains AI Chat, custom clients) can drive sessions directly — coverage matrix, Zed configuration and breaking pre-release notes are in [`f7 acp` Subcommand Page](../reference/floyd-acp.md).
 - Add `/btw` for side-channel conversations without steering the active main turn, and allow `/btw` to open the side-channel panel before entering a question.
 
 ### Bug Fixes
@@ -1530,11 +1530,11 @@ This page documents the changes in each Floyd Code CLI release.
   ```
 
   Floyd shows the goal in the TUI and keeps progress visible while it works. Use `/goal status`, `/goal pause`, `/goal resume`, `/goal cancel`, and `/goal replace <objective>` to manage the goal. This feature is still experimental. Try it and tell us what would make it more useful.
-- Add `floyd provider` CLI subcommand with `add`, `remove`, `list`, and `catalog list` / `catalog add` actions, so providers from a custom registry (api.json) or the public models.dev catalog can be imported and managed without launching the TUI.
+- Add `f7 provider` CLI subcommand with `add`, `remove`, `list`, and `catalog list` / `catalog add` actions, so providers from a custom registry (api.json) or the public models.dev catalog can be imported and managed without launching the TUI.
 - Add background structured questions so agents can continue while waiting for user answers.
 - Add background automatic upgrades, which can be disabled in tui.toml.
 - Add `/undo` slash command to withdraw the last prompt from conversation history, and keep replay records in sync when a prompt is undone.
-- Add a `floyd upgrade` command for manually checking and upgrade Floyd Code CLI.
+- Add a `f7 upgrade` command for manually checking and upgrade Floyd Code CLI.
 - Add approval lifecycle hook events for observing pending and completed permission prompts.
 - Allow subagents to use custom tools registered on their parent agent.
 - Allow glob searches to target explicit absolute paths outside the workspace.
@@ -1677,7 +1677,7 @@ This page documents the changes in each Floyd Code CLI release.
 
 ### Other
 
-- Enhance `floyd export` to include more diagnostic information in the manifest.
+- Enhance `f7 export` to include more diagnostic information in the manifest.
 
 ## 0.3.0 (2026-05-26)
 
@@ -1696,7 +1696,7 @@ This page documents the changes in each Floyd Code CLI release.
 - Hide the todo panel on resume when all todos are already completed.
 - Always emit a paired tool result when a tool returns a malformed or missing result, preventing the next request from failing with a missing tool_call_id error.
 - Fix Plan mode session resets so new sessions no longer fail after plan review rejection and continue receiving events after setup errors.
-- Exit promptly when the controlling terminal goes away. The TUI now handles `SIGHUP` / `SIGTERM` and stdout/stderr `EIO` / `EPIPE` / `ENOTCONN` errors, preventing leftover `floyd` processes that pin a CPU core after the parent shell or multiplexer dies unexpectedly.
+- Exit promptly when the controlling terminal goes away. The TUI now handles `SIGHUP` / `SIGTERM` and stdout/stderr `EIO` / `EPIPE` / `ENOTCONN` errors, preventing leftover `f7` processes that pin a CPU core after the parent shell or multiplexer dies unexpectedly.
 - Avoid overly small local completion caps that can truncate reasoning before summaries are produced.
 
 ### Refactors

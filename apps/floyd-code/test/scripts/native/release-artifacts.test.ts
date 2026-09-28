@@ -18,7 +18,7 @@ const packageScript = resolve(appRoot, 'scripts/native/package.mjs');
 const manifestScript = resolve(appRoot, 'scripts/native/produce-manifest.mjs');
 const artifactsDir = resolve(appRoot, 'dist-native/artifacts');
 const target = 'test-zip-artifact';
-const executableName = process.platform === 'win32' ? 'floyd.exe' : 'floyd';
+const executableName = process.platform === 'win32' ? 'f7.exe' : 'f7';
 const fakeBinary = resolve(appRoot, 'dist-native/bin', target, executableName);
 
 function sha256(bytes: Buffer | string): string {
@@ -175,7 +175,7 @@ describe('native release artifacts', () => {
     try {
       const binaryContent = Buffer.from('fake windows binary');
       const zip = new ZipFile();
-      zip.addBuffer(binaryContent, 'floyd.exe');
+      zip.addBuffer(binaryContent, 'f7.exe');
       zip.end();
       await pipeline(
         zip.outputStream,

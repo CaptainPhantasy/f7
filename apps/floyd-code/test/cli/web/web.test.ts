@@ -1,9 +1,9 @@
 /**
- * Tests for the `floyd web` Commander wiring and its subcommands.
+ * Tests for the `f7 web` Commander wiring and its subcommands.
  *
  * These tests don't actually start the server — the foreground runner is
  * injected, so they verify option parsing, the ready banner / one-line ready
- * output, browser opening, and the rotate-token / deprecated `floyd server kill`
+ * output, browser opening, and the rotate-token / deprecated `f7 server kill`
  * subcommands against fake deps.
  */
 
@@ -81,7 +81,7 @@ function makeIo(): {
   };
 }
 
-describe('floyd web', () => {
+describe('f7 web', () => {
   it('registers the `web` command with only the rotate-token subcommand', () => {
     const program = makeProgram();
     const web = program.commands.find((c) => c.name() === 'web');
@@ -101,6 +101,7 @@ describe('floyd web', () => {
     expect(longs).toContain('--allowed-host');
     expect(longs).toContain('--insecure-no-tls');
     expect(longs).toContain('--allow-remote-shutdown');
+    expect(longs).toContain('--allow-remote-terminals');
     expect(longs).toContain('--dangerous-bypass-auth');
     expect(longs).toContain('--log-level');
     expect(longs).toContain('--debug-endpoints');
@@ -115,10 +116,9 @@ describe('floyd web', () => {
     expect(longs).not.toContain('--keep-alive');
     expect(longs).not.toContain('--daemon');
     expect(longs).not.toContain('--idle-grace-ms');
-    expect(longs).not.toContain('--allow-remote-terminals');
   });
 
-  it('routes `floyd server` and any legacy subcommand to a deprecation notice', async () => {
+  it('routes `f7 server` and any legacy subcommand to a deprecation notice', async () => {
     for (const argv of [
       ['node', 'floyd', 'server'],
       ['node', 'floyd', 'server', 'run', '--port', '1'],
@@ -142,16 +142,16 @@ describe('floyd web', () => {
       exitSpy.mockRestore();
 
       expect(exitCalls).toEqual([1]);
-      expect(stderr).toContain('`floyd server` has been deprecated and no longer works.');
-      expect(stderr).toContain('floyd web');
-      expect(stderr).toContain('floyd server kill');
+      expect(stderr).toContain('`f7 server` has been deprecated and no longer works.');
+      expect(stderr).toContain('f7 web');
+      expect(stderr).toContain('f7 server kill');
       expect(stderr).toContain('0.28.0');
       expect(stderr).toContain('next major version');
     }
   });
 });
 
-describe('`floyd web` ready banner', () => {
+describe('`f7 web` ready banner', () => {
   it('prints the TUI-style ready panel once listening', async () => {
     const { handleWebCommand } = await import('#/cli/sub/web/run');
     // The runner reports the actual bound origin — the banner must take the
@@ -342,7 +342,7 @@ describe('ready banner reflects the bind class', () => {
   });
 });
 
-describe('`floyd web` opens the browser', () => {
+describe('`f7 web` opens the browser', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     resetCapabilitiesCache();
@@ -472,7 +472,7 @@ describe('`floyd web` opens the browser', () => {
   });
 });
 
-describe('floyd rc', () => {
+describe('f7 rc', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
@@ -516,7 +516,7 @@ describe('floyd rc', () => {
   });
 });
 
-describe('`floyd web` option threading', () => {
+describe('`f7 web` option threading', () => {
   it('threads the CLI flags into the foreground runner options', async () => {
     const { handleWebCommand } = await import('#/cli/sub/web/run');
     const { runner, calls } = makeRunner();
@@ -531,6 +531,7 @@ describe('`floyd web` option threading', () => {
         dangerousBypassAuth: true,
         debugEndpoints: true,
         allowRemoteShutdown: true,
+        allowRemoteTerminals: true,
         open: false,
       },
       { startServerForeground: runner, openUrl: vi.fn(), stdout, stderr },
@@ -543,6 +544,7 @@ describe('`floyd web` option threading', () => {
       debugEndpoints: true,
       insecureNoTls: true,
       allowRemoteShutdown: true,
+      allowRemoteTerminals: true,
       dangerousBypassAuth: true,
       allowedHosts: ['.example.com'],
     });
@@ -771,7 +773,7 @@ function makeLegacyKillDeps(overrides: Partial<LegacyKillDeps> = {}): {
   return { deps, writes, errors, signals, state, clock };
 }
 
-describe('`floyd server kill` (deprecated, legacy servers only)', () => {
+describe('`f7 server kill` (deprecated, legacy servers only)', () => {
   const legacyLock = { pid: 1234, host: '127.0.0.1', port: 58627 };
 
   it('is registered as the only working subcommand of the deprecated `server` command', () => {
@@ -779,6 +781,8 @@ describe('`floyd server kill` (deprecated, legacy servers only)', () => {
     const server = program.commands.find((c) => c.name() === 'server');
     expect(server).toBeDefined();
     expect(server?.commands.map((c) => c.name())).toEqual(['kill']);
+    const kill = server?.commands.find((c) => c.name() === 'kill');
+    expect(kill?.description()).toContain('Servers started by `f7 web` run in the foreground');
   });
 
   it('prints a deprecation notice naming the 0.28.0 cutoff on every run', async () => {
@@ -788,7 +792,8 @@ describe('`floyd server kill` (deprecated, legacy servers only)', () => {
     await handleLegacyKillCommand(deps);
 
     const notice = errors.join('');
-    expect(notice).toContain('deprecated');
+    expect(notice).toContain('`f7 server kill` is deprecated');
+    expect(notice).toContain('Servers started by `f7 web` run in the foreground');
     expect(notice).toContain('0.28.0');
     expect(notice).toContain('Ctrl+C');
   });
@@ -1056,7 +1061,7 @@ describe('browserOpenOrigin', () => {
   });
 });
 
-describe('`floyd web rotate-token`', () => {
+describe('`f7 web rotate-token`', () => {
   let dir: string;
   let prevHome: string | undefined;
 

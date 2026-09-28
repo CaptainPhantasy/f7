@@ -82,7 +82,7 @@ import { TranscriptService } from './services/transcript/transcriptService';
 import { ProjectionService } from './services/projection';
 import { ModelCatalogRefreshScheduler } from './services/modelCatalog/modelCatalogRefreshScheduler';
 import { startConfigChangedPublisher } from './services/config/configChangedPublisher';
-import { createAuthFailureLimiter } from './middleware/rateLimit';
+import { createAuthFailureLimiter, isTrustProxyEnabled } from './middleware/rateLimit';
 import { createRemoteControlManager } from '@legacy-ai/remote-control';
 
 import { createAuthTokenService, type IAuthTokenService } from './services/auth/authTokenService';
@@ -114,6 +114,7 @@ export interface ServerStartOptions {
   readonly disableHostCheck?: boolean;
   readonly insecureNoTls?: boolean;
   readonly allowRemoteShutdown?: boolean;
+  readonly allowRemoteTerminals?: boolean;
   readonly authTokenService?: IAuthTokenService;
   readonly disableAuth?: boolean;
   readonly webTitle?: string;
@@ -162,7 +163,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     );
   }
   const enableShutdown = exposureClass === 'loopback' || opts.allowRemoteShutdown === true;
-  const enableTerminals = exposureClass === 'loopback';
+  const enableTerminals = exposureClass === 'loopback' || opts.allowRemoteTerminals === true;
   const debugEndpoints = exposureClass === 'loopback' && opts.debugEndpoints === true;
   const logger = opts.logger ?? createServerLogger({ level: opts.logLevel ?? 'info' });
   const onUnhandledRejection = (reason: unknown): void => {
@@ -275,6 +276,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
   const app = Fastify({
     loggerInstance: logger,
     disableRequestLogging: true,
+    trustProxy: isTrustProxyEnabled(),
     genReqId: (req) => resolveRequestId(req.headers),
   }) as unknown as FastifyInstance;
   app.server.requestTimeout = 0;

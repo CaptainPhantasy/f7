@@ -38,11 +38,11 @@ Some commands are only available in the idle state. Executing these commands whi
 | `/reload-tui` | — | Reload only the `tui.toml` UI preferences (theme, editor, notifications, etc.) without rebuilding the session | Yes |
 | `/init` | — | Analyze the current codebase and generate `AGENTS.md` | No |
 | `/export-md [<path>]` | `/export` | Export the current session as a Markdown file | No |
-| `/export-debug-zip` | — | Export the current session as a debug ZIP archive (same behavior as [`floyd export`](./floyd-command.md#floyd-export)) | No |
+| `/export-debug-zip` | — | Export the current session as a debug ZIP archive (same behavior as [`f7 export`](./floyd-command.md#f7-export)) | No |
 | `/copy` | — | Copy the last assistant message to the clipboard | No |
 | `/add-dir [<path>]` | — | Add an extra workspace directory to the current session. Run without a path (or with `list`) to list configured directories. When adding, choose whether to remember the directory for the project in `.floyd-code/local.toml` | No |
-| `/web` | — | Open the current session in the web UI: pick a running server to connect to, or start a new foreground server after the TUI exits. See [`floyd web`](./floyd-command.md#floyd-web) | Yes |
-| `/desktop` | `/install-desktop` | Open the Floyd Code desktop app page in your browser (URL follows the active region: `https://www.floyd.com/code` or `https://www.floyd.ai/code`). See [`floyd install-desktop`](./floyd-command.md#floyd-install-desktop) | Yes |
+| `/web` | — | Open the current session in the web UI: pick a running server to connect to, or start a new foreground server after the TUI exits. See [`f7 web`](./floyd-command.md#f7-web) | Yes |
+| `/desktop` | `/install-desktop` | Open the Floyd Code desktop app page in your browser (URL follows the active region). See [`f7 install-desktop`](./floyd-command.md#f7-install-desktop) | Yes |
 
 ## Modes & Run Control
 
@@ -93,10 +93,10 @@ If an upcoming goal needs to start with `manage`, put `--` after `next`:
 In non-interactive prompt mode, only the create forms start goal mode:
 
 ```sh
-floyd -p "/goal Fix the failing checkout test"
+f7 -p "/goal Fix the failing checkout test"
 ```
 
-Prompt mode exits with code `0` when the goal completes, `3` when it blocks, and `6` when it pauses. Other `/goal` subcommands, including `next`, are TUI controls and are not handled by `floyd -p`.
+Prompt mode exits with code `0` when the goal completes, `3` when it blocks, and `6` when it pauses. Other `/goal` subcommands, including `next`, are TUI controls and are not handled by `f7 -p`.
 
 ## Information & Status
 

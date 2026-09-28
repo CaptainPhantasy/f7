@@ -13,19 +13,19 @@ export const AuthErrors = {
       title: 'Login required',
       retryable: false,
       public: true,
-      action: 'Run /login to authenticate with the OAuth provider.',
+      action: 'Configure a provider in config.toml or via /provider; use /login only for an OAuth provider.',
     },
     'auth.provisioning_required': {
       title: 'Provider provisioning required',
       retryable: false,
       public: true,
-      action: 'Configure a provider via /login or the providers endpoint.',
+      action: 'No provider is configured. Add one in config.toml or via /provider; use /login only for an OAuth provider.',
     },
     'auth.token_missing': {
       title: 'Provider credential missing',
       retryable: false,
       public: true,
-      action: 'Configure an API key or complete OAuth login for the provider.',
+      action: 'Set an API key for this provider in config.toml or via /provider; use /login only for an OAuth provider.',
     },
     'auth.token_unauthorized': {
       title: 'Provider credential unauthorized',

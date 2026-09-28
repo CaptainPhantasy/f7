@@ -1,6 +1,6 @@
 # Providers and models
 
-Floyd Code CLI supports connecting to multiple LLM platforms simultaneously: one-click login via the Floyd Code managed service, connecting Claude with an Anthropic API key, or connecting third-party inference services via the OpenAI-compatible protocol. Each provider corresponds to a specific API protocol; models are declared on top of providers with their own name, context length, and capabilities. This page explains how to configure each type of provider in `config.toml`.
+Floyd Code CLI connects to whichever LLM platforms you choose, several at a time — no account with us is required. The usual path is an OpenAI-compatible endpoint: your own gateway, a hosted API, or a server on your own machine. An Anthropic or Google API key works the same way. Each provider corresponds to a specific API protocol; models are declared on top of providers with their own name, context length, and capabilities. This page explains how to configure each type of provider in `config.toml`.
 
 ## Supported provider types
 
@@ -8,7 +8,7 @@ The `type` field in the `providers` table determines which protocol implementati
 
 | Type | Protocol | Typical use |
 | --- | --- | --- |
-| [`floyd`](#floyd) | OpenAI-compatible | Floyd Code managed service, Floyd Platform API key |
+| [`floyd`](#floyd) | OpenAI-compatible | Legacy AI managed service; supports video upload |
 | [`anthropic`](#anthropic) | Anthropic Messages | Claude model family |
 | [`openai`](#openai) | OpenAI Chat Completions | OpenAI and compatible services, DeepSeek, Qwen, etc. |
 | [`openai_responses`](#openai_responses) | OpenAI Responses API | OpenAI's newer Responses interface |
@@ -40,24 +40,24 @@ Two paths when adding:
 Floyd Code OAuth managed accounts logged in via `/login` do not appear in `/provider`. Use `/login` and `/logout` to manage them.
 :::
 
-The same operations are also available in non-interactive environments via the shell command: [`floyd provider`](../reference/floyd-command.md#floyd-provider).
+The same operations are also available in non-interactive environments via the shell command: [`f7 provider`](../reference/floyd-command.md#f7-provider).
 
 ## `floyd`
 
-For connecting to Legacy AI's OpenAI-compatible interface, including the Floyd Code managed service and Floyd Platform API keys.
+The OpenAI-compatible protocol used by Legacy AI's managed service, with one extra capability: video upload. Unless you have a managed Legacy AI key, use [`openai`](#openai) instead — it speaks the same protocol and lets you name your own endpoint plainly.
 
-- Default `base_url`: `https://api.legacy.ai/v1`
+- Default `base_url`: the managed service's own endpoint, so set `base_url` explicitly to point this type at your own gateway
 - Credential key names: `FLOYD_API_KEY`, `FLOYD_BASE_URL`
 - Additional capability: supports video upload
 
 ```toml
 [providers.floyd]
 type = "floyd"
-base_url = "https://api.legacy.ai/v1"
-api_key = "sk-xxxxx"
+base_url = "https://your-gateway.example/v1"
+api_key = "YOUR_API_KEY"
 ```
 
-> When using the Floyd Code managed service, running `/login` automatically configures `base_url` and credentials, so no manual setup is needed.
+> With a managed account, `base_url` and credentials are written for you, so nothing in this section needs to be set by hand.
 
 ## `anthropic`
 
@@ -93,6 +93,22 @@ Third-party reasoning models (DeepSeek, Qwen, One API, etc.) work out of the box
 type = "openai"
 base_url = "https://api.openai.com/v1"
 api_key = "sk-xxxxx"
+```
+
+Any other service speaking this protocol is the same shape — point `base_url` at its endpoint and declare the model ids it serves:
+
+```toml
+default_model = "my-gateway/gpt-4.1"
+
+[providers.my-gateway]
+type = "openai"
+base_url = "https://your-gateway.example/v1"
+api_key = "YOUR_API_KEY"
+
+[models."my-gateway/gpt-4.1"]
+provider = "my-gateway"
+model = "gpt-4.1"
+max_context_size = 1047576
 ```
 
 ## `openai_responses`
@@ -149,14 +165,14 @@ GOOGLE_CLOUD_LOCATION = "us-central1"
 
 ```sh
 gcloud auth application-default login   # one-time authentication
-floyd
+f7
 ```
 
 To route Vertex requests through a custom (e.g. proxied) endpoint, set `base_url` (or the `GOOGLE_VERTEX_BASE_URL` env var); when omitted, the SDK default regional `*-aiplatform.googleapis.com` host is used. As with `google-genai`, give the host root only. The SDK appends `/v1beta1/publishers/google/models/…` itself.
 
 ## OAuth and credential injection
 
-The Floyd Code managed service uses OAuth rather than static API keys. After running `/login`, the built-in authentication toolchain automatically writes and refreshes credentials, so no manual configuration is needed in `config.toml` for this.
+The Legacy AI managed service authenticates with OAuth rather than a static API key: once a managed account is authenticated, the built-in toolchain writes and refreshes the credential, so nothing needs to be configured in `config.toml` by hand. Providers you configure yourself always use `api_key` or `api_key_env`.
 
 ## Next steps
 

@@ -10,95 +10,81 @@ It fits scenarios such as:
 - **Understanding a project**: exploring an unfamiliar codebase and answering questions about architecture and implementation
 - **Automating tasks**: batch-processing files, running builds and tests, chaining multiple scripts together
 
-The CLI is written in TypeScript, distributed via npm, and runs on Node.js.
+The CLI is written in TypeScript and runs on Node.js.
 
 ## Installation
 
-Two installation options are available: the official install script (recommended, no pre-installed Node.js required) and a global npm install.
+Floyd Code CLI runs from a checkout of this repository: no prebuilt binary and no npm package is published yet. Node.js 24.15.0 or later and pnpm 10.33.0 are required.
 
 ::: tip Before you install
 Floyd Code CLI is a fully interactive TUI application. For the best visual experience, run it in a terminal with true-color and ligature support, such as [Kitty](https://sw.kovidgoyal.net/kitty/) or [Ghostty](https://ghostty.org/).
 :::
 
-### Install script (recommended)
-
-::: code-group
-
-```sh [macOS / Linux]
-curl -fsSL https://code.floyd.com/floyd-code/install.sh | bash
-```
-
-```powershell [Windows (PowerShell)]
-irm https://code.floyd.com/floyd-code/install.ps1 | iex
-```
-
-:::
-
-> On Windows, install [Git for Windows](https://gitforwindows.org/) before first launch. Floyd Code CLI uses the bundled Git Bash as its shell environment; if Git Bash is installed in a custom location, set `FLOYD_SHELL_PATH` to the absolute path of `bash.exe`.
-
-The script automatically downloads the latest release, verifies the checksum, and places the `floyd` executable on your `PATH`.
-
-### npm installation
-
-Requires Node.js 22.19.0 or later:
+Check both versions first:
 
 ```sh
 node --version
+pnpm --version
 ```
 
-::: code-group
+Clone the repository and install the workspace:
 
-```sh [npm]
-npm install -g @legacy-ai/floyd-code
+```sh
+git clone https://github.com/CaptainPhantasy/f7.git
+cd f7
+pnpm install
 ```
 
-```sh [pnpm]
-pnpm add -g @legacy-ai/floyd-code
-```
+> On Windows, install [Git for Windows](https://gitforwindows.org/) before first launch. Floyd Code CLI uses the bundled Git Bash as its shell environment; if Git Bash is installed in a custom location, set `FLOYD_SHELL_PATH` to the absolute path of `bash.exe`.
 
-:::
+The executable is `f7`. Inside the checkout, `pnpm dev:cli` starts the same CLI, so run that wherever the examples on this page show `f7`.
 
 ## First launch
 
-Move into your project directory and run `floyd` to start the interactive UI:
+Move into your project directory and run `f7` to start the interactive UI:
 
 ```sh
 cd your-project
-floyd
+f7
 ```
 
 To run a single instruction without entering the interactive UI, use `-p`:
 
 ```sh
-floyd -p "Take a look at this project's directory structure"
+f7 -p "Take a look at this project's directory structure"
 ```
 
 To resume the previous session, add `-c`:
 
 ```sh
-floyd -c
+f7 -c
 ```
 
-On first launch you need to configure an API source. In the interactive UI, enter `/login` to begin the login flow:
+Floyd Code CLI needs no account — it works with whichever model provider you point it at. In the interactive UI, `/provider` walks you through it: pick a known third-party provider, paste its API key, then choose the default model. You can equally write the provider into `~/.floyd-code/config.toml` yourself:
 
+```toml
+default_model = "my-gateway/gpt-4.1"
+
+[providers.my-gateway]
+type = "openai"
+base_url = "https://your-gateway.example/v1"
+api_key = "YOUR_API_KEY"
+
+[models."my-gateway/gpt-4.1"]
+provider = "my-gateway"
+model = "gpt-4.1"
+max_context_size = 1047576
 ```
-/login
-```
 
-`/login` opens a platform selector supporting two options:
+Any OpenAI-compatible endpoint works, as do the Anthropic API and Google's Gemini API. [Providers and models](../configuration/providers.md) covers each type, and how to import a whole provider from a catalog or registry instead of typing the fields by hand.
 
-- **Floyd Code (OAuth)** — device-code flow; open the link on any device, sign in, and enter the code to authorize
-- **Floyd Platform API key** — enter an API key from `platform.floyd.com` or `platform.floyd.ai`
-
-To sign out, enter `/logout` to clear the current credentials.
-
-::: tip Using other AI providers
-If you want to connect Anthropic, OpenAI, Google, or other providers, edit `~/.floyd-code/config.toml` directly to configure the API key. See [Providers and models](../configuration/providers.md) for details. For the full reference of all config options, see [Configuration files](../configuration/config-files.md), [Environment variables](../configuration/env-vars.md), and [Configuration overrides](../configuration/overrides.md).
+::: tip Where credentials live
+Keys are read from `config.toml`, not from the shell environment — the one exception is `api_key_env`, which points at a variable name you choose. See [Environment variables](../configuration/env-vars.md), [Configuration files](../configuration/config-files.md), and [Configuration overrides](../configuration/overrides.md).
 :::
 
 ## Your first conversation
 
-Once logged in, describe a task in natural language. A good starting point is to let Floyd Code CLI familiarize itself with the project:
+With a provider configured, describe a task in natural language. A good starting point is to let Floyd Code CLI familiarize itself with the project:
 
 ```
 Take a look at this project's directory structure and briefly describe what each directory is for.
@@ -150,23 +136,15 @@ Floyd Code CLI stores its local data under `~/.floyd-code/` by default — confi
 
 ## Upgrade and uninstall
 
-After installation, verify that the executable is ready:
+After installation, verify that the CLI starts:
 
 ```sh
-floyd --version
+f7 --version
 ```
 
-**Upgrade**: run `floyd upgrade` — the CLI checks for the latest version and presents update options. Choose `Install update now` to upgrade based on your current install source. You can also upgrade directly via the package manager:
+**Upgrade**: in a source checkout, `git pull` and run `pnpm install` again. `f7 upgrade` covers packaged installs: it checks for the latest version and presents update options.
 
-```sh
-npm install -g @legacy-ai/floyd-code@latest
-```
-
-**Uninstall**: if you installed via the script, delete the `floyd` executable. If you installed via npm:
-
-```sh
-npm uninstall -g @legacy-ai/floyd-code
-```
+**Uninstall**: remove the checkout directory.
 
 ## Next steps
 

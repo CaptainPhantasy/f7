@@ -2,7 +2,8 @@ import { DEFAULT_OAUTH_PROVIDER_NAME } from '#/constant/app';
 
 export { DEFAULT_OAUTH_PROVIDER_NAME, OAUTH_LOGIN_REQUIRED_CODE, PRODUCT_NAME } from '#/constant/app';
 
-export const LLM_NOT_SET_MESSAGE = 'LLM not set, send "/login" to login';
+export const LLM_NOT_SET_MESSAGE =
+  'LLM not set. Configure a provider in config.toml or run /provider to add one; use /login only for an OAuth provider.';
 export const NO_ACTIVE_SESSION_MESSAGE = 'No active session. Send a message to start one.';
 export const CTRL_D_HINT = 'Press Ctrl+D again to exit';
 export const CTRL_C_HINT = 'Press Ctrl+C again to exit';

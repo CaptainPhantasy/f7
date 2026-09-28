@@ -135,7 +135,7 @@ Custom agents delegated as sub-agents run without the built-in sub-agent framing
 
 ### Selecting the Main Agent
 
-Two CLI flags select which agent drives a new session, in both print mode (`floyd -p`) and the interactive TUI:
+Two CLI flags select which agent drives a new session, in both print mode (`f7 -p`) and the interactive TUI:
 
 - **`--agent <name>`**: Start the session with the named agent as the main Agent. The name can refer to a built-in agent or to any discovered file; an unknown name fails with an error listing the available agents.
 - **`--agent-file <path>`**: Load one agent file at the highest priority for this launch and start with it. The flag accepts exactly one file: it cannot be repeated, and it cannot be combined with `--agent`.
@@ -145,8 +145,8 @@ Both flags only apply when starting a new session: neither can be combined with 
 For example:
 
 ```sh
-floyd --agent reviewer
-floyd -p --agent reviewer "Review the changes on this branch"
+f7 --agent reviewer
+f7 -p --agent reviewer "Review the changes on this branch"
 ```
 
 The bound agent is the session's identity: it is fixed at the session's first bind and cannot be switched later. In the TUI the flags bind only the startup session; a session created later in the same process (for example via `/new`) starts with the default agent.
