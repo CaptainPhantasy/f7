@@ -3,27 +3,40 @@ import { bridge, Events } from "@/services";
 import { requiresManagedProviderLogin, useSettingsStore } from "@/stores";
 import type { ExtensionConfig } from "shared/types";
 
-export type AppStatus = "loading" | "no-workspace" | "runtime-error" | "not-logged-in" | "no-models" | "ready";
+export type AppStatus =
+  | "loading"
+  | "no-workspace"
+  | "runtime-error"
+  | "no-provider"
+  | "managed-provider-unconfigured"
+  | "no-models"
+  | "ready";
 
-export type ConfigErrorStatus = "loading" | "no-workspace" | "runtime-error" | "no-models";
+export type ConfigErrorStatus =
+  | "loading"
+  | "no-workspace"
+  | "runtime-error"
+  | "managed-provider-unconfigured"
+  | "no-models";
 
 export type AppViewResolution =
   | { readonly view: "login" }
   | {
       readonly view: "status";
       readonly status: ConfigErrorStatus;
-      /** True when the status screen must offer a path to the sign-in screen. */
+      /** True when the status screen must offer a path to the provider-setup screen. */
       readonly canGoToLogin: boolean;
     }
   | { readonly view: "main" };
 
 /**
- * Pure view router for App. The `no-models` status (a managed OAuth token
- * exists but config.toml has no models — e.g. a first login whose model
- * provisioning failed after the device flow already persisted the token)
- * must always keep a path back to the sign-in screen: Reload alone cannot
- * change the on-disk state, so without it the user is stranded and the
- * login UI becomes unreachable.
+ * Pure view router for App. `no-provider` (nothing configured yet) owns the
+ * provider-setup screen; `no-models` is that setup skipped or a config.toml
+ * without models, and keeps a path back to it, because Reload alone cannot
+ * change the on-disk state and the user would otherwise be stranded.
+ * `managed-provider-unconfigured` is routed to the status screen instead: its
+ * fix is a config.toml edit, not a screen this build can complete, so that
+ * screen must carry the instructions.
  */
 export function resolveAppView(input: {
   readonly status: AppStatus;
@@ -32,14 +45,18 @@ export function resolveAppView(input: {
   readonly showLogin: boolean;
 }): AppViewResolution {
   const { status, modelsCount, skippedLogin, showLogin } = input;
-  if (showLogin || (status === "not-logged-in" && !skippedLogin)) {
+  if (showLogin || (status === "no-provider" && !skippedLogin)) {
     return { view: "login" };
   }
   if (skippedLogin && modelsCount === 0) {
     return { view: "status", status: "no-models", canGoToLogin: true };
   }
-  if (status !== "ready" && status !== "not-logged-in") {
-    return { view: "status", status, canGoToLogin: status === "no-models" };
+  if (status !== "ready" && status !== "no-provider") {
+    return {
+      view: "status",
+      status,
+      canGoToLogin: status === "no-models" || status === "managed-provider-unconfigured",
+    };
   }
   return { view: "main" };
 }
@@ -111,27 +128,22 @@ export function useAppInit(): AppInitState {
 
         const modelsCount = floydConfig.models?.length ?? 0;
 
-        if (modelsCount === 0 && !loginStatus.loggedIn) {
-          setState({ status: "not-logged-in", errorMessage: null, modelsCount });
-          return;
-        }
-
         if (modelsCount === 0) {
-          setState({ status: "no-models", errorMessage: null, modelsCount: 0 });
+          setState({ status: "no-provider", errorMessage: null, modelsCount: 0 });
           return;
         }
 
         if (requiresManagedProviderLogin(floydConfig.models, floydConfig.defaultModel, loginStatus.loggedIn)) {
-          setState({ status: "not-logged-in", errorMessage: null, modelsCount });
+          setState({ status: "managed-provider-unconfigured", errorMessage: null, modelsCount });
           return;
         }
 
         setState({ status: "ready", errorMessage: null, modelsCount });
-      } catch (err) {
+      } catch (error) {
         if (!cancelled) {
           setState({
             status: "runtime-error",
-            errorMessage: err instanceof Error ? err.message : "Failed to initialize",
+            errorMessage: error instanceof Error ? error.message : "Failed to initialize",
             modelsCount: 0,
           });
         }

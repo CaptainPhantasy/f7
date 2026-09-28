@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { FloydMascot } from "./FloydMascot";
 
 interface Props {
-  type: "loading" | "runtime-error" | "no-models" | "no-workspace";
+  type: "loading" | "runtime-error" | "no-models" | "no-workspace" | "managed-provider-unconfigured";
   errorMessage?: string | null;
   onRefresh?: () => void;
   onBackToLogin?: () => void;
@@ -57,6 +57,25 @@ function ErrorDetails({ message }: { message?: string | null }) {
   );
 }
 
+function SetupActions({ onRefresh, onBackToLogin }: Pick<Props, "onRefresh" | "onBackToLogin">) {
+  return (
+    <div className="flex flex-col min-[400px]:flex-row min-[400px]:justify-between gap-2 w-full">
+      {onBackToLogin && (
+        <Button onClick={onBackToLogin} variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+          <IconArrowLeft className="size-3" />
+          Provider setup
+        </Button>
+      )}
+      {onRefresh && (
+        <Button onClick={onRefresh} variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+          <IconRefresh className="size-3" />
+          Reload
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function NoModelsContent({ onRefresh, onBackToLogin }: Pick<Props, "onRefresh" | "onBackToLogin">) {
   return (
     <>
@@ -66,7 +85,7 @@ function NoModelsContent({ onRefresh, onBackToLogin }: Pick<Props, "onRefresh" |
           <span className="text-sm font-medium">Model setup required</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Sign in with a Floyd account, or configure a provider and model in your shared Floyd Code <code className="bg-muted px-1 rounded">config.toml</code>.
+          Configure a provider and model in your shared Floyd Code <code className="bg-muted px-1 rounded">config.toml</code> — no account or sign-in is required.
         </p>
       </div>
 
@@ -80,20 +99,41 @@ function NoModelsContent({ onRefresh, onBackToLogin }: Pick<Props, "onRefresh" |
         </p>
       </div>
 
-      <div className="flex flex-col min-[400px]:flex-row min-[400px]:justify-between gap-2 w-full">
-        {onBackToLogin && (
-          <Button onClick={onBackToLogin} variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-            <IconArrowLeft className="size-3" />
-            Back to sign in
-          </Button>
-        )}
-        {onRefresh && (
-          <Button onClick={onRefresh} variant="ghost" size="sm" className="gap-1 text-muted-foreground">
-            <IconRefresh className="size-3" />
-            Reload
-          </Button>
-        )}
+      <SetupActions onRefresh={onRefresh} onBackToLogin={onBackToLogin} />
+    </>
+  );
+}
+
+function ManagedProviderContent({ onRefresh, onBackToLogin }: Pick<Props, "onRefresh" | "onBackToLogin">) {
+  return (
+    <>
+      <div className="space-y-2">
+        <div className="inline-flex items-center gap-2 text-amber-500">
+          <IconAlertTriangle className="size-5" />
+          <span className="text-sm font-medium">Managed provider not configured</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Your active model comes from the managed <code className="bg-muted px-1 rounded">managed:floyd-code</code>{" "}
+          provider, which this build ships without a deployment: there is no sign-in to complete and no account to
+          create.
+        </p>
       </div>
+
+      <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2">
+        <div className="flex items-center gap-2 text-xs font-medium">
+          <IconFileSettings className="size-4" />
+          Fix the configuration
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Set <code className="bg-muted px-1 rounded">default_model</code> to a model from your own provider in the
+          shared Floyd Code <code className="bg-muted px-1 rounded">config.toml</code> — Provider setup has a working
+          example — or point the managed provider at a deployment of your own by setting the{" "}
+          <code className="bg-muted px-1 rounded">FLOYD_CODE_OAUTH_HOST</code> and{" "}
+          <code className="bg-muted px-1 rounded">FLOYD_CODE_BASE_URL</code> environment variables. Then reload.
+        </p>
+      </div>
+
+      <SetupActions onRefresh={onRefresh} onBackToLogin={onBackToLogin} />
     </>
   );
 }
@@ -145,6 +185,17 @@ export function ConfigErrorScreen({ type, errorMessage, onRefresh, onBackToLogin
         <div className="max-w-sm text-center space-y-6">
           <FloydMascot className="h-10 mx-auto opacity-50" />
           <NoModelsContent onRefresh={onRefresh} onBackToLogin={onBackToLogin} />
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "managed-provider-unconfigured") {
+    return (
+      <div className="flex-1 min-h-0 overflow-y-auto p-6">
+        <div className="max-w-sm mx-auto text-center space-y-6">
+          <FloydMascot className="h-10 mx-auto opacity-50" />
+          <ManagedProviderContent onRefresh={onRefresh} onBackToLogin={onBackToLogin} />
         </div>
       </div>
     );

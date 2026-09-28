@@ -71,7 +71,7 @@ Key names per provider:
 | Key | Applicable provider | Default |
 | --- | --- | --- |
 | `FLOYD_API_KEY` | Floyd / Legacy | None |
-| `FLOYD_BASE_URL` | Floyd / Legacy | `https://api.legacy.ai/v1` |
+| `FLOYD_BASE_URL` | Floyd / Legacy | None; the `floyd` provider refuses an unconfigured endpoint and names this variable |
 | `ANTHROPIC_API_KEY` | Anthropic | None |
 | `ANTHROPIC_BASE_URL` | Anthropic | Follows Anthropic SDK default |
 | `OPENAI_API_KEY` | OpenAI (`openai` and `openai_responses`) | None |
@@ -89,18 +89,20 @@ For the full provider type and field reference, see [Providers and models](./pro
 
 ## OAuth and managed services
 
-This group of variables redirects OAuth authentication and managed service endpoints to a self-hosted or test environment. They are not needed for everyday use.
+This group of variables points the OAuth login and the managed-service endpoints at a deployment you control. None of them has a default: this build ships every managed host as an empty string, so the client never reaches a host nobody configured. They are not needed for everyday use — the primary path is a provider declared under `[providers.*]` in `config.toml`, which carries its own endpoint.
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
-| `FLOYD_CODE_OAUTH_HOST` | OAuth auth host; highest priority | Falls back to `FLOYD_OAUTH_HOST` when unset |
-| `FLOYD_OAUTH_HOST` | OAuth auth host; fallback for `FLOYD_CODE_OAUTH_HOST` | Falls back to `https://auth.floyd.com` when unset |
-| `FLOYD_CODE_BASE_URL` | Managed API base URL used after OAuth login | `https://api.floyd.com/coding/v1` |
+| `FLOYD_CODE_OAUTH_HOST` | OAuth auth host; highest priority | None; falls back to `FLOYD_OAUTH_HOST` when unset |
+| `FLOYD_OAUTH_HOST` | OAuth auth host; fallback for `FLOYD_CODE_OAUTH_HOST` | None; an unset host leaves login with no server, so set the host you authenticate against |
+| `FLOYD_CODE_BASE_URL` | Managed API base URL used after OAuth login | None; managed-service calls fail closed with an error naming `FLOYD_CODE_BASE_URL` |
 
-Both variables address the vendor's managed service, and neither has to be set: the CLI requires no account, and a provider configured in `config.toml` supplies the endpoint on its own.
+These variables address the deployment you are pointing at, and none of them has to be set: the CLI requires no account, and a provider configured in `config.toml` supplies the endpoint on its own.
+
+The same group covers a deployment's remaining endpoints. `FLOYD_CODE_CDN_BASE`, `FLOYD_CODE_SITE_BASE`, and `FLOYD_CODE_TELEMETRY_ENDPOINT` configure the CDN, site, and telemetry roots for the default slot; their `FLOYD_CODE_GLOBAL_*` counterparts serve the global slot (`FLOYD_CODE_GLOBAL_OAUTH_HOST` also accepts the alias `FLOYD_GLOBAL_OAUTH_HOST`), and `FLOYD_CODE_CONTENT_CDN_BASE` covers content downloads. All of them default to empty as well.
 
 ::: warning
-`FLOYD_CODE_BASE_URL` (OAuth-managed service, targeting `floyd.com`) and `FLOYD_BASE_URL` (direct API key connection, targeting `legacy.ai`) are two distinct variables. Use each one in its appropriate context.
+`FLOYD_CODE_BASE_URL` (OAuth-managed service) and `FLOYD_BASE_URL` (direct API key connection) are two distinct variables. Use each one in its appropriate context.
 :::
 
 ## Define a model from environment variables (`FLOYD_MODEL_*`)
@@ -123,7 +125,7 @@ Complete variable list:
 | `FLOYD_MODEL_NAME` | Yes (also the enable switch) | Model id sent to the API | — |
 | `FLOYD_MODEL_API_KEY` | Yes | API key | — |
 | `FLOYD_MODEL_PROVIDER_TYPE` | No | Provider type: `floyd`, `anthropic`, `openai` | `floyd` |
-| `FLOYD_MODEL_BASE_URL` | No | API base URL | Each type has its own default |
+| `FLOYD_MODEL_BASE_URL` | No | API base URL | `https://api.openai.com/v1` for `openai`; the Anthropic SDK default for `anthropic`; `floyd` has none and must be given one |
 | `FLOYD_MODEL_MAX_CONTEXT_SIZE` | No | Maximum context length (tokens) | `262144` (256 K) |
 | `FLOYD_MODEL_CAPABILITIES` | No | Comma-separated capability tags, unioned with auto-detected capabilities | `image_in,thinking` |
 | `FLOYD_MODEL_DISPLAY_NAME` | No | Name shown in `/model` | Falls back to `FLOYD_MODEL_NAME` |
@@ -150,7 +152,7 @@ Switches that control the behavior of subsystems such as telemetry, background t
 | `FLOYD_CODE_BACKGROUND_PRINT_MAX_TURNS` | Max number of new turns triggered by background-task completions in print mode; higher priority than `[task] print_max_turns` | Positive integer; invalid values are ignored |
 | `FLOYD_IMAGE_MAX_EDGE_PX` | Longest-edge ceiling (px) for image compression; higher priority than `[image] max_edge_px` (default `2000`) | Positive integer; invalid values are ignored |
 | `FLOYD_IMAGE_READ_BYTE_BUDGET` | Per-image byte budget for model-initiated image reads; higher priority than `[image] read_byte_budget` (default `262144`) | Positive integer; invalid values are ignored |
-| `FLOYD_CODE_PLUGIN_MARKETPLACE_URL` | Override the marketplace JSON loaded by `/plugins`; default `https://code.floyd.com/floyd-code/plugins/marketplace.json` | Also accepts `http://`, `file://` URLs, and local paths |
+| `FLOYD_CODE_PLUGIN_MARKETPLACE_URL` | Override the marketplace catalog loaded by `/plugins`; with none set the URL is derived from `FLOYD_CODE_CDN_BASE`, so an unconfigured CDN base leaves the catalog to the source checkout's `plugins/` directory | Also accepts `http://`, `file://` URLs, and local paths |
 | `FLOYD_CODE_AGENT_SWARM_MAX_CONCURRENCY` | Cap on AgentSwarm subagents running concurrently during the initial ramp; unset = no cap | Positive integer; invalid values fail fast |
 | `FLOYD_CODE_SUBAGENT_SCOPE_CACHE_SIZE` | How many completed subagent scopes stay resident for fast resume; older ones are evicted and rebuilt from persisted state on demand (default `32`; `0` or negative = never evict) | Integer; invalid values fail fast |
 | `FLOYD_CODE_SUBAGENT_SCOPE_EVICT_TIMEOUT_MS` | Max wall-clock time (ms) a single subagent scope eviction may take before the eviction queue skips it and moves on (default `15000`) | Positive integer; invalid values fail fast |
@@ -173,7 +175,7 @@ Switches that control the behavior of subsystems such as telemetry, background t
 | `FLOYD_TOKEN_COUNTING_STRATEGY` | Context token count reported externally; higher priority than `[token_counting] strategy` | `measured+estimated`, `measured`, `estimated` (case-insensitive); invalid values are ignored |
 | `FLOYD_WEB_SEARCH_BASE_URL` | Web search (`WebSearch`) service API URL; higher priority than the config file; credentials and custom headers not forwarded | Non-blank string; blank values are ignored |
 | `FLOYD_WEB_SEARCH_API_KEY` | Web search (`WebSearch`) service API key; replaces both the configured key and the OAuth credential | Non-blank string; blank values are ignored |
-| `FLOYD_WEB_FETCH_BASE_URL` | Web fetch (`FetchURL`) service API URL; higher priority than the config file; credentials not forwarded. Without an endpoint, signed-in users get the managed Floyd OAuth fetch service before direct local requests | Non-blank string; blank values are ignored |
+| `FLOYD_WEB_FETCH_BASE_URL` | Web fetch (`FetchURL`) service API URL; higher priority than the config file; credentials not forwarded. With no endpoint configured, `FetchURL` falls back to direct local requests | Non-blank string; blank values are ignored |
 | `FLOYD_WEB_FETCH_API_KEY` | Web fetch (`FetchURL`) service API key; replaces both the configured key and the OAuth credential | Non-blank string; blank values are ignored |
 | `FLOYD_CODE_EXPERIMENTAL_FLAG` | Enable all registered experimental features for this process | `1`, `true`, `yes`, `on` |
 | `FLOYD_SHELL_PATH` | Override the Git Bash path on Windows (used when auto-detection fails) | Absolute path |

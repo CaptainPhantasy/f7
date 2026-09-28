@@ -71,7 +71,7 @@ OPENAI_BASE_URL = "https://your-gateway.example/v1"
 | 键名 | 适用供应商 | 默认值 |
 | --- | --- | --- |
 | `FLOYD_API_KEY` | Floyd / Legacy | 无 |
-| `FLOYD_BASE_URL` | Floyd / Legacy | `https://api.legacy.ai/v1` |
+| `FLOYD_BASE_URL` | Floyd / Legacy | 无；`floyd` 供应商在端点未配置时拒绝启动并提示该变量 |
 | `ANTHROPIC_API_KEY` | Anthropic | 无 |
 | `ANTHROPIC_BASE_URL` | Anthropic | Anthropic SDK 默认值 |
 | `OPENAI_API_KEY` | OpenAI（`openai` 和 `openai_responses`） | 无 |
@@ -89,18 +89,20 @@ OPENAI_BASE_URL = "https://your-gateway.example/v1"
 
 ## OAuth 与托管端点
 
-这组变量用于将 OAuth 认证和托管服务端点指向自建或测试环境，日常使用不需要设置。
+这组变量用于把 OAuth 登录和托管服务端点指向你自己部署的环境，日常使用不需要设置。它们都没有默认值：本构建中所有托管 host 都是空字符串，客户端不会访问任何未经配置的主机。主路径是在 `config.toml` 的 `[providers.*]` 里声明供应商，端点由供应商自带。
 
 | 环境变量 | 用途 | 默认值 |
 | --- | --- | --- |
-| `FLOYD_CODE_OAUTH_HOST` | OAuth 认证 host，优先级最高 | 未设时回退到 `FLOYD_OAUTH_HOST` |
-| `FLOYD_OAUTH_HOST` | OAuth 认证 host，作为上一个的 fallback | 未设时使用 `https://auth.floyd.com` |
-| `FLOYD_CODE_BASE_URL` | OAuth 登录后的托管 API base URL | `https://api.floyd.com/coding/v1` |
+| `FLOYD_CODE_OAUTH_HOST` | OAuth 认证 host，优先级最高 | 无默认值；未设时回退到 `FLOYD_OAUTH_HOST` |
+| `FLOYD_OAUTH_HOST` | OAuth 认证 host，作为上一个的 fallback | 无默认值；未设置时登录没有可用的服务端，需自行设置要认证的 host |
+| `FLOYD_CODE_BASE_URL` | OAuth 登录后的托管 API base URL | 无默认值；托管服务调用会直接失败，并提示设置 `FLOYD_CODE_BASE_URL` |
 
-这两个变量都指向厂商的托管服务，且都不需要设置：CLI 不要求账号，在 `config.toml` 里配置好供应商就会自带端点。
+这些变量都指向你部署的服务，且都不需要设置：CLI 不要求账号，在 `config.toml` 里配置好供应商就会自带端点。
+
+同一组变量还覆盖部署的其余端点：`FLOYD_CODE_CDN_BASE`、`FLOYD_CODE_SITE_BASE`、`FLOYD_CODE_TELEMETRY_ENDPOINT` 分别配置默认槽位的 CDN、站点和遥测根地址，对应的 `FLOYD_CODE_GLOBAL_*` 系列服务全局槽位（`FLOYD_CODE_GLOBAL_OAUTH_HOST` 还接受别名 `FLOYD_GLOBAL_OAUTH_HOST`），`FLOYD_CODE_CONTENT_CDN_BASE` 用于内容下载。这些变量同样默认都是空。
 
 ::: warning
-`FLOYD_CODE_BASE_URL`（OAuth 托管服务，指向 `floyd.com`）和 `FLOYD_BASE_URL`（API 密钥直连，指向 `legacy.ai`）是两个不同的变量，请按场景区分。
+`FLOYD_CODE_BASE_URL`（OAuth 托管服务）和 `FLOYD_BASE_URL`（API 密钥直连）是两个不同的变量，请按场景区分。
 :::
 
 ## 用环境变量定义模型（`FLOYD_MODEL_*`）
@@ -123,7 +125,7 @@ f7
 | `FLOYD_MODEL_NAME` | 是（同时是启用开关） | 发送给 API 的模型 ID | — |
 | `FLOYD_MODEL_API_KEY` | 是 | API 密钥 | — |
 | `FLOYD_MODEL_PROVIDER_TYPE` | 否 | 供应商类型：`floyd`、`anthropic`、`openai` | `floyd` |
-| `FLOYD_MODEL_BASE_URL` | 否 | API 基础 URL | 各类型有各自默认值 |
+| `FLOYD_MODEL_BASE_URL` | 否 | API 基础 URL | `openai` 为 `https://api.openai.com/v1`；`anthropic` 用 Anthropic SDK 默认值；`floyd` 没有默认值，必须显式设置 |
 | `FLOYD_MODEL_MAX_CONTEXT_SIZE` | 否 | 最大上下文长度（token 数） | `262144`（256K） |
 | `FLOYD_MODEL_CAPABILITIES` | 否 | 逗号分隔的能力标签，与自动探测的能力取并集 | `image_in,thinking` |
 | `FLOYD_MODEL_DISPLAY_NAME` | 否 | 在 `/model` 中显示的名称 | 回退到 `FLOYD_MODEL_NAME` |
@@ -150,7 +152,7 @@ f7
 | `FLOYD_CODE_BACKGROUND_PRINT_MAX_TURNS` | print 模式下由后台任务完成触发的新轮次上限，优先级高于 `[task] print_max_turns` | 正整数；非法值被忽略 |
 | `FLOYD_IMAGE_MAX_EDGE_PX` | 图片压缩的最长边上限（像素），优先级高于 `config.toml` 的 `[image] max_edge_px`（默认 `2000`） | 正整数；非法值被忽略 |
 | `FLOYD_IMAGE_READ_BYTE_BUDGET` | 模型自行读图的单图字节预算，优先级高于 `config.toml` 的 `[image] read_byte_budget`（默认 `262144`） | 正整数；非法值被忽略 |
-| `FLOYD_CODE_PLUGIN_MARKETPLACE_URL` | 覆盖 `/plugins` 加载的 marketplace JSON；默认 `https://code.floyd.com/floyd-code/plugins/marketplace.json` | 也接受 `http://`、`file://` URL 和本地路径 |
+| `FLOYD_CODE_PLUGIN_MARKETPLACE_URL` | 覆盖 `/plugins` 加载的 marketplace 清单；未设置时 URL 由 `FLOYD_CODE_CDN_BASE` 推导，CDN base 未配置时清单来自源码仓库的 `plugins/` 目录 | 也接受 `http://`、`file://` URL 和本地路径 |
 | `FLOYD_CODE_AGENT_SWARM_MAX_CONCURRENCY` | 限制 AgentSwarm 初始提升并发阶段可同时运行的 subagent 数量；不设置表示不限制 | 正整数；非法值会立即失败 |
 | `FLOYD_CODE_SUBAGENT_SCOPE_CACHE_SIZE` | 保留在内存中的已完成 subagent scope 数量，超出后最旧的会被驱逐，恢复时从持久化状态按需重建（默认 `32`；`0` 或负数 = 不驱逐） | 整数；非法值会立即失败 |
 | `FLOYD_CODE_SUBAGENT_SCOPE_EVICT_TIMEOUT_MS` | 单个 subagent scope 驱逐允许的最长时间（毫秒），超时后驱逐队列跳过它继续后续驱逐（默认 `15000`） | 正整数；非法值会立即失败 |
@@ -173,7 +175,7 @@ f7
 | `FLOYD_TOKEN_COUNTING_STRATEGY` | 对外上报的上下文 token 计数，优先级高于 `config.toml` 的 `[token_counting] strategy` | `measured+estimated`、`measured`、`estimated`（不区分大小写）；非法值被忽略 |
 | `FLOYD_WEB_SEARCH_BASE_URL` | 网页搜索（`WebSearch`）服务的 API URL，优先级高于配置文件；凭据与自定义 header 不发往该端点 | 非空字符串；空白值被忽略 |
 | `FLOYD_WEB_SEARCH_API_KEY` | 网页搜索（`WebSearch`）服务的 API 密钥；设置后同时替换配置中的 API 密钥和 OAuth 凭据 | 非空字符串；空白值被忽略 |
-| `FLOYD_WEB_FETCH_BASE_URL` | 网页抓取（`FetchURL`）服务的 API URL，优先级高于配置文件；未指定端点时已登录用户走 Floyd OAuth 托管抓取，再回退本地直连；凭据不发往该端点 | 非空字符串；空白值被忽略 |
+| `FLOYD_WEB_FETCH_BASE_URL` | 网页抓取（`FetchURL`）服务的 API URL，优先级高于配置文件；未指定端点时回退为本地直连抓取；凭据不发往该端点 | 非空字符串；空白值被忽略 |
 | `FLOYD_WEB_FETCH_API_KEY` | 网页抓取（`FetchURL`）服务的 API 密钥；设置后同时替换配置中的 API 密钥和 OAuth 凭据 | 非空字符串；空白值被忽略 |
 | `FLOYD_CODE_EXPERIMENTAL_FLAG` | 在当前进程启用所有已注册的实验功能 | `1`、`true`、`yes`、`on` |
 | `FLOYD_SHELL_PATH` | Windows 上覆盖 Git Bash 路径（自动探测失败时使用） | 绝对路径 |
