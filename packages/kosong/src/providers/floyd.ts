@@ -1,5 +1,5 @@
 import { normalizeFloydToolSchema } from './floyd-schema';
-import { parseTraceId } from '#/errors';
+import { ChatProviderError, parseTraceId } from '#/errors';
 import type { ContentPart, Message, StreamedMessagePart, ToolCall } from '#/message';
 import type {
   ChatProvider,
@@ -431,7 +431,13 @@ export class FloydChatProvider implements ChatProvider {
   constructor(options: FloydOptions) {
     const apiKey = options.apiKey ?? process.env['FLOYD_API_KEY'];
     this._apiKey = apiKey === undefined || apiKey.length === 0 ? undefined : apiKey;
-    this._baseUrl = options.baseUrl ?? process.env['FLOYD_BASE_URL'] ?? 'https://api.legacy.ai/v1';
+    const baseUrl = options.baseUrl ?? process.env['FLOYD_BASE_URL'];
+    if (baseUrl === undefined || baseUrl.length === 0) {
+      throw new ChatProviderError(
+        'FloydChatProvider: baseUrl is required. Set FLOYD_BASE_URL to the Floyd API base URL, or pass baseUrl in the provider options.',
+      );
+    }
+    this._baseUrl = baseUrl;
     this._defaultHeaders = options.defaultHeaders;
     this._clientFactory = options.clientFactory;
     this._model = options.model;

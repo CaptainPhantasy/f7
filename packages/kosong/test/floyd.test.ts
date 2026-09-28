@@ -31,6 +31,7 @@ function createProvider(stream: boolean = false): FloydChatProvider {
   return new FloydChatProvider({
     model: 'floyd-k2-turbo-preview',
     apiKey: 'test-key',
+    baseUrl: 'https://floyd.example.test/v1',
     stream,
   });
 }
@@ -104,6 +105,7 @@ async function captureFloydMessages(
   let provider = new FloydChatProvider({
     model: 'floyd-k2',
     apiKey: 'test-key',
+    baseUrl: 'https://floyd.example.test/v1',
     stream: false,
     clientFactory: () => ({ chat: { completions: { create } } }) as never,
   });
@@ -933,6 +935,7 @@ describe('FloydChatProvider', () => {
       const provider = new FloydChatProvider({
         model: 'floyd-k2-turbo-preview',
         apiKey: 'test-key',
+        baseUrl: 'https://floyd.example.test/v1',
         stream: false,
         generationKwargs: { prompt_cache_key: 'session-test' },
       });
@@ -1090,11 +1093,48 @@ describe('FloydChatProvider', () => {
       const saved = process.env['FLOYD_API_KEY'];
       delete process.env['FLOYD_API_KEY'];
       try {
-        const provider = new FloydChatProvider({ model: 'test' });
+        const provider = new FloydChatProvider({
+          model: 'test',
+          baseUrl: 'https://floyd.example.test/v1',
+        });
         await expect(provider.generate('', [], [])).rejects.toThrow(/options\.auth\.apiKey/);
       } finally {
         if (saved !== undefined) {
           process.env['FLOYD_API_KEY'] = saved;
+        }
+      }
+    });
+
+    it('refuses an unconfigured base URL and names FLOYD_BASE_URL', () => {
+      const saved = process.env['FLOYD_BASE_URL'];
+      delete process.env['FLOYD_BASE_URL'];
+      try {
+        expect(() => new FloydChatProvider({ model: 'test' })).toThrow(/FLOYD_BASE_URL/);
+      } finally {
+        if (saved !== undefined) {
+          process.env['FLOYD_BASE_URL'] = saved;
+        }
+      }
+    });
+
+    it('prefers the baseUrl option over FLOYD_BASE_URL', () => {
+      const saved = process.env['FLOYD_BASE_URL'];
+      process.env['FLOYD_BASE_URL'] = 'https://floyd-env.example.test/v1';
+      try {
+        expect(new FloydChatProvider({ model: 'test' }).modelParameters['baseUrl']).toBe(
+          'https://floyd-env.example.test/v1',
+        );
+        expect(
+          new FloydChatProvider({
+            model: 'test',
+            baseUrl: 'https://floyd-option.example.test/v1',
+          }).modelParameters['baseUrl'],
+        ).toBe('https://floyd-option.example.test/v1');
+      } finally {
+        if (saved === undefined) {
+          delete process.env['FLOYD_BASE_URL'];
+        } else {
+          process.env['FLOYD_BASE_URL'] = saved;
         }
       }
     });
@@ -1110,6 +1150,7 @@ describe('FloydChatProvider', () => {
       };
       const provider = new FloydChatProvider({
         model: 'test',
+        baseUrl: 'https://floyd.example.test/v1',
         stream: false,
         clientFactory: (auth) => {
           auths.push(auth);
@@ -1883,7 +1924,7 @@ describe('FloydChatProvider', () => {
       expect(params).toMatchObject({
         model: 'floyd-k2-turbo-preview',
         temperature: 0.5,
-        baseUrl: expect.any(String),
+        baseUrl: 'https://floyd.example.test/v1',
       });
     });
   });

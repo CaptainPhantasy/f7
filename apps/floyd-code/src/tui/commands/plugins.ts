@@ -818,7 +818,7 @@ const WEBBRIDGE_POST_INSTALL_MARKDOWN = [
   '',
   '   - [Chrome Web Store](https://chromewebstore.google.com/detail/floyd-webbridge/fldmhceldgbpfpkbgopacenieobmligc)',
   '   - [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/floyd-webbridge/bnlffdbcfnanfbknnlaflhlhkocccckg)',
-  '   - [Manual installation guide](https://www.floyd.com/code/docs/floyd-code-cli/customization/plugins.html#install-the-browser-extension)',
+  '   - [Manual installation guide](https://github.com/CaptainPhantasy/f7)',
   '',
   '2. Run `/reload` or `/new` to apply it.',
 ].join('\n');

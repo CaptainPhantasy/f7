@@ -67,6 +67,7 @@ async function captureRequestBody(
   const provider = new FloydChatProvider({
     model: 'floyd-test',
     apiKey: 'test-key',
+    baseUrl: 'https://floyd.example.test/v1',
     stream: false,
   });
   let capturedBody: Record<string, unknown> | undefined;

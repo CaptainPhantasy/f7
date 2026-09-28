@@ -558,7 +558,7 @@ describe('plugins selector dialogs', () => {
     panel.handleInput('\r');
     expect(onSelect).toHaveBeenCalledWith({
       kind: 'open-url',
-      url: 'https://www.floyd.com/features/webbridge#local-agent',
+      url: 'https://github.com/CaptainPhantasy/f7',
       label: 'Floyd Browser Extension',
     });
   });

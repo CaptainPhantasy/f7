@@ -214,7 +214,10 @@ describe('handleSecondaryModelCommand', () => {
 
     await handleSecondaryModelCommand(host, '');
 
-    expect(host.showNotice).toHaveBeenCalled();
+    expect(host.showNotice).toHaveBeenCalledWith(
+      'No models configured',
+      expect.stringMatching(/\/provider.*\[providers\.\*\] in config\.toml.*\/login/),
+    );
     expect(host.mountEditorReplacement).not.toHaveBeenCalled();
   });
 

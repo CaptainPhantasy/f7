@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 
+import { FEEDBACK_ISSUE_URL } from '#/constant/app';
 import { getVersion } from '../../version';
 import { darkColors } from '../../../tui/theme/colors';
 import { supportsHyperlinks, toTerminalHyperlink } from '../../../utils/terminal-hyperlink';
@@ -48,8 +49,8 @@ export function formatRemoteControlOutput(options: RemoteControlOutputOptions): 
   const status = (text: string): string => chalk.hex(darkColors.success)(text);
   const link = (url: string): string =>
     supportsHyperlinks() ? toTerminalHyperlink(accent(url), url) : accent(url);
-  const docs = toTerminalHyperlink('docs', 'https://floyd.com/code/docs/remote-control');
-  const feedback = toTerminalHyperlink('feedback', 'https://floyd.com/code/feedback');
+  const docs = toTerminalHyperlink('docs', 'https://github.com/CaptainPhantasy/f7');
+  const feedback = toTerminalHyperlink('feedback', FEEDBACK_ISSUE_URL);
   const [localBase, localFrag] = splitTokenFragment(
     buildOpenableUrl(options.localOrigin, options.localServerToken),
   );

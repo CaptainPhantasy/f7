@@ -245,6 +245,7 @@ describe('plugins command capability surface', () => {
     expect(rendered).toContain(
       '\u001B]8;;https://chromewebstore.google.com/detail/floyd-webbridge/fldmhceldgbpfpkbgopacenieobmligc\u001B\\',
     );
+    expect(rendered).toContain('\u001B]8;;https://github.com/CaptainPhantasy/f7\u001B\\');
     expect(rendered).toContain('Chrome Web Store');
     expect(rendered).toContain('Edge Add-ons');
     expect(rendered).toContain('Manual installation guide');
@@ -271,6 +272,7 @@ describe('plugins command capability surface', () => {
     expect(unwrappedVisibleText(transcriptEntries)).toContain(
       'https://chromewebstore.google.com/detail/floyd-webbridge/fldmhceldgbpfpkbgopacenieobmligc',
     );
+    expect(unwrappedVisibleText(transcriptEntries)).toContain('https://github.com/CaptainPhantasy/f7');
   });
 
   it('separates the WebBridge install result from its setup steps with one blank line', async () => {

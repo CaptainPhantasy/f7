@@ -12,6 +12,7 @@ function createProvider(): FloydChatProvider {
   return new FloydChatProvider({
     model: 'floyd-k2-turbo-preview',
     apiKey: 'test-key',
+    baseUrl: 'https://floyd.example.test/v1',
   });
 }
 

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { FEEDBACK_ISSUE_URL } from '#/constant/app';
 import {
   formatRemoteControlOutput,
   formatRemoteControlStatus,
@@ -43,6 +44,9 @@ describe('Remote Control output', () => {
     expect(output).toContain('grants control of this machine');
     expect(output).toContain('docs');
     expect(output).toContain('feedback');
+    expect(output).toContain('\u001B]8;;https://github.com/CaptainPhantasy/f7\u0007');
+    expect(output).toContain(`\u001B]8;;${FEEDBACK_ISSUE_URL}`);
+    expect(output).not.toContain('floyd.com');
     expect(output).toContain('Logs: off');
     expect(output).not.toContain('stream-1');
   });

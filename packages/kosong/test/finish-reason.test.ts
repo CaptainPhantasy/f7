@@ -104,6 +104,7 @@ function makeFloydChatClient(response: unknown) {
 function createFloydProvider(response: unknown, stream: boolean): FloydChatProvider {
   return new FloydChatProvider({
     model: 'floyd-k2-turbo-preview',
+    baseUrl: 'https://floyd.example.test/v1',
     stream,
     clientFactory: () => makeFloydChatClient(response) as never,
   });

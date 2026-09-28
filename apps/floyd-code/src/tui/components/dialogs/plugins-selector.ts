@@ -35,10 +35,10 @@ const ELLIPSIS = '…';
 
 // Hardcoded Web Bridge promotion: a built-in fallback shown only while the
 // marketplace catalog is loading, unreachable, or predates the real
-// `floyd-webbridge` entry. Selecting it opens the install page in the browser;
-// once the catalog carries the real entry, that row wins and installs
+// `floyd-webbridge` entry. Selecting it opens the project repository in the
+// browser; once the catalog carries the real entry, that row wins and installs
 // normally.
-const WEB_BRIDGE_URL = 'https://www.floyd.com/features/webbridge#local-agent';
+const WEB_BRIDGE_URL = 'https://github.com/CaptainPhantasy/f7';
 const WEB_BRIDGE_ENTRY: PluginMarketplaceEntry = {
   id: 'floyd-webbridge',
   displayName: 'Floyd Browser Extension',

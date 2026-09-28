@@ -197,7 +197,7 @@ export async function handleSecondaryModelCommand(host: SlashCommandHost, args: 
   if (Object.keys(models).length === 0) {
     host.showNotice(
       'No models configured',
-      'Run /login to sign in to Floyd, or /provider to add another provider from a model catalog.',
+      'Run /provider to add a provider from a model catalog, or configure one under [providers.*] in config.toml. /login is only needed for an operator-supplied OAuth server.',
     );
     return;
   }
@@ -372,7 +372,7 @@ export function showModelPicker(host: SlashCommandHost, selectedValue: string = 
   if (entries.length === 0) {
     host.showNotice(
       'No models configured',
-      'Run /login to sign in to Floyd, or /provider to add another provider from a model catalog.',
+      'Run /provider to add a provider from a model catalog, or configure one under [providers.*] in config.toml. /login is only needed for an operator-supplied OAuth server.',
     );
     return;
   }
