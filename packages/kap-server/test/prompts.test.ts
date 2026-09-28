@@ -21,8 +21,10 @@ import {
   ISessionContext,
   ISessionMetadata,
   MAX_IMAGE_DECODE_BYTES,
+  Error2,
   closeSessionById,
   getLiveSessionById,
+  type IAgentScopeHandle,
 } from '@legacy-ai/agent-core-v2';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -1994,4 +1996,236 @@ describe('server-v2 /api/v1 prompts', () => {
     expect(toolPolicy?.isToolActive('Bash')).toBe(false);
     expect(toolPolicy?.isToolActive('Read')).toBe(true);
   });
+});
+
+interface PromptSubmitWarnings {
+  warnings?: { code: string; message: string }[];
+}
+
+type PromptSubmitEnvelope = Omit<Envelope<PromptItemWire>, 'details'> & {
+  details?: PromptSubmitWarnings;
+};
+
+describe('server-v2 /api/v1 prompts launch reporting', () => {
+  let server: RunningServer | undefined;
+  let home: string | undefined;
+  let base: string;
+  let llmHits: string[] = [];
+  let llmDelayMs = 0;
+  let llmServer: { close: (done: () => void) => void } | undefined;
+
+  beforeAll(async () => {
+    const { createServer } = await import('node:http');
+    const httpServer = createServer((req, res) => {
+      const chunks: Buffer[] = [];
+      req.on('data', (chunk: Buffer) => chunks.push(chunk));
+      req.on('end', () => {
+        llmHits.push(Buffer.concat(chunks).toString('utf8'));
+        const send = (): void => {
+          res.writeHead(200, { 'content-type': 'text/event-stream' });
+          res.end(
+            `data: ${JSON.stringify({
+              id: 'chatcmpl-mock',
+              object: 'chat.completion.chunk',
+              created: 1,
+              model: 'mock',
+              choices: [{ index: 0, delta: { role: 'assistant', content: 'ok' }, finish_reason: null }],
+            })}\n\ndata: ${JSON.stringify({
+              id: 'chatcmpl-mock',
+              object: 'chat.completion.chunk',
+              created: 1,
+              model: 'mock',
+              choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
+              usage: { prompt_tokens: 10, completion_tokens: 4, total_tokens: 14 },
+            })}\n\ndata: [DONE]\n\n`,
+          );
+        };
+        if (llmDelayMs > 0) setTimeout(send, llmDelayMs);
+        else send();
+      });
+    });
+    await new Promise<void>((resolve) => httpServer.listen(0, '127.0.0.1', resolve));
+    llmServer = httpServer;
+    const address = httpServer.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-v2-prompt-launch-'));
+    await writeConfigToml(
+      home,
+      [
+        'default_model = "stub"',
+        '',
+        '[providers.stub]',
+        'type = "openai"',
+        `base_url = "http://127.0.0.1:${String(port)}"`,
+        'api_key = "stub"',
+        '',
+        '[models.stub]',
+        'provider = "stub"',
+        'model = "stub"',
+        'max_context_size = 1000',
+        '',
+      ].join('\n'),
+    );
+    server = await startServer({
+      hostIdentity: TEST_HOST_IDENTITY,
+      host: '127.0.0.1',
+      port: 0,
+      homeDir: home,
+      logLevel: 'silent',
+    });
+    base = `http://127.0.0.1:${server.port}`;
+  });
+
+  afterAll(async () => {
+    if (server !== undefined) {
+      await server.close();
+      server = undefined;
+    }
+    if (llmServer !== undefined) {
+      const closing = llmServer;
+      await new Promise<void>((resolve) => {
+        closing.close(() => {
+          resolve();
+        });
+      });
+      llmServer = undefined;
+    }
+    if (home !== undefined) {
+      await rm(home, { recursive: true, force: true, maxRetries: 3, retryDelay: 25 } as never);
+    }
+  });
+
+  beforeEach(() => {
+    llmHits = [];
+    llmDelayMs = 0;
+  });
+
+  async function postPrompt(
+    sessionId: string,
+    content: unknown,
+  ): Promise<{ status: number; body: PromptSubmitEnvelope }> {
+    const res = await fetch(`${base}/api/v1/sessions/${sessionId}/prompts`, {
+      method: 'POST',
+      headers: authHeaders(server as RunningServer, { 'content-type': 'application/json' }),
+      body: JSON.stringify({ content }),
+    } as never);
+    return { status: res.status, body: (await res.json()) as PromptSubmitEnvelope };
+  }
+
+  async function newSession(model?: string): Promise<{ id: string; main: IAgentScopeHandle }> {
+    const res = await fetch(`${base}/api/v1/sessions`, {
+      method: 'POST',
+      headers: authHeaders(server as RunningServer, { 'content-type': 'application/json' }),
+      body: JSON.stringify({ metadata: { cwd: home } }),
+    } as never);
+    const created = (await res.json()) as Envelope<{ id: string }>;
+    expect(created.code).toBe(0);
+    const id = created.data.id;
+    const session = getLiveSessionById(server!.core.accessor, id);
+    if (session === undefined) throw new Error(`session ${id} not found`);
+    await session.accessor.get(IAgentLifecycleService).create({ agentId: 'main' });
+    const main = session.accessor.get(IAgentLifecycleService).handleOf('main');
+    if (main === undefined) throw new Error(`main agent of session ${id} not found`);
+    if (model !== undefined) await main.accessor.get(IAgentProfileService).setModel(model);
+    return { id, main };
+  }
+
+  it('reports prompt.not_launched when the loop never picks the prompt up', async () => {
+    const { id, main } = await newSession('stub');
+    const loop = main.accessor.get(IAgentLoopService);
+    const hold = loop.tryAcquireQuiescence();
+    expect(hold).toBeDefined();
+
+    let submitted: { status: number; body: PromptSubmitEnvelope };
+    try {
+      submitted = await postPrompt(id, [{ type: 'text', text: 'held prompt' }]);
+    } finally {
+      hold?.dispose();
+    }
+
+    expect(submitted.status).toBe(200);
+    expect(submitted.body.code).toBe(0);
+    expect(submitted.body.data.status).toBe('queued');
+    expect(submitted.body.details?.warnings).toHaveLength(1);
+    expect(submitted.body.details?.warnings?.[0]?.code).toBe('prompt.not_launched');
+    expect(submitted.body.details?.warnings?.[0]?.message).toContain('/api/v1/ws');
+    expect(submitted.body.details?.warnings?.[0]?.message).toContain(submitted.body.data.prompt_id);
+    expect(llmHits).toHaveLength(0);
+
+    await vi.waitFor(() => {
+      expect(llmHits).toHaveLength(1);
+    }, { timeout: 10000 });
+  }, 30000);
+
+  it('reports prompt.queued_behind_turn for a prompt queued behind an active turn', async () => {
+    const { id } = await newSession('stub');
+    llmDelayMs = 1500;
+
+    const first = await postPrompt(id, [{ type: 'text', text: 'first' }]);
+    expect(first.body.code).toBe(0);
+    expect(first.body.data.status).toBe('running');
+    expect(first.body.details).toBeUndefined();
+
+    const second = await postPrompt(id, [{ type: 'text', text: 'second' }]);
+    expect(second.body.code).toBe(0);
+    expect(second.body.data.status).toBe('queued');
+    expect(second.body.details?.warnings).toHaveLength(1);
+    expect(second.body.details?.warnings?.[0]?.code).toBe('prompt.queued_behind_turn');
+    expect(second.body.details?.warnings?.[0]?.message).toContain(second.body.data.prompt_id);
+
+    await vi.waitFor(() => {
+      expect(llmHits.length).toBeGreaterThanOrEqual(2);
+    }, { timeout: 20000 });
+  }, 30000);
+
+  it('reports prompt.failed with the turn error when the turn already settled', async () => {
+    const { id, main } = await newSession('stub');
+    const loop = main.accessor.get(IAgentLoopService);
+    const lookup = loop.promptHandle.bind(loop);
+    const stub = vi.spyOn(loop, 'promptHandle').mockImplementation((promptId) => {
+      const handle = lookup(promptId);
+      if (handle === undefined) return undefined;
+      return {
+        ...handle,
+        state: 'failed',
+        launched: new Promise<never>(() => {}),
+        completion: Promise.resolve({
+          promptId,
+          result: {
+            type: 'failed',
+            steps: 0,
+            error: new Error2('model.not_configured', 'Model not set'),
+          },
+          state: 'failed',
+        }),
+      } as never;
+    });
+
+    let submitted: { status: number; body: PromptSubmitEnvelope };
+    try {
+      submitted = await postPrompt(id, [{ type: 'text', text: 'turn fails' }]);
+    } finally {
+      stub.mockRestore();
+    }
+
+    expect(submitted.status).toBe(200);
+    expect(submitted.body.code).toBe(0);
+    expect(submitted.body.details?.warnings).toHaveLength(1);
+    expect(submitted.body.details?.warnings?.[0]?.code).toBe('prompt.failed');
+    expect(submitted.body.details?.warnings?.[0]?.message).toContain('model.not_configured');
+    expect(submitted.body.details?.warnings?.[0]?.message).toContain(submitted.body.data.prompt_id);
+  }, 30000);
+
+  it('omits launch details when the turn starts', async () => {
+    const { id } = await newSession('stub');
+    const submitted = await postPrompt(id, [{ type: 'text', text: 'runs now' }]);
+    expect(submitted.body.code).toBe(0);
+    expect(submitted.body.data.status).toBe('running');
+    expect(submitted.body.details).toBeUndefined();
+
+    await vi.waitFor(() => {
+      expect(llmHits).toHaveLength(1);
+    }, { timeout: 10000 });
+  }, 30000);
 });

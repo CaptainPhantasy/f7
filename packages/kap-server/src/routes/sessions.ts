@@ -15,6 +15,7 @@ import {
   ISessionLegacyService,
   ISessionTitleService,
   IEventService,
+  IModelCatalog,
   SessionCreated,
   IWorkspaceAliases,
   ISessionManager,
@@ -238,6 +239,11 @@ export function registerSessionsRoutes(
       }
 
       try {
+        const agentConfig = body.agent_config;
+        const requestedModel = agentConfig?.model;
+        if (requestedModel !== undefined && requestedModel !== '') {
+          core.accessor.get(IModelCatalog).get(requestedModel);
+        }
         const touched = await registry.createOrTouch(workDir);
         const handle = await core.accessor.get(ISessionManager).create({
           workspaceId: touched.id,
@@ -247,11 +253,15 @@ export function registerSessionsRoutes(
           await handle.accessor.get(ISessionMetadata).setTitle(body.title);
         }
         const meta = await handle.accessor.get(ISessionMetadata).read();
-        const session = toWireSession(
-          { ...meta, workspaceId: touched.id },
-          touched.root,
-          { busy: false, mainTurnActive: false, pendingInteraction: 'none' },
-        );
+        if (agentConfig !== undefined) {
+          await applySessionAgentConfig(core, meta.id, agentConfig);
+        }
+        const session = toWireSession({ ...meta, workspaceId: touched.id }, touched.root, {
+          busy: false,
+          mainTurnActive: false,
+          pendingInteraction: 'none',
+          model: requestedModel,
+        });
         core.accessor.get(IEventService).publish(
           new SessionCreated({ payload: { agentId: 'main', sessionId: session.id, session } }),
         );

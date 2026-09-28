@@ -347,15 +347,38 @@ export function registerPromptsRoutes(app: PromptRouteHost, core: Scope): void {
         reservation.submit();
         enqueued = true;
         const handle = resolved.prompt.promptHandle(id)!;
-        if (status.state === 'idle' && !status.paused && status.queue.length === 0) {
-          await Promise.race([handle.launched, handle.completion]);
-        }
+        const settlement =
+          status.state === 'idle' && !status.paused && status.queue.length === 0
+            ? await Promise.race([handle.launched.then(() => undefined), handle.completion])
+            : undefined;
         const staging = preparedMedia;
         void Promise.race([handle.launched, handle.completion]).then(
           () => staging?.discard(),
           () => staging?.discard(),
         );
-        reply.send(okEnvelope(projectPromptHandle(handle), req.id));
+        const loop = resolved.prompt.snapshot();
+        const warnings = collectPromptLaunchWarnings({ handle, settlement, loop });
+        if (warnings.length === 0) {
+          reply.send(okEnvelope(projectPromptHandle(handle), req.id));
+          return;
+        }
+        for (const warning of warnings) {
+          requestLog(req)?.warn(
+            {
+              session_id,
+              prompt_id: handle.id,
+              prompt_state: handle.state,
+              loop_state: loop.state,
+              loop_paused: loop.paused,
+              queue_length: loop.queue.length,
+            },
+            warning.message,
+          );
+        }
+        reply.send({
+          ...okEnvelope(projectPromptHandle(handle), req.id),
+          details: { warnings },
+        });
       } catch (error) {
         if (!enqueued) await preparedMedia?.discard();
         sendMappedError(reply, req, error);
@@ -487,6 +510,55 @@ function projectPromptList(loop: IAgentLoopService) {
 
 function projectPromptHandle(handle: PromptHandle) {
   return projectPromptSnapshot(handle);
+}
+
+interface PromptSubmitWarning {
+  readonly code: 'prompt.not_launched' | 'prompt.queued_behind_turn' | 'prompt.failed' | 'prompt.cancelled' | 'prompt.blocked';
+  readonly message: string;
+}
+
+function collectPromptLaunchWarnings(input: {
+  readonly handle: PromptHandle;
+  readonly settlement: Awaited<PromptHandle['completion']> | undefined;
+  readonly loop: ReturnType<IAgentLoopService['snapshot']>;
+}): PromptSubmitWarning[] {
+  const { handle, settlement, loop } = input;
+  if (handle.state === 'pending') {
+    if (loop.state === 'running' && !loop.paused) {
+      return [
+        {
+          code: 'prompt.queued_behind_turn',
+          message: `prompt ${handle.id} was accepted and is queued behind the session's active turn; it starts when that turn ends`,
+        },
+      ];
+    }
+    return [
+      {
+        code: 'prompt.not_launched',
+        message: `prompt ${handle.id} was accepted but no turn has started for it: the session is idle, and turns are driven by a session client attached to /api/v1/ws, so this prompt stays queued until a client drives the session`,
+      },
+    ];
+  }
+  if (settlement === undefined || settlement.state === 'completed') return [];
+  return [
+    {
+      code:
+        settlement.state === 'failed'
+          ? 'prompt.failed'
+          : settlement.state === 'cancelled'
+            ? 'prompt.cancelled'
+            : 'prompt.blocked',
+      message: `prompt ${handle.id} already ${settlement.state} before this request returned${reflectTurnError(settlement.result)}`,
+    },
+  ];
+}
+
+function reflectTurnError(result: Awaited<PromptHandle['completion']>['result']): string {
+  if (result === undefined || result.type !== 'failed') return '';
+  const error = result.error;
+  if (isError2(error)) return ` (${error.code}: ${error.message})`;
+  if (error instanceof Error) return ` (${error.message})`;
+  return '';
 }
 
 export function projectPromptSnapshot(prompt: {

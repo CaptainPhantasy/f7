@@ -22,6 +22,7 @@ import {
   IAgentConversationUndoService,
   IAgentCronService,
   IAgentLifecycleService,
+  IAgentProfileService,
   IEventBus,
   IEventDispatcher,
   IEventService,
@@ -493,6 +494,159 @@ describe('server-v2 /api/v1/sessions', () => {
 
     const got = await getJson<SessionWire>(`/api/v1/sessions/${id}`);
     expect(got.body.data.agent_config).toEqual({ model: 'stub' });
+  });
+
+  it('runs the first turn of a session created with agent_config.model and no default model', async () => {
+    const { createServer } = await import('node:http');
+    const hits: string[] = [];
+    const llm = createServer((req, res) => {
+      const chunks: Buffer[] = [];
+      req.on('data', (chunk: Buffer) => chunks.push(chunk));
+      req.on('end', () => {
+        hits.push(Buffer.concat(chunks).toString('utf8'));
+        res.writeHead(200, { 'content-type': 'text/event-stream' });
+        res.end(
+          [
+            'data: ' +
+              JSON.stringify({
+                id: 'chatcmpl-bound',
+                object: 'chat.completion.chunk',
+                created: 1,
+                model: 'stub',
+                choices: [
+                  { index: 0, delta: { role: 'assistant', content: 'ok' }, finish_reason: null },
+                ],
+              }),
+            '',
+            'data: ' +
+              JSON.stringify({
+                id: 'chatcmpl-bound',
+                object: 'chat.completion.chunk',
+                created: 1,
+                model: 'stub',
+                choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
+                usage: { prompt_tokens: 10, completion_tokens: 4, total_tokens: 14 },
+              }),
+            '',
+            'data: [DONE]',
+            '',
+          ].join('\n'),
+        );
+      });
+    });
+    await new Promise<void>((resolve) => llm.listen(0, '127.0.0.1', resolve));
+    const address = llm.address();
+    const llmPort = typeof address === 'object' && address !== null ? address.port : 0;
+    try {
+      await server?.close();
+      server = undefined;
+      const cwd = home as string;
+      await writeFile(
+        join(cwd, 'config.toml'),
+        [
+          '[providers.stub]',
+          'type = "openai"',
+          `base_url = "http://127.0.0.1:${String(llmPort)}"`,
+          'api_key = "stub"',
+          '',
+          '[models.stub]',
+          'provider = "stub"',
+          'model = "stub"',
+          'max_context_size = 1000',
+          '',
+        ].join('\n'),
+        'utf-8',
+      );
+      server = await startServer({
+        hostIdentity: TEST_HOST_IDENTITY,
+        host: '127.0.0.1',
+        port: 0,
+        homeDir: home,
+        logLevel: 'silent',
+      });
+      base = `http://127.0.0.1:${server.port}`;
+
+      const created = await postJson<SessionWire>('/api/v1/sessions', {
+        title: 'bound at creation',
+        metadata: { cwd },
+        agent_config: { model: 'stub' },
+      });
+      expect(created.body.code).toBe(0);
+      expect(created.body.data.agent_config).toEqual({ model: 'stub' });
+
+      const id = created.body.data.id;
+      const session = getLiveSessionById((server as RunningServer).core.accessor, id);
+      const main = session?.accessor.get(IAgentLifecycleService).handleOf(MAIN_AGENT_ID);
+      expect(main?.accessor.get(IAgentProfileService).getModel()).toBe('stub');
+      if (main === undefined) throw new Error('creation did not provision the main agent');
+
+      const ended: { reason?: string; error?: { code?: string; message?: string } }[] = [];
+      const subscription = main.accessor.get(IEventBus).subscribe((event) => {
+        if (event.type === 'turn.ended') ended.push(event as (typeof ended)[number]);
+      });
+      const submitted = await postJson<{ prompt_id: string }>(`/api/v1/sessions/${id}/prompts`, {
+        content: [{ type: 'text', text: 'hello' }],
+      });
+      expect(submitted.body.code).toBe(0);
+
+      await vi.waitFor(
+        () => {
+          expect(ended).toHaveLength(1);
+        },
+        { timeout: 30000 },
+      );
+      subscription.dispose();
+
+      expect(ended[0]?.reason).toBe('completed');
+      expect(ended[0]?.error).toBeUndefined();
+      expect(hits.length).toBeGreaterThan(0);
+    } finally {
+      await new Promise<void>((resolve) => llm.close(() => resolve()));
+    }
+  }, 60000);
+
+  it('rejects a session created with an unresolvable agent_config.model', async () => {
+    await server?.close();
+    server = undefined;
+    const cwd = home as string;
+    await writeFile(
+      join(cwd, 'config.toml'),
+      [
+        'default_model = "stub"',
+        '',
+        '[providers.stub]',
+        'type = "openai"',
+        'base_url = "http://127.0.0.1:9999"',
+        'api_key = "stub"',
+        '',
+        '[models.stub]',
+        'provider = "stub"',
+        'model = "stub"',
+        'max_context_size = 1000',
+        '',
+      ].join('\n'),
+      'utf-8',
+    );
+    server = await startServer({
+      hostIdentity: TEST_HOST_IDENTITY,
+      host: '127.0.0.1',
+      port: 0,
+      homeDir: home,
+      logLevel: 'silent',
+      debugEndpoints: true,
+    });
+    base = `http://127.0.0.1:${server.port}`;
+
+    const { body } = await postJson<null>('/api/v1/sessions', {
+      metadata: { cwd },
+      agent_config: { model: 'no-such-model' },
+    });
+
+    expect(body.code).toBe(40001);
+    expect(body.msg).toContain('no-such-model');
+
+    const sessions = await getJson<PageWire>('/api/v1/sessions');
+    expect(sessions.body.data.items.some((s) => s.metadata.cwd === cwd)).toBe(false);
   });
 
   it('reports the journaled event watermark as last_seq', async () => {
