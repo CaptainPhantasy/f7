@@ -65,6 +65,7 @@ describe('refreshUpdateCache', () => {
 
   it('threads timeoutMs into the default CDN fetch', async () => {
     vi.useFakeTimers();
+    vi.stubEnv('FLOYD_CODE_CDN_BASE', 'https://cdn.example.test/floyd-code');
     vi.stubGlobal(
       'fetch',
       vi.fn(async (_input: string | URL, init?: RequestInit) => {
@@ -94,6 +95,7 @@ describe('refreshUpdateCache', () => {
     } finally {
       vi.useRealTimers();
       vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
     }
   });
 });

@@ -330,7 +330,7 @@ Bulk-import all providers from a custom registry (`api.json`). The command fetch
 f7 provider add https://registry.example.com/v1/models/api.json --api-key YOUR_KEY
 
 # Or via environment variable (suitable for CI / .envrc)
-FLOYD_REGISTRY_API_KEY=YOUR_KEY floyd provider add https://registry.example.com/v1/models/api.json
+FLOYD_REGISTRY_API_KEY=YOUR_KEY f7 provider add https://registry.example.com/v1/models/api.json
 
 # Public registry: no key needed
 f7 provider add https://registry.example.com/v1/models/api.json

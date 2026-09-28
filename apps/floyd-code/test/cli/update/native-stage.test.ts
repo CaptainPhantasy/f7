@@ -13,7 +13,28 @@ import {
   stagedExePath,
   stageNativeUpdate,
 } from '#/cli/update/native-stage';
+import type * as AppConstants from '#/constant/app';
 import { getNativeStagedStateFile, getNativeStagingDir } from '#/utils/paths';
+
+// This build ships no vendor CDN, so the shipped binaries base is empty and
+// the artifact URLs are ''. These tests exercise the download/verify path,
+// which needs a configured base; the unconfigured behaviour is asserted
+// separately with the base emptied again.
+const cdnMock = vi.hoisted(() => ({ binariesBase: '' }));
+
+vi.mock('#/constant/app', async (importOriginal) => {
+  const actual = await importOriginal<typeof AppConstants>();
+  return {
+    ...actual,
+    floydCodeCdnBinariesBase: () => cdnMock.binariesBase,
+  };
+});
+
+const CONFIGURED_BINARIES_BASE = 'https://cdn.example.test/floyd-code/binaries';
+
+beforeEach(() => {
+  cdnMock.binariesBase = CONFIGURED_BINARIES_BASE;
+});
 
 const fsMocks = vi.hoisted(() => ({
   /** Records chmod/rename calls (path-based) so tests can assert ordering. */
@@ -175,16 +196,40 @@ describe('stageNativeUpdate', () => {
     await rm(workDir, { recursive: true, force: true });
   });
 
+  it('refuses to stage when no CDN base is configured', async () => {
+    cdnMock.binariesBase = '';
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    await expect(
+      stageNativeUpdate({
+        version: VERSION,
+        exePath,
+        platform: 'linux',
+        arch: 'x64',
+        fetchImpl,
+      }),
+    ).rejects.toThrow(/CDN base not configured[\s\S]*floydCodeCdnBinariesBase/);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(await readStagedNativeUpdate(exePath)).toBeNull();
+    await expect(stat(getNativeStagedStateFile(exePath))).rejects.toThrow();
+  });
+
   it('downloads, verifies and records the staged metadata', async () => {
+    const fetchImpl = mockCdnFetch({ payload: PAYLOAD });
     const result = await stageNativeUpdate({
       version: VERSION,
       exePath,
       platform: 'linux',
       arch: 'x64',
-      fetchImpl: mockCdnFetch({ payload: PAYLOAD }),
+      fetchImpl,
     });
 
     expect(result.status).toBe('staged');
+    // The artifact requests target the configured base — an unconfigured one
+    // would yield a relative path that fetch cannot parse.
+    expect(fetchImpl).toHaveBeenCalledWith(
+      `${CONFIGURED_BINARIES_BASE}/${VERSION}/manifest.json`,
+      expect.anything(),
+    );
     expect(result.staged).toMatchObject({
       version: VERSION,
       target: 'linux-x64',

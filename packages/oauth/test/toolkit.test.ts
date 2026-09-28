@@ -50,9 +50,14 @@ const TEST_IDENTITY = {
   platform: 'floyd_code_cli',
 } as const;
 
+const MANAGED_BASE_URL = 'https://api.example.test/coding/v1';
+const MANAGED_OAUTH_KEY = resolveFloydCodeOAuthKey({ oauthHost: '', baseUrl: MANAGED_BASE_URL });
+const MANAGED_STORAGE_NAME = resolveFloydTokenStorageName({ oauthKey: MANAGED_OAUTH_KEY });
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 function managedModelsResponse(): Response {
@@ -296,16 +301,19 @@ describe('FloydOAuthToolkit', () => {
   });
 
   it('provisions managed config after login when an adapter is configured', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', MANAGED_BASE_URL);
     const storage = new MemoryTokenStorage();
     const write = vi.fn();
-    const fetchImpl = vi.fn(async () => managedModelsResponse()) as unknown as typeof fetch;
+    const fetchMock = vi.fn(async (_input: unknown, _init?: RequestInit) =>
+      managedModelsResponse(),
+    );
     const config = { providers: {} };
     const toolkit = new FloydOAuthToolkit({
       homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
       identity: TEST_IDENTITY,
       storage,
       now: () => 100,
-      fetchImpl,
+      fetchImpl: fetchMock as unknown as typeof fetch,
       configAdapter: {
         read: () => config,
         write,
@@ -322,7 +330,7 @@ describe('FloydOAuthToolkit', () => {
       },
     });
 
-    storage.tokens.set('floyd-code', token('access-1'));
+    storage.tokens.set(MANAGED_STORAGE_NAME, token('access-1'));
     await expect(toolkit.login()).resolves.toMatchObject({
       providerName: FLOYD_CODE_PROVIDER_NAME,
       ok: true,
@@ -330,18 +338,20 @@ describe('FloydOAuthToolkit', () => {
         defaultModel: 'floyd-code/floyd-for-coding',
       },
     });
+    expect(fetchInputUrl(fetchMock.mock.calls[0]?.[0])).toBe(`${MANAGED_BASE_URL}/models`);
     expect(write).toHaveBeenCalledWith(config);
   });
 
   it.each([401, 402])(
     'force-refreshes a stored token when managed model provisioning rejects cached auth with HTTP %i',
     async (status) => {
+      vi.stubEnv('FLOYD_CODE_BASE_URL', MANAGED_BASE_URL);
       const storage = new MemoryTokenStorage();
       const write = vi.fn();
       const onDeviceCode = vi.fn();
       const config = { providers: {} };
       const oauthHost = 'https://auth.test';
-      const oauthKey = resolveFloydCodeOAuthKey({ oauthHost });
+      const oauthKey = resolveFloydCodeOAuthKey({ oauthHost, baseUrl: MANAGED_BASE_URL });
       storage.tokens.set(resolveFloydTokenStorageName({ oauthKey }), token('stale-access'));
       const fetchMock = vi
         .fn()
@@ -408,6 +418,8 @@ describe('FloydOAuthToolkit', () => {
         },
       });
       expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchInputUrl(fetchMock.mock.calls[0]?.[0])).toBe(`${MANAGED_BASE_URL}/models`);
+      expect(fetchInputUrl(fetchMock.mock.calls[1]?.[0])).toBe(`${MANAGED_BASE_URL}/models`);
       const firstModelRequest = fetchMock.mock.calls[0]?.[1] as RequestInit | undefined;
       const secondModelRequest = fetchMock.mock.calls[1]?.[1] as RequestInit | undefined;
       expect(new Headers(firstModelRequest?.headers).get('authorization')).toBe(
@@ -569,8 +581,9 @@ describe('FloydOAuthToolkit', () => {
   });
 
   it('propagates the managed quota response', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', MANAGED_BASE_URL);
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('floyd-code', token('access-1'));
+    storage.tokens.set(MANAGED_STORAGE_NAME, token('access-1'));
     const fetchImpl = vi.fn(async (_input: unknown, _init?: RequestInit) =>
       new Response(
         JSON.stringify({
@@ -592,7 +605,7 @@ describe('FloydOAuthToolkit', () => {
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
-    ) as unknown as typeof fetch;
+    );
     vi.stubGlobal('fetch', fetchImpl);
     const toolkit = new FloydOAuthToolkit({
       homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
@@ -618,11 +631,13 @@ describe('FloydOAuthToolkit', () => {
         },
       },
     });
+    expect(fetchInputUrl(fetchImpl.mock.calls[0]?.[0])).toBe(`${MANAGED_BASE_URL}/usages`);
   });
 
   it('returns null extraUsage when the payload has no boosterWallet', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', MANAGED_BASE_URL);
     const storage = new MemoryTokenStorage();
-    storage.tokens.set('floyd-code', token('access-1'));
+    storage.tokens.set(MANAGED_STORAGE_NAME, token('access-1'));
     const fetchImpl = vi.fn(async (_input: unknown, _init?: RequestInit) =>
       new Response(
         JSON.stringify({
@@ -633,7 +648,7 @@ describe('FloydOAuthToolkit', () => {
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
-    ) as unknown as typeof fetch;
+    );
     vi.stubGlobal('fetch', fetchImpl);
     const toolkit = new FloydOAuthToolkit({
       homeDir: join('/tmp', 'floyd-oauth-toolkit-test'),
@@ -651,6 +666,7 @@ describe('FloydOAuthToolkit', () => {
         extraUsage: null,
       },
     });
+    expect(fetchInputUrl(fetchImpl.mock.calls[0]?.[0])).toBe(`${MANAGED_BASE_URL}/usages`);
   });
 
   it('propagates the managed profile response', async () => {

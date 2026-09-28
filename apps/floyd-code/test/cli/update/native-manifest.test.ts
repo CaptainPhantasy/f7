@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   fetchNativeReleaseManifest,
@@ -6,9 +6,30 @@ import {
   nativeManifestUrl,
   selectPlatformEntry,
 } from '#/cli/update/native-manifest';
-import { floydCodeCdnBinariesBase } from '#/constant/app';
+import type * as AppConstants from '#/constant/app';
+
+// This build ships no vendor CDN, so the shipped binaries base is empty and
+// the URL builders return ''. The request-routing tests below need a
+// configured base, so they configure this knob; the unconfigured behaviour is
+// asserted separately with the base emptied again.
+const cdnMock = vi.hoisted(() => ({ binariesBase: '' }));
+
+vi.mock('#/constant/app', async (importOriginal) => {
+  const actual = await importOriginal<typeof AppConstants>();
+  return {
+    ...actual,
+    floydCodeCdnBinariesBase: () => cdnMock.binariesBase,
+  };
+});
+
+const CONFIGURED_BINARIES_BASE = 'https://cdn.example.test/floyd-code/binaries';
+const CONFIGURED_MANIFEST_URL = `${CONFIGURED_BINARIES_BASE}/0.7.0/manifest.json`;
 
 const VERSION = '0.7.0';
+
+beforeEach(() => {
+  cdnMock.binariesBase = CONFIGURED_BINARIES_BASE;
+});
 
 function mockFetch(response: {
   readonly ok: boolean;
@@ -44,7 +65,7 @@ describe('fetchNativeReleaseManifest', () => {
     expect(manifest.version).toBe(VERSION);
     expect(Object.keys(manifest.platforms)).toEqual(['win32-x64', 'darwin-arm64']);
     expect(f).toHaveBeenCalledWith(
-      nativeManifestUrl(VERSION),
+      CONFIGURED_MANIFEST_URL,
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
@@ -195,10 +216,38 @@ describe('selectPlatformEntry', () => {
 });
 
 describe('url helpers', () => {
-  it('builds the manifest and binary URLs from the binaries base', () => {
-    expect(nativeManifestUrl(VERSION)).toBe(`${floydCodeCdnBinariesBase()}/${VERSION}/manifest.json`);
+  it('builds absolute manifest and binary URLs from the configured binaries base', () => {
+    expect(nativeManifestUrl(VERSION)).toBe(CONFIGURED_MANIFEST_URL);
     expect(nativeBinaryUrl(VERSION, 'floyd-code-win32-x64.zip')).toBe(
-      `${floydCodeCdnBinariesBase()}/${VERSION}/floyd-code-win32-x64.zip`,
+      `${CONFIGURED_BINARIES_BASE}/${VERSION}/floyd-code-win32-x64.zip`,
     );
+  });
+
+  it('returns empty — never a relative path — when no binaries base is configured', () => {
+    cdnMock.binariesBase = '';
+    // `${base}/${version}/…` on an empty base would yield '/0.7.0/manifest.json',
+    // which fetch cannot parse.
+    expect(nativeManifestUrl(VERSION)).toBe('');
+    expect(nativeBinaryUrl(VERSION, 'floyd-code-win32-x64.zip')).toBe('');
+  });
+});
+
+describe('unconfigured CDN base', () => {
+  beforeEach(() => {
+    cdnMock.binariesBase = '';
+  });
+
+  it('refuses to request a manifest and names the knob to set', async () => {
+    const f = mockFetch({ ok: true, status: 200, body: MANIFEST_BODY });
+    await expect(fetchNativeReleaseManifest(VERSION, f)).rejects.toThrow(
+      /CDN base not configured[\s\S]*floydCodeCdnBinariesBase/,
+    );
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it('still rejects a non-semver version before the configuration check', async () => {
+    const f = mockFetch({ ok: true, status: 200, body: MANIFEST_BODY });
+    await expect(fetchNativeReleaseManifest('nope', f)).rejects.toThrow(/invalid semver/);
+    expect(f).not.toHaveBeenCalled();
   });
 });

@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   getRecommendedEffortConfig,
@@ -16,6 +16,8 @@ const CLOUD_CONFIG = {
 };
 
 const ENVELOPE = { name: 'recommended_effort', config: CLOUD_CONFIG };
+
+const BASE_URL = 'https://api.example.test/coding/v1';
 
 const tempDirs: string[] = [];
 
@@ -32,7 +34,12 @@ async function makeCacheFile(): Promise<string> {
   return join(dir, 'cache.json');
 }
 
+beforeEach(() => {
+  vi.stubEnv('FLOYD_CODE_BASE_URL', BASE_URL);
+});
+
 afterEach(async () => {
+  vi.unstubAllEnvs();
   resetRecommendedEffortConfigCache();
   await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
@@ -48,7 +55,7 @@ describe('getRecommendedEffortConfig', () => {
 
     expect(result).toEqual(CLOUD_CONFIG);
     expect(fetchImpl).toHaveBeenCalledWith(
-      expect.stringContaining('/client_configs'),
+      `${BASE_URL}/client_configs`,
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ name: 'recommended_effort' }),
@@ -199,6 +206,19 @@ describe('getRecommendedEffortConfig', () => {
       cacheFile,
     });
     expect(result).toBeUndefined();
+  });
+
+  it('makes no request and reports no config when no endpoint is configured', async () => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    const fetchImpl = vi.fn(async () => jsonResponse(ENVELOPE));
+
+    const result = await getRecommendedEffortConfig({
+      fetchImpl: fetchImpl as typeof fetch,
+      cacheFile: null,
+    });
+
+    expect(result).toBeUndefined();
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 });
 

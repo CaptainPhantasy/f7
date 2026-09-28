@@ -521,12 +521,18 @@ export async function refreshProviderModels(
     const providerConfig = readProvider(config, providerId);
     if (providerConfig === undefined) continue;
 
+    const configuredBaseUrl = nonEmptyString(providerConfig.baseUrl);
+    const refreshPlatform =
+      configuredBaseUrl === undefined || nonEmptyString(platform.baseUrl) !== undefined
+        ? platform
+        : { ...platform, baseUrl: configuredBaseUrl };
+
     try {
       const declared = declaredProviderCredential(providerConfig, providerId);
       const apiKey = resolveProviderApiKey(providerConfig, providerId);
       if (apiKey === undefined) continue;
-      let models = await fetchOpenPlatformModels(platform, apiKey);
-      models = filterModelsByPrefix(models, platform);
+      let models = await fetchOpenPlatformModels(refreshPlatform, apiKey);
+      models = filterModelsByPrefix(models, refreshPlatform);
       if (models.length === 0) continue;
 
       config = await rebaseSelectionAfterFetch(host, config);
@@ -535,7 +541,7 @@ export async function refreshProviderModels(
       if (selectedModel === undefined) continue;
       const next = structuredClone(config);
       applyOpenPlatformConfig(next, {
-        platform,
+        platform: refreshPlatform,
         models,
         selectedModel,
         thinking: false,

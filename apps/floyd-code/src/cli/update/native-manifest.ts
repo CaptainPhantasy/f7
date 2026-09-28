@@ -46,12 +46,17 @@ export const NativeReleaseManifestSchema = z.object({
 export type NativeReleaseManifest = z.infer<typeof NativeReleaseManifestSchema>;
 export type NativePlatformEntry = z.infer<typeof PlatformEntrySchema>;
 
+export const NATIVE_CDN_BASE_UNCONFIGURED_MESSAGE =
+  'Native update CDN base not configured: floydCodeCdnBinariesBase() is empty in this build, so no host serves native release artifacts.';
+
 export function nativeManifestUrl(version: string): string {
-  return `${floydCodeCdnBinariesBase()}/${version}/manifest.json`;
+  const base = floydCodeCdnBinariesBase();
+  return base.length === 0 ? '' : `${base}/${version}/manifest.json`;
 }
 
 export function nativeBinaryUrl(version: string, filename: string): string {
-  return `${floydCodeCdnBinariesBase()}/${version}/${filename}`;
+  const base = floydCodeCdnBinariesBase();
+  return base.length === 0 ? '' : `${base}/${version}/${filename}`;
 }
 
 /**
@@ -70,6 +75,10 @@ export async function fetchNativeReleaseManifest(
   if (valid(version) === null) {
     throw new Error(`invalid semver for native manifest lookup: ${JSON.stringify(version)}`);
   }
+  const url = nativeManifestUrl(version);
+  if (url.length === 0) {
+    throw new Error(NATIVE_CDN_BASE_UNCONFIGURED_MESSAGE);
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => {
     controller.abort();
@@ -78,7 +87,7 @@ export async function fetchNativeReleaseManifest(
   // proxy can deliver headers within the limit and then stall mid-body, and
   // resolving `fetch()` alone would clear the timer and hang the worker.
   try {
-    const response = await fetchImpl(nativeManifestUrl(version), { signal: controller.signal });
+    const response = await fetchImpl(url, { signal: controller.signal });
     if (!response.ok) {
       throw new Error(`native manifest for ${version} returned HTTP ${response.status}`);
     }

@@ -13,6 +13,7 @@ import {
   type ManagedFloydConfigShape,
   type OpenPlatformDefinition,
 } from '../src/open-platform';
+import { refreshProviderModels, type RefreshProviderHost } from '../src/refreshProviderModels';
 
 const PLATFORM_BASE_URL = 'https://api.example.test/v1';
 
@@ -135,13 +136,18 @@ describe('fetchOpenPlatformModels', () => {
     vi.stubEnv('FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_BASE_URL', '');
     const fetchMock = vi.fn();
 
-    await expect(
-      fetchOpenPlatformModels(
-        getOpenPlatformById('legacy-cn')!,
-        'sk-test',
-        fetchMock as unknown as typeof fetch,
-      ),
-    ).rejects.toThrow(/FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_BASE_URL/);
+    const error = await fetchOpenPlatformModels(
+      getOpenPlatformById('legacy-cn')!,
+      'sk-test',
+      fetchMock as unknown as typeof fetch,
+    ).catch((error: unknown) => error);
+
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toContain(
+      'No base URL configured for platform "legacy-cn"',
+    );
+    expect((error as Error).message).toContain('base_url');
+    expect((error as Error).message).toContain('FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_BASE_URL');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -628,5 +634,140 @@ describe('removeOpenPlatformConfig', () => {
     removeOpenPlatformConfig(config, 'legacy-cn');
 
     expect(config.defaultModel).toBe('other/model');
+  });
+});
+
+describe('refreshProviderModels platform base URL', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  const PROVIDER_BASE_URL = 'https://platform.example.test/v1';
+
+  function makeHost(initial: ManagedFloydConfigShape): {
+    host: RefreshProviderHost;
+    snapshot: () => ManagedFloydConfigShape;
+  } {
+    let current = structuredClone(initial);
+    return {
+      snapshot: () => current,
+      host: {
+        getConfig: async () => structuredClone(current),
+        removeProvider: async (providerId) => {
+          delete current.providers[providerId];
+          return structuredClone(current);
+        },
+        setConfig: async (patch) => {
+          current = {
+            ...current,
+            ...patch,
+            providers: { ...current.providers, ...patch.providers },
+            models: { ...current.models, ...patch.models },
+          };
+          return structuredClone(current);
+        },
+        resolveOAuthToken: async () => '',
+      },
+    };
+  }
+
+  function makeEnvKeyProvider(): ManagedFloydConfigShape {
+    vi.stubEnv('FLOYD_TEST_OPEN_PLATFORM_KEY', 'sk-open-platform');
+    vi.stubEnv('FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_BASE_URL', '');
+    return {
+      providers: {
+        'legacy-cn': {
+          type: 'floyd',
+          baseUrl: PROVIDER_BASE_URL,
+          apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY',
+        },
+      },
+      models: {},
+    };
+  }
+
+  it('refreshes through the configured provider base_url when the platform env override is unset', async () => {
+    const fetchMock = vi.fn(async () => makeModelsResponse());
+    vi.stubGlobal('fetch', fetchMock);
+    const { host, snapshot } = makeHost(makeEnvKeyProvider());
+
+    const result = await refreshProviderModels(host, { providerId: 'legacy-cn' });
+
+    expect(result.failed).toEqual([]);
+    expect(result.changed).toEqual([
+      {
+        providerId: 'legacy-cn',
+        providerName: 'Floyd Platform (API key · mainland CN)',
+        added: 2,
+        removed: 0,
+      },
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${PROVIDER_BASE_URL}/models`,
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer sk-open-platform' }),
+      }),
+    );
+    expect(snapshot().providers['legacy-cn']).toEqual({
+      type: 'floyd',
+      baseUrl: PROVIDER_BASE_URL,
+      apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY',
+    });
+    expect(snapshot().models?.['legacy-cn/floyd-k2-0712-preview']).toMatchObject({
+      provider: 'legacy-cn',
+      model: 'floyd-k2-0712-preview',
+      maxContextSize: 256000,
+    });
+    expect(snapshot().models?.['legacy-cn/non-floyd-model']).toBeUndefined();
+  });
+
+  it('prefers the platform env override over the provider base_url', async () => {
+    const config = makeEnvKeyProvider();
+    vi.stubEnv('FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_BASE_URL', 'https://env.example.test/v1');
+    const fetchMock = vi.fn(async () => makeModelsResponse());
+    vi.stubGlobal('fetch', fetchMock);
+    const { host, snapshot } = makeHost(config);
+
+    const result = await refreshProviderModels(host, { providerId: 'legacy-cn' });
+
+    expect(result.failed).toEqual([]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://env.example.test/v1/models',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer sk-open-platform' }),
+      }),
+    );
+    expect(snapshot().providers['legacy-cn']).toMatchObject({
+      baseUrl: 'https://env.example.test/v1',
+      apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY',
+    });
+  });
+
+  it('reports the base_url setting to provide when neither the provider nor the platform has one', async () => {
+    vi.stubEnv('FLOYD_TEST_OPEN_PLATFORM_KEY', 'sk-open-platform');
+    vi.stubEnv('FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_BASE_URL', '');
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { host, snapshot } = makeHost({
+      providers: {
+        'legacy-cn': { type: 'floyd', apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY' },
+      },
+      models: {},
+    });
+
+    const result = await refreshProviderModels(host, { providerId: 'legacy-cn' });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.changed).toEqual([]);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0]?.provider).toBe('legacy-cn');
+    expect(result.failed[0]?.reason).toContain('base_url');
+    expect(result.failed[0]?.reason).toContain('FLOYD_CODE_OPEN_PLATFORM_LEGACY_CN_BASE_URL');
+    expect(snapshot().providers['legacy-cn']).toEqual({
+      type: 'floyd',
+      apiKeyEnv: 'FLOYD_TEST_OPEN_PLATFORM_KEY',
+    });
   });
 });

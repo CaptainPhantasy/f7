@@ -23,6 +23,7 @@ import { writeJsonFile } from '#/utils/persistence';
 
 import {
   fetchNativeReleaseManifest,
+  NATIVE_CDN_BASE_UNCONFIGURED_MESSAGE,
   nativeBinaryUrl,
   selectPlatformEntry,
 } from './native-manifest';
@@ -311,6 +312,9 @@ async function downloadAndHash(
   onProgress?: (downloadedBytes: number, totalBytes: number | null) => void,
   idleTimeoutMs: number = DOWNLOAD_IDLE_TIMEOUT_MS,
 ): Promise<number> {
+  if (url.length === 0) {
+    throw new Error(NATIVE_CDN_BASE_UNCONFIGURED_MESSAGE);
+  }
   const controller = new AbortController();
   let idleTimeout: ReturnType<typeof setTimeout> | undefined;
   const armIdleTimeout = (): void => {

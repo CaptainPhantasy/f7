@@ -224,7 +224,7 @@ describe('resolveProviderEndpoint', () => {
     process.env['FLOYD_API_KEY'] = 'sk-floyd-env';
     expect(resolveProviderEndpoint('floyd')).toEqual({
       apiKey: 'sk-floyd-env',
-      baseUrl: 'https://api.legacy.ai/v1',
+      baseUrl: '',
     });
   });
 
@@ -278,7 +278,7 @@ describe('floyd provider definitions', () => {
       expect(definition?.endpoint).toEqual({
         apiKeyEnv: 'FLOYD_API_KEY',
         baseUrlEnv: 'FLOYD_BASE_URL',
-        defaultBaseUrl: 'https://api.legacy.ai/v1',
+        defaultBaseUrl: '',
       });
       expect(definition?.hostHeaders).toBe('full');
       expect(definition?.modelSource).toBe('oauth-catalog');

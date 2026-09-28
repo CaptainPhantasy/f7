@@ -713,6 +713,8 @@ describe('refreshAllProviderModels', () => {
   });
 
   it('forces default thinking on when the refreshed default model cannot disable thinking', async () => {
+    const baseUrl = 'https://api.managed.example.test/coding/v1';
+    vi.stubEnv('FLOYD_CODE_BASE_URL', baseUrl);
     const host = makeRefreshHost({
       providers: {
         [FLOYD_CODE_PROVIDER_NAME]: {
@@ -734,22 +736,23 @@ describe('refreshAllProviderModels', () => {
       telemetry: true,
     } as unknown as FloydConfig);
 
-    const fetchMock = vi.fn<FetchMock>(
-      async () =>
-        new Response(
-          JSON.stringify({
-            data: [
-              {
-                id: 'floyd-deep-coder',
-                context_length: 262144,
-                supports_reasoning: true,
-                supports_thinking_type: 'only',
-              },
-            ],
-          }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ),
-    );
+    const fetchMock = vi.fn<FetchMock>(async (input, init) => {
+      expect(fetchInputUrl(input)).toBe(`${baseUrl}/models`);
+      expect(new Headers(init?.headers).get('authorization')).toBe('Bearer oauth-access-token');
+      return new Response(
+        JSON.stringify({
+          data: [
+            {
+              id: 'floyd-deep-coder',
+              context_length: 262144,
+              supports_reasoning: true,
+              supports_thinking_type: 'only',
+            },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await refreshAllProviderModels({

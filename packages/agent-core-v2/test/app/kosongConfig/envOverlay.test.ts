@@ -47,7 +47,7 @@ describe('floydModelEnvOverlay.apply', () => {
     });
     expect((effective['providers'] as Record<string, unknown>)[ENV_MODEL_PROVIDER_KEY]).toEqual({
       type: 'floyd',
-      baseUrl: 'https://api.legacy.ai/v1',
+      baseUrl: '',
     });
     expect(effective['defaultModel']).toBe(ENV_MODEL_ALIAS_KEY);
   });

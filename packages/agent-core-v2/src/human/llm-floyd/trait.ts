@@ -1,5 +1,6 @@
 import type { ProtocolEndpoint, ProviderConnection } from '#/llm/protocol/connection';
 import type { ContentPart, ToolDescription } from '#/llm/message';
+import type { LlmModel } from '#/llm/model';
 import { providerImagePolicy } from '#/llm/media/image-formats';
 import { CONTEXT_MANAGEMENT_BETA } from '#/llm/requester/bases/anthropic/contract';
 import type { AnthropicTrait } from '#/llm/requester/bases/anthropic/trait';
@@ -14,7 +15,7 @@ import { normalizeFloydToolSchema } from './schema';
 
 export const FLOYD_API_KEY_ENV = 'FLOYD_API_KEY';
 export const FLOYD_BASE_URL_ENV = 'FLOYD_BASE_URL';
-export const FLOYD_DEFAULT_BASE_URL = 'https://api.legacy.ai/v1';
+export const FLOYD_DEFAULT_BASE_URL = '';
 
 const floydEndpoint: ProtocolEndpoint = {
   apiKeyEnv: FLOYD_API_KEY_ENV,
@@ -22,8 +23,24 @@ const floydEndpoint: ProtocolEndpoint = {
   defaultBaseUrl: FLOYD_DEFAULT_BASE_URL,
 };
 
+function isBaseUrlConfigured(model: LlmModel | undefined): boolean {
+  const modelBaseUrl = model?.baseUrl;
+  if (modelBaseUrl !== undefined && modelBaseUrl.length > 0) {
+    return true;
+  }
+  const envBaseUrl = process.env[FLOYD_BASE_URL_ENV];
+  return envBaseUrl !== undefined && envBaseUrl.length > 0;
+}
+
 export const floydConnection: ProviderConnection = {
-  endpoint: () => floydEndpoint,
+  endpoint: (ctx) => {
+    if (!isBaseUrlConfigured(ctx?.model)) {
+      throw new Error(
+        `Floyd endpoint is not configured: no base URL is set. Set ${FLOYD_BASE_URL_ENV} to the Floyd API base URL, or pass baseUrl for the model.`,
+      );
+    }
+    return floydEndpoint;
+  },
 };
 
 export interface FloydThinkingConfig {

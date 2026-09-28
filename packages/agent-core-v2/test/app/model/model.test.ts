@@ -349,7 +349,7 @@ describe('floydModelEnvOverlay', () => {
       },
     });
     expect(effective['providers']).toEqual({
-      [ENV_MODEL_PROVIDER_KEY]: { type: 'floyd', baseUrl: 'https://api.legacy.ai/v1' },
+      [ENV_MODEL_PROVIDER_KEY]: { type: 'floyd', baseUrl: '' },
     });
   });
 

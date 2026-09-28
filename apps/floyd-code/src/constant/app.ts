@@ -92,11 +92,12 @@ export const FEEDBACK_VERSION_PREFIX = 'floyd-code-';
 // Telemetry event name; keep stable for dashboard queries.
 export const FEEDBACK_TELEMETRY_EVENT = 'feedback_submitted';
 
-// This build ships no vendor CDN, so the base stays empty: no version check,
-// install script, or binary download can reach a host the project does not
-// control, and the update path degrades to "no update available".
+export const FLOYD_CODE_CDN_BASE_ENV = 'FLOYD_CODE_CDN_BASE';
+// No vendor CDN ships with this build, so the base is empty unless an operator
+// configures one: no version check, install script, or binary download can
+// reach a host the project does not control.
 export function floydCodeCdnBase(): string {
-  return '';
+  return (process.env[FLOYD_CODE_CDN_BASE_ENV] ?? '').replace(/\/+$/, '');
 }
 export function floydCodeCdnLatestUrl(): string {
   const base = floydCodeCdnBase();

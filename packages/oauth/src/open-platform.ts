@@ -142,7 +142,7 @@ export async function fetchOpenPlatformModels(
   const baseUrl = platform.baseUrl.replace(/\/+$/, '');
   if (baseUrl.length === 0) {
     throw new Error(
-      `No base URL configured for platform "${platform.id}". Set ${openPlatformEnvName(platform.id, 'BASE_URL')} to the platform's API base URL.`,
+      `No base URL configured for platform "${platform.id}". Set base_url on the "${platform.id}" provider in config.toml, or set ${openPlatformEnvName(platform.id, 'BASE_URL')}.`,
     );
   }
   const res = await fetchImpl(`${baseUrl}/models`, {

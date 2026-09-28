@@ -330,7 +330,7 @@ f7 provider <action> [options]
 f7 provider add https://registry.example.com/v1/models/api.json --api-key YOUR_KEY
 
 # 或通过环境变量（适合 CI / .envrc）
-FLOYD_REGISTRY_API_KEY=YOUR_KEY floyd provider add https://registry.example.com/v1/models/api.json
+FLOYD_REGISTRY_API_KEY=YOUR_KEY f7 provider add https://registry.example.com/v1/models/api.json
 
 # 公开 registry：无需密钥
 f7 provider add https://registry.example.com/v1/models/api.json

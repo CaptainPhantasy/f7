@@ -410,7 +410,6 @@ describe('media', () => {
     expect(floydFilesBaseUrl({ ...anthropic, baseUrl: 'https://api.example.test/' })).toBe(
       'https://api.example.test/v1',
     );
-    expect(floydFilesBaseUrl(anthropic)).toBe(FLOYD_DEFAULT_BASE_URL);
     const openai: LlmModel = { ...mediaModel, provider: 'openai', baseUrl: 'https://api.example.test' };
     expect(floydFilesBaseUrl(openai)).toBe('https://api.example.test');
   });
@@ -492,8 +491,8 @@ describe('endpoint', () => {
     vi.unstubAllEnvs();
   });
 
-  it('injects the endpoint from env and connection defaults at request time', async () => {
-    vi.stubEnv(FLOYD_BASE_URL_ENV, '');
+  it('injects the endpoint from env and the explicit model baseUrl at request time', async () => {
+    vi.stubEnv(FLOYD_BASE_URL_ENV, 'https://example.test/v9');
     vi.stubEnv(FLOYD_API_KEY_ENV, 'env-key');
     const seen: LlmModel[] = [];
     const client = createClientStub((captured, request) => {
@@ -520,12 +519,6 @@ describe('endpoint', () => {
       { messages },
       { signal },
     );
-    vi.stubEnv(FLOYD_BASE_URL_ENV, 'https://example.test/v9');
-    await requester.generate(
-      { model: floydProvider.resolveModel('floyd-k3') },
-      { messages },
-      { signal },
-    );
     await requester.generate(
       { model: floydProvider.resolveModel('floyd-k3', { baseUrl: 'https://explicit.test/v1' }) },
       { messages },
@@ -533,11 +526,30 @@ describe('endpoint', () => {
     );
 
     expect(seen.map((entry) => entry.baseUrl)).toEqual([
-      FLOYD_DEFAULT_BASE_URL,
       'https://example.test/v9',
       'https://explicit.test/v1',
     ]);
     expect(seen[0]?.apiKey).toBe('env-key');
+  });
+
+  it('refuses an unconfigured floyd base and names FLOYD_BASE_URL', async () => {
+    expect(FLOYD_DEFAULT_BASE_URL).toBe('');
+    vi.stubEnv(FLOYD_BASE_URL_ENV, '');
+    vi.stubEnv(FLOYD_API_KEY_ENV, 'env-key');
+    const client = stubOpenAIClient(chatCompletionChunks);
+    const requester = createOpenAIRequester({
+      ...floydOpenAI,
+      clientFactory: client.clientFactory,
+    });
+
+    await expect(
+      requester.generate(
+        { model: floydProvider.resolveModel('floyd-k3') },
+        { messages },
+        { signal: new AbortController().signal },
+      ),
+    ).rejects.toThrow(new RegExp(FLOYD_BASE_URL_ENV));
+    expect(client.called()).toBe(false);
   });
 
   it('selects protocols by name and rejects undeclared ones', () => {

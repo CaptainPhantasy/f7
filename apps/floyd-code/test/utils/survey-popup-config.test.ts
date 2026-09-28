@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   DEFAULT_SURVEY_POPUP_CONFIG,
@@ -26,6 +26,8 @@ const CLOUD_CONFIG = {
 
 const ENVELOPE = { name: 'survey_popup', config: CLOUD_CONFIG };
 
+const BASE_URL = 'https://api.example.test/coding/v1';
+
 const tempDirs: string[] = [];
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -41,7 +43,12 @@ async function makeCacheFile(): Promise<string> {
   return join(dir, 'cache.json');
 }
 
+beforeEach(() => {
+  vi.stubEnv('FLOYD_CODE_BASE_URL', BASE_URL);
+});
+
 afterEach(async () => {
+  vi.unstubAllEnvs();
   resetSurveyPopupConfigCache();
   await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
@@ -74,7 +81,7 @@ describe('getSurveyPopupConfig', () => {
 
     expect(result).toEqual(CLOUD_CONFIG);
     expect(fetchImpl).toHaveBeenCalledWith(
-      expect.stringContaining('/client_configs'),
+      `${BASE_URL}/client_configs`,
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ name: 'survey_popup' }),
@@ -299,6 +306,45 @@ describe('getSurveyPopupConfig', () => {
       cacheFile,
     });
     expect(result).toEqual(DEFAULT_SURVEY_POPUP_CONFIG);
+  });
+});
+
+describe('getSurveyPopupConfig with no base URL configured', () => {
+  beforeEach(() => {
+    vi.stubEnv('FLOYD_CODE_BASE_URL', undefined);
+    vi.stubEnv('FLOYD_CODE_GLOBAL_BASE_URL', undefined);
+  });
+
+  it('returns the built-in defaults without issuing a request', async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse(ENVELOPE));
+
+    const result = await getSurveyPopupConfig({
+      fetchImpl: fetchImpl as typeof fetch,
+      cacheFile: null,
+    });
+
+    expect(result).toEqual(DEFAULT_SURVEY_POPUP_CONFIG);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('leaves the peek cache cold', async () => {
+    await getSurveyPopupConfig({
+      fetchImpl: vi.fn(async () => jsonResponse(ENVELOPE)) as unknown as typeof fetch,
+      cacheFile: null,
+    });
+
+    expect(peekSurveyPopupConfig()).toEqual(DEFAULT_SURVEY_POPUP_CONFIG);
+  });
+
+  it('writes no disk cache entry', async () => {
+    const cacheFile = await makeCacheFile();
+
+    await getSurveyPopupConfig({
+      fetchImpl: vi.fn(async () => jsonResponse(ENVELOPE)) as unknown as typeof fetch,
+      cacheFile,
+    });
+
+    await expect(readFile(cacheFile, 'utf-8')).rejects.toMatchObject({ code: 'ENOENT' });
   });
 });
 
