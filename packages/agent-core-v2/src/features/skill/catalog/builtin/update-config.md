@@ -25,22 +25,24 @@ Use the first line when it is non-empty; otherwise use the second line. In the r
 
 The "read → copy → Edit → validate → back up → overwrite" flow below applies to both files; only **which reload command applies** differs (see Capability 4).
 
-## Prerequisite 1: the official docs are the single source of truth
+## Prerequisite 1: the shipped docs are the single source of truth
 
-Before touching any config, use **FetchURL** to fetch the official config docs as the one authoritative reference for fields (key names, types, allowed values, owning section):
+The authoritative reference for fields (key names, types, allowed values, owning section) ships with Floyd Code in the repository, under `docs/en/`:
 
 ```
-https://legacyai.github.io/floyd-code/en/configuration/config-files.html
+docs/en/configuration/config-files.md
 ```
+
+Before touching any config, **Read** that page. This project has no hosted documentation site, so never fetch a documentation URL — read the page from the checkout.
 
 - Use the **snake_case key names and sections exactly as documented** — don't invent them, don't guess camelCase.
-- If FetchURL is unavailable or the fetch fails, tell the user plainly that you can't reach the online docs, and ask them to paste the relevant section or confirm whether to proceed from what you already know. **Never edit blindly without an authoritative reference.**
+- If the page cannot be read (the checkout is not available), tell the user plainly that you can't consult the reference, and ask them to paste the relevant section or confirm whether to proceed from what you already know. **Never edit blindly without an authoritative reference.**
 
 ## Prerequisite 2: read the target file before any change
 
 Before any modification, use **Read** on the target config file (decide whether it's `config.toml` or `tui.toml` per the above):
 
-- Location: `<FLOYD_CODE_HOME>/config.toml` or `<FLOYD_CODE_HOME>/tui.toml`. For other scopes/files, defer to the official docs.
+- Location: `<FLOYD_CODE_HOME>/config.toml` or `<FLOYD_CODE_HOME>/tui.toml`. For other scopes/files, defer to the shipped docs.
 - A missing or empty file is fine — you'll create a minimal skeleton later.
 - If the file exists but **fails to parse as TOML**, report the error verbatim and **stop** — never overwrite a broken file in place (it could destroy the user's existing config).
 
@@ -50,7 +52,7 @@ Before any modification, use **Read** on the target config file (decide whether 
 
 When the user asks "what config is there", "what does this setting do", or "how do I use it":
 
-1. Fetch the official docs (Prerequisite 1).
+1. Read the shipped docs page (Prerequisite 1).
 2. Read the current `config.toml` (Prerequisite 2).
 3. Answer against both: list the relevant sections / keys, what each is for, **current value vs default**, and the allowed-value range; say which file and section each lives in.
 4. Present it as a compact grouped list or table. **Stay read-only — write no files.**
@@ -63,7 +65,7 @@ Don't edit the target file in place, and **don't rewrite it from scratch** — i
 2. **Read the target file** (Prerequisite 2): Read it to understand the current state and confirm it parses.
 3. **Copy out a candidate (do not create from scratch)**: use **Bash** to copy the target verbatim — `cp config.toml config-new.toml` (same directory, `-new` suffix; for tui.toml, `cp tui.toml tui-new.toml`). **Leave the original untouched for now.**
    - Only when the target doesn't exist (nothing to copy) should you use **Write** to create a minimal skeleton candidate (e.g. just the comment line `# <FLOYD_CODE_HOME>/config.toml`).
-4. **Edit the candidate**: use the **Edit** tool on the candidate to **change/add only the target key** — never rewrite the whole file. That way every existing section, entry, comment, and bit of formatting stays exactly as-is; only what should change changes. The candidate is identical to the original, so use the content you read in step 2 to locate the Edit anchor. Check the change against the official docs (key / section / value type / allowed values, snake_case).
+4. **Edit the candidate**: use the **Edit** tool on the candidate to **change/add only the target key** — never rewrite the whole file. That way every existing section, entry, comment, and bit of formatting stays exactly as-is; only what should change changes. The candidate is identical to the original, so use the content you read in step 2 to locate the Edit anchor. Check the change against the shipped docs (key / section / value type / allowed values, snake_case).
 5. **Validate the candidate** (see Capability 3, via `floyd doctor`). **If anything fails, keep Editing the candidate and re-validate, looping until it all passes.**
 6. **Back up and overwrite** (only after validation fully passes):
    - **Back up the old file — always create a new timestamped backup, keep all of them, never overwrite an existing backup.** Copy this exactly with **Bash** (for config.toml): `cp config.toml "config.toml.$(date +%Y%m%d-%H%M%S).bak"`; for tui.toml: `cp tui.toml "tui.toml.$(date +%Y%m%d-%H%M%S).bak"`. Skip the backup only if the target didn't exist.
@@ -82,7 +84,7 @@ When a path is passed explicitly the file must exist (your candidate does, so th
 
 Then do two checks `floyd doctor` can't:
 
-1. **Cross-check values against the official docs** (single source of truth): are the key / section / enum values as documented, and snake_case? doctor guarantees "schema-valid", but "valid yet not what the user wanted" (e.g. a misspelled model alias) needs the docs.
+1. **Cross-check values against the shipped docs** (single source of truth): are the key / section / enum values as documented, and snake_case? doctor guarantees "schema-valid", but "valid yet not what the user wanted" (e.g. a misspelled model alias) needs the docs.
 2. **Completeness**: every existing entry is still present (the candidate fully replaces the target — a dropped line is a deletion).
 
 > To also check whether the currently **active** config is OK overall, run `floyd doctor` with no path (it checks the default `config.toml` + `tui.toml`, showing a missing one as skipped).
@@ -108,4 +110,4 @@ floyd reports configuration deprecations as warnings — in the TUI startup noti
 
 - **Always back up before overwriting**, with a **timestamped name and all history kept** — don't skip the backup, don't keep only a single `.bak`, don't overwrite an old backup.
 - Don't drop unrelated entries (the candidate fully replaces the target — a dropped line is a deletion).
-- When you can't reach the docs / have no authoritative reference, don't edit by guessing.
+- When you can't read the docs page / have no authoritative reference, don't edit by guessing.

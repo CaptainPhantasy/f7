@@ -68,5 +68,9 @@ describe('promptForInstallChoice', () => {
     // The OSC-8 escape target and the visible label must both carry the URL.
     expect(rendered).toContain(`]8;;${CHANGELOG_URL}`);
     expect(rendered).toContain(`View changelog: ${CHANGELOG_URL}`);
+    // The repository is still empty, so a /blob/main/ deep link would land on
+    // an empty-repo page; the link must stay on the repository itself.
+    expect(CHANGELOG_URL).toMatch(/^https:\/\/github\.com\/CaptainPhantasy\/f7$/);
+    expect(rendered).not.toContain('floyd.com');
   });
 });

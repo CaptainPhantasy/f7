@@ -19,9 +19,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 
 const VERSION = '3.4.0';
-const DEFAULT_FLOYD_CODE_OAUTH_HOST = 'https://auth.floyd.com';
-const DEFAULT_FLOYD_CODE_BASE_URL = 'https://api.floyd.com/coding/v1';
-const API_URL = datasourceApiUrl();
+const DEFAULT_CREDENTIAL_NAME = 'floyd-code';
 const REQUEST_TIMEOUT_MS = 30_000;
 const PROTOCOL_VERSION = '2025-06-18';
 
@@ -166,8 +164,8 @@ async function runTool(params) {
     const text = extractText(response);
     const formatted = (handler.format?.(text, built) ?? text).trim();
     return { content: [{ type: 'text', text: appendTrace(appendWarnings(formatted, fileWarnings), trace) }] };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     return {
       content: [{ type: 'text', text: appendTrace(message, trace) }],
       isError: true,
@@ -269,33 +267,40 @@ function resolveFloydHome() {
 function datasourceApiUrl() {
   const explicit = process.env.FLOYD_DATASOURCE_API_URL?.trim();
   if (explicit !== undefined && explicit.length > 0) return explicit;
-  return `${floydCodeBaseUrl()}/tools`;
+  const baseUrl = floydCodeBaseUrl();
+  if (baseUrl === undefined) {
+    throw new Error(
+      'Floyd datasource is not configured: set FLOYD_CODE_BASE_URL to the Floyd Code API base URL ' +
+        '(tool calls go to <base>/tools), or set FLOYD_DATASOURCE_API_URL to the full tool endpoint.',
+    );
+  }
+  return `${baseUrl}/tools`;
 }
 
 function floydCodeBaseUrl() {
-  return (process.env.FLOYD_CODE_BASE_URL ?? DEFAULT_FLOYD_CODE_BASE_URL).replace(/\/+$/, '');
+  return configuredEndpoint(process.env.FLOYD_CODE_BASE_URL);
 }
 
 function floydCodeOAuthHost() {
-  return normalizeEndpoint(
-    process.env.FLOYD_CODE_OAUTH_HOST ??
-      process.env.FLOYD_OAUTH_HOST ??
-      DEFAULT_FLOYD_CODE_OAUTH_HOST,
-  );
+  return configuredEndpoint(process.env.FLOYD_CODE_OAUTH_HOST ?? process.env.FLOYD_OAUTH_HOST);
 }
 
-function normalizeEndpoint(value) {
-  return value.trim().replace(/\/+$/, '');
+function configuredEndpoint(value) {
+  if (value === undefined) return undefined;
+  const normalized = value.trim().replace(/\/+$/, '');
+  return normalized.length > 0 ? normalized : undefined;
 }
 
 function resolveFloydCodeCredentialName() {
   const oauthHost = floydCodeOAuthHost();
   const baseUrl = floydCodeBaseUrl();
-  if (
-    oauthHost === normalizeEndpoint(DEFAULT_FLOYD_CODE_OAUTH_HOST) &&
-    baseUrl === DEFAULT_FLOYD_CODE_BASE_URL
-  ) {
-    return 'floyd-code';
+  if (oauthHost === undefined && baseUrl === undefined) return DEFAULT_CREDENTIAL_NAME;
+  if (oauthHost === undefined || baseUrl === undefined) {
+    throw new Error(
+      `Floyd datasource credentials are scoped to an (API base URL, OAuth host) pair: set FLOYD_CODE_OAUTH_HOST ` +
+        `(or FLOYD_OAUTH_HOST) alongside FLOYD_CODE_BASE_URL so the credential file name resolves, or leave both ` +
+        `unset to use the default ${DEFAULT_CREDENTIAL_NAME} credentials.`,
+    );
   }
 
   // Keep this in sync with packages/oauth/src/managed-floyd-code.ts.
@@ -316,16 +321,16 @@ async function loadAccessToken() {
   let parsed;
   try {
     parsed = JSON.parse(await readFile(credentialsFile, 'utf8'));
-  } catch (err) {
-    if (isNotFound(err)) {
+  } catch (error) {
+    if (isNotFound(error)) {
       throw new Error(
         `Floyd Code credentials file not found: ${credentialsFile}\nRun /login in Floyd Code first.`,
       );
     }
-    if (err instanceof SyntaxError) {
-      throw new Error(`Failed to parse Floyd Code credentials file: ${err.message}`);
+    if (error instanceof SyntaxError) {
+      throw new Error(`Failed to parse Floyd Code credentials file: ${error.message}`);
     }
-    throw err;
+    throw error;
   }
 
   if (!isRecord(parsed)) {
@@ -339,6 +344,7 @@ async function loadAccessToken() {
 }
 
 async function callFloydTool(method, params, trace = {}) {
+  const apiUrl = datasourceApiUrl();
   const { floydHome, token: initialToken } = await loadAccessToken();
   let token = initialToken;
   const toolCallId = randomUUID();
@@ -349,7 +355,7 @@ async function callFloydTool(method, params, trace = {}) {
   }, REQUEST_TIMEOUT_MS);
   try {
     const request = async (accessToken) => {
-      const response = await fetch(API_URL, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: await buildHeaders(floydHome, accessToken, toolCallId),
         body: JSON.stringify({ method, params }),
@@ -378,11 +384,11 @@ async function callFloydTool(method, params, trace = {}) {
     } catch {
       return text;
     }
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
       throw new Error(`Request timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds.`);
     }
-    throw err;
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
@@ -527,14 +533,14 @@ async function dispatch(message) {
   try {
     const result = await handleRequest(message);
     sendResult(id, result ?? {});
-  } catch (err) {
-    if (err && typeof err === 'object' && err.jsonRpc !== undefined) {
-      sendError(id, err.jsonRpc);
+  } catch (error) {
+    if (error && typeof error === 'object' && error.jsonRpc !== undefined) {
+      sendError(id, error.jsonRpc);
       return;
     }
     sendError(id, {
       code: -32603,
-      message: err instanceof Error ? err.message : String(err),
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 }
@@ -547,10 +553,10 @@ function start() {
     let message;
     try {
       message = JSON.parse(trimmed);
-    } catch (err) {
+    } catch (error) {
       sendError(null, {
         code: -32700,
-        message: `Parse error: ${err instanceof Error ? err.message : String(err)}`,
+        message: `Parse error: ${error instanceof Error ? error.message : String(error)}`,
       });
       return;
     }

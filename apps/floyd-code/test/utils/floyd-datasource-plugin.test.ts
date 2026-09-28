@@ -416,6 +416,113 @@ describe('floyd-datasource MCP server', () => {
       await rm(tempDir, { recursive: true, force: true });
     }
   });
+
+  it('fails closed with the knob names when no datasource endpoint is configured', async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), 'floyd-datasource-plugin-'));
+    const floydHome = join(tempDir, 'floyd-home');
+    let child: ChildProcessWithoutNullStreams | undefined;
+
+    try {
+      await mkdir(join(floydHome, 'credentials'), { recursive: true });
+      await writeFile(
+        join(floydHome, 'credentials', 'floyd-code.json'),
+        JSON.stringify({ access_token: 'test-token', expires_at: 4_102_444_800 }),
+        'utf8',
+      );
+      child = spawn(process.execPath, [SERVER_ENTRY], {
+        cwd: REPO_ROOT,
+        env: {
+          ...process.env,
+          FLOYD_CODE_HOME: floydHome,
+          FLOYD_CODE_BASE_URL: undefined,
+          FLOYD_CODE_OAUTH_HOST: undefined,
+          FLOYD_OAUTH_HOST: undefined,
+          FLOYD_DATASOURCE_API_URL: undefined,
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      const client = createRpcClient(child);
+
+      await client.request('initialize', {});
+      const tools = await client.request('tools/list', {});
+      const call = await client.request('tools/call', {
+        name: 'get_data_source_desc',
+        arguments: { name: 'arxiv' },
+      });
+
+      expect(
+        (tools.result as { tools: Array<{ name: string }> }).tools.map((tool) => tool.name),
+      ).toEqual(['call_data_source_tool', 'get_data_source_desc']);
+      expect(call.error).toBeUndefined();
+      expect(call.result).toEqual({
+        content: [
+          {
+            type: 'text',
+            text:
+              'Floyd datasource is not configured: set FLOYD_CODE_BASE_URL to the Floyd Code API base URL ' +
+              '(tool calls go to <base>/tools), or set FLOYD_DATASOURCE_API_URL to the full tool endpoint.',
+          },
+        ],
+        isError: true,
+      });
+    } finally {
+      child?.stdin.end();
+      child?.kill();
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses a half-configured OAuth scope instead of guessing the credential file name', async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), 'floyd-datasource-plugin-'));
+    const floydHome = join(tempDir, 'floyd-home');
+    let child: ChildProcessWithoutNullStreams | undefined;
+
+    try {
+      await mkdir(join(floydHome, 'credentials'), { recursive: true });
+      await writeFile(
+        join(floydHome, 'credentials', 'floyd-code.json'),
+        JSON.stringify({ access_token: 'test-token', expires_at: 4_102_444_800 }),
+        'utf8',
+      );
+      child = spawn(process.execPath, [SERVER_ENTRY], {
+        cwd: REPO_ROOT,
+        env: {
+          ...process.env,
+          FLOYD_CODE_HOME: floydHome,
+          FLOYD_CODE_BASE_URL: 'http://127.0.0.1:1/coding/v1',
+          FLOYD_CODE_OAUTH_HOST: undefined,
+          FLOYD_OAUTH_HOST: undefined,
+          FLOYD_DATASOURCE_API_URL: undefined,
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      const client = createRpcClient(child);
+
+      await client.request('initialize', {});
+      const call = await client.request('tools/call', {
+        name: 'get_data_source_desc',
+        arguments: { name: 'arxiv' },
+      });
+
+      expect(call.error).toBeUndefined();
+      expect(call.result).toEqual({
+        content: [
+          {
+            type: 'text',
+            text:
+              'Floyd datasource credentials are scoped to an (API base URL, OAuth host) pair: set ' +
+              'FLOYD_CODE_OAUTH_HOST (or FLOYD_OAUTH_HOST) alongside FLOYD_CODE_BASE_URL so the credential ' +
+              'file name resolves, or leave both unset to use the default floyd-code credentials.',
+          },
+        ],
+        isError: true,
+      });
+    } finally {
+      child?.stdin.end();
+      child?.kill();
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });
 
 // Pin the expected credential file name to the canonical OAuth-key resolver so

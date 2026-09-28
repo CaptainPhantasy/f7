@@ -14,8 +14,7 @@ import {
 
 import { type InstallSource, type UpdateTarget } from './types';
 
-export const CHANGELOG_URL =
-  'https://github.com/CaptainPhantasy/f7/blob/main/docs/en/release-notes/changelog.md';
+export const CHANGELOG_URL = 'https://github.com/CaptainPhantasy/f7';
 
 export type InstallPromptChoiceValue = 'install' | 'skip';
 

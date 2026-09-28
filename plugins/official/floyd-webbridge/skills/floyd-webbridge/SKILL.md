@@ -40,7 +40,7 @@ Single-tab tools (`snapshot`, `click`, `fill`, `screenshot`, `save_as_pdf`) act 
 
 ```bash
 curl -s -X POST http://127.0.0.1:10086/command \
-  -d '{"action":"find_tab","args":{"url":"https://www.floyd.com","active":true},"session":"k26-research"}'
+  -d '{"action":"find_tab","args":{"url":"https://example.com","active":true},"session":"research"}'
 ```
 
 ### Call Format
@@ -78,10 +78,10 @@ curl.exe -s -X POST http://127.0.0.1:10086/command -H "Content-Type: application
 ```bash
 # First tab: set session + a human label (in the user's language)
 curl -s -X POST http://127.0.0.1:10086/command \
-  -d '{"action":"navigate","args":{"url":"https://www.floyd.com","newTab":true,"group_title":"K2.6 feature research"},"session":"k26-research"}'
+  -d '{"action":"navigate","args":{"url":"https://example.com","newTab":true,"group_title":"feature research"},"session":"research"}'
 # Another site, same task → same session → joins the same group automatically
 curl -s -X POST http://127.0.0.1:10086/command \
-  -d '{"action":"navigate","args":{"url":"https://www.legacy.cn","newTab":true},"session":"k26-research"}'
+  -d '{"action":"navigate","args":{"url":"https://example.org","newTab":true},"session":"research"}'
 ```
 
 Closing is always user-initiated: call `close_session` only when the user explicitly asks ("close those", "clear the tabs"). It clears the whole group in one call.
@@ -152,7 +152,4 @@ Read [operations.md](references/operations.md) when the daemon or extension is u
 
 ## Version mismatches
 
-If a tool returns an error containing **"Please update the Floyd Browser Extension"** or the older **"Please update the Floyd WebBridge extension"**, the user's browser extension is older than this skill. Don't try to reconcile versions yourself — just tell the user, in their language, to update the extension and retry:
-
-- English: https://www.floyd.com/features/webbridge
-- 中文: https://www.floyd.com/zh-cn/features/webbridge
+If a tool returns an error containing **"Please update the Floyd Browser Extension"** or the older **"Please update the Floyd WebBridge extension"**, the user's browser extension is older than this skill. Don't try to reconcile versions yourself — just tell the user, in their language, to update the extension and retry. The install and update paths are in [operations.md](references/operations.md).

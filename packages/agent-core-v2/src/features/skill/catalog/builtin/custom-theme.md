@@ -49,13 +49,13 @@ Use the first line when it is non-empty; otherwise use the second line. In the r
 
 ## Source of truth: the docs token reference
 
-Before choosing colors, use **FetchURL** to fetch the official custom-theme docs as the authoritative list of tokens and what each controls:
+The authoritative list of tokens and what each controls ships with Floyd Code in the repository, under `docs/en/`:
 
 ```
-https://legacyai.github.io/floyd-code/en/customization/themes.html
+docs/en/customization/themes.md
 ```
 
-Only set tokens from this set — unknown keys are silently ignored at load. If FetchURL is unavailable or the fetch fails, fall back to the embedded reference below (it mirrors the same tokens) and tell the user you're working from the built-in list rather than the live docs.
+Before choosing colors, **Read** that page. This project has no hosted documentation site, so never fetch a documentation URL — read the page from the checkout. Only set tokens from this set — unknown keys are silently ignored at load. If the page cannot be read (the checkout is not available), fall back to the embedded reference below (it mirrors the same tokens) and tell the user you're working from the built-in list rather than the shipped docs.
 
 ## Color tokens (what each controls)
 

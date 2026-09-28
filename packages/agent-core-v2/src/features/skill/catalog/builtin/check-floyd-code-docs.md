@@ -5,40 +5,39 @@ description: Answer questions about the Floyd Code product using the official do
 
 # Check Floyd Code docs (check-floyd-code-docs)
 
-Answer Floyd Code **product** questions from the official documentation site, not from memory. This skill covers product usage ("how do I configure a provider", "what does this error mean", "how does membership quota work"); it is not for developing the Floyd Code repository itself.
+Answer Floyd Code **product** questions from the documentation that ships with Floyd Code, not from memory. This skill covers product usage ("how do I configure a provider", "what does this error mean", "how does quota work"); it is not for developing the Floyd Code repository itself.
 
 ## The single source of truth
 
-Official documentation (English):
+The English documentation lives in the Floyd Code repository, under `docs/en/`:
 
 ```
-https://www.floyd.com/code/docs/en/
+docs/en/
 ```
 
-Fetch pages with **FetchURL** before answering. All page links below are relative to this base.
+Read pages from that tree with **Read** — and **Grep** to locate a term — before answering. All page paths below are relative to `docs/en/`. This project has no hosted documentation site, so never fetch a documentation URL: read the file from the checkout instead.
 
 ## Which page to read for which question
 
-| Question topic | Page (relative to the base URL) |
+| Question topic | Page (relative to `docs/en/`) |
 | --- | --- |
-| What Floyd Code is; Base URL / API Key; standard vs high-speed model; platform comparison | `./` (home overview) |
-| Membership plans, quota and rate limits, fuel packs | `floyd-code/membership.html` |
-| Install / login / usage FAQ | `floyd-code/faq.html` |
-| Error codes and their meaning (e.g. 401 for high-speed model access) | `floyd-code/error-reference.html` |
-| Product news and recent changes | `floyd-code/whats-new.html` |
-| Community guidelines; contact and feedback | `floyd-code/community-guidelines.html`, `floyd-code/contact-and-feedback.html` |
-| `config.toml` fields, providers/models, environment variables, data locations, config overrides | `floyd-code-cli/configuration/` — `config-files.html`, `providers.html`, `env-vars.html`, `data-locations.html`, `overrides.html` |
-| Skills, MCP, hooks, plugins, themes, agents/sub-agents, Floyd Datasource | `floyd-code-cli/customization/` — `skills.html`, `mcp.html`, `hooks.html`, `plugins.html`, `themes.html`, `agents.html`; Floyd Datasource lives at `plugins.html#floyd-datasource` |
-| Getting started, sessions and context, goals, interaction and input, IDEs, migration, use cases | `floyd-code-cli/guides/` — `getting-started.html`, `sessions.html`, `goals.html`, `interaction.html`, `ides.html`, `migration.html`, `use-cases.html` |
-| Slash commands, keyboard shortcuts, builtin tools, `floyd` command flags, ACP | `floyd-code-cli/reference/` — `slash-commands.html`, `keyboard.html`, `tools.html`, `floyd-command.html`, `floyd-acp.html` |
-| CLI changelog | `floyd-code-cli/release-notes/changelog.html` |
-| Using Floyd Code in Claude Code and other third-party agents | `third-party-tools/other-coding-agents.html` |
+| What Floyd Code is; install, first session, upgrade | `guides/getting-started.md` |
+| Configuring a provider, Base URL / API key, choosing a model, comparing providers | `configuration/providers.md` |
+| `config.toml` fields, providers/models, environment variables, data locations, config overrides | `configuration/` — `config-files.md`, `providers.md`, `env-vars.md`, `data-locations.md`, `overrides.md` |
+| Skills, MCP, hooks, plugins, themes, agents/sub-agents, Floyd Datasource | `customization/` — `skills.md`, `mcp.md`, `hooks.md`, `plugins.md`, `themes.md`, `agents.md`, `datasource.md` |
+| Sessions and context, interaction and input, use cases, IDEs | `guides/` — `sessions.md`, `interaction.md`, `use-cases.md`, `ides.md` |
+| The browser UI, remote control, migrating from another tool | `guides/` — `web.md`, `remote-control.md`, `migration.md` |
+| Slash commands, keyboard shortcuts, builtin tools, `f7` command flags, ACP | `reference/` — `slash-commands.md`, `keyboard.md`, `tools.md`, `floyd-command.md`, `floyd-acp.md` |
+| Membership, plan quota and rate limits, usage reporting | `reference/slash-commands.md` (`/usage`), `reference/server-api.md` (`GET /api/v1/oauth/usage`), `configuration/config-files.md` |
+| Error codes and their meaning | `reference/server-api.md` |
+| Importing instructions, skills, or MCP settings from Claude Code or Codex | `reference/slash-commands.md` (`/import-from-cc-codex`), `customization/agents.md` |
+| Product news and recent changes, CLI changelog | `release-notes/changelog.md` |
 
-If no row fits the question, fetch the docs home page and follow its navigation links.
+If no row fits the question, start at `docs/en/index.md` and follow the links from there.
 
 ## How to answer
 
 1. Pick the page from the table above.
-2. **FetchURL the page before answering** — answer strictly from the fetched content, never from memory.
-3. Cite the page link(s) you used at the end of the answer.
-4. If the fetch fails or the docs do not cover the question, say so plainly: answer from what you already know, attach the docs entry link (`https://www.floyd.com/code/docs/en/`), and mark which parts you could not verify. **Never invent config keys, command names, model IDs, or product behaviors.**
+2. **Read the page before answering** — answer strictly from its content, never from memory.
+3. Cite the pages you used at the end of the answer, as repository-relative paths (`docs/en/...`).
+4. If the page cannot be read, the checkout is not available, or the docs do not cover the question, say so plainly: answer from what you already know, name the `docs/en/` page that would cover it, and mark which parts you could not verify. **Never invent config keys, command names, model IDs, or product behaviors.**

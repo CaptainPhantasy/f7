@@ -16,7 +16,7 @@ description: |
 
 这两个工具由 Floyd Code 托管执行，参数直接按 tool schema 传 JSON。
 
-工具会读取当前 Floyd Code 环境对应的本地 OAuth 登录凭据；当设置了 `FLOYD_CODE_OAUTH_HOST` / `FLOYD_CODE_BASE_URL` 时，会使用对应环境的隔离凭据。如果没有登录凭据，让用户先在 Floyd Code 里执行 `/login`。
+工具会读取当前 Floyd Code 环境对应的本地 OAuth 登录凭据；当同时设置了 `FLOYD_CODE_OAUTH_HOST` / `FLOYD_CODE_BASE_URL` 时，会使用对应环境的隔离凭据（凭据文件名按这对地址派生），只设置其中一个会直接报错。后端地址未配置（`FLOYD_CODE_BASE_URL` 和 `FLOYD_DATASOURCE_API_URL` 都没设置）时，工具会返回错误并指明要设置的环境变量，不要替用户猜测或写死地址。如果没有登录凭据，让用户先在 Floyd Code 里执行 `/login`。
 
 ## 1. 这个 skill 提供什么能力
 

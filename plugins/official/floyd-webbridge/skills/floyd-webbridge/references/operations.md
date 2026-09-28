@@ -13,13 +13,11 @@ The `floyd-webbridge` binary lives at `~/.floyd-webbridge/bin/floyd-webbridge` (
    - Windows: `& "$env:USERPROFILE\.floyd-webbridge\bin\floyd-webbridge.exe" start`
 
    Then retry the tool call.
-2. **`command not found` / binary missing** → not installed. Point the user to the help page below to install it.
-3. **Extension missing or won't connect** → give the user both official installation paths:
+2. **`command not found` / binary missing** → not installed. Tell the user to reinstall the plugin from Floyd Code's `/plugins` panel, which downloads the daemon binary and the plugin together.
+3. **Extension missing or won't connect** → give the user both installation paths:
    - Chrome Web Store: https://chromewebstore.google.com/detail/floyd-webbridge/fldmhceldgbpfpkbgopacenieobmligc
-   - Restricted-network fallback: download https://floyd-web-img.legacy.cn/webbridge/latest/extension/floyd-webbridge-extension.zip, unzip it, open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select the extracted folder.
-4. **Anything still broken after a `start` + retry** → don't deep-troubleshoot. Point the user to the help page:
-   - English: https://www.floyd.com/features/webbridge
-   - 中文: https://www.floyd.com/zh-cn/features/webbridge
+   - Restricted-network fallback: with the extension package already on disk, unzip it, open `chrome://extensions`, enable Developer mode, choose **Load unpacked**, and select the extracted folder.
+4. **Anything still broken after a `start` + retry** → don't deep-troubleshoot. Point the user to the installation paths above, and suggest they report the problem at https://github.com/CaptainPhantasy/f7/issues with the daemon log from `~/.floyd-webbridge/`.
 
 ## Do NOT do automatically
 
