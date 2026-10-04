@@ -7,6 +7,8 @@ import { type Entry, fromBuffer as yauzlFromBuffer } from 'yauzl';
 
 import { Error2, ErrorCodes } from '#/errors';
 
+import { hasRecognizablePluginShape } from './adapt';
+
 export async function downloadZip(url: string, signal?: AbortSignal): Promise<Buffer> {
   const controller = new AbortController();
   const timeoutHandle = setTimeout(() => {
@@ -141,6 +143,7 @@ async function restoreFilePermissions(destPath: string, entry: Entry): Promise<v
 
 async function detectPluginRoot(dir: string): Promise<string> {
   if (await hasManifest(dir)) return dir;
+  if (await hasRecognizablePluginShape(dir)) return dir;
 
   const entries = await readdir(dir, { withFileTypes: true });
   const childDirs = entries.filter((entry) => entry.isDirectory());
@@ -148,6 +151,7 @@ async function detectPluginRoot(dir: string): Promise<string> {
   if (childDir !== undefined) {
     const child = path.join(dir, childDir.name);
     if (await hasManifest(child)) return child;
+    if (await hasRecognizablePluginShape(child)) return child;
   }
 
   return dir;

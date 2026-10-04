@@ -28,6 +28,7 @@ function pluginServiceStub(commands: readonly PluginCommandDef[]): IPluginServic
     onDidMutate: () => ({ dispose: () => {} }),
     listPlugins: async () => [],
     installPlugin: async () => ({ id: '' }) as never,
+    installAllPlugins: async () => ({ installed: [], skipped: [] }),
     setPluginEnabled: async () => {},
     setPluginMcpServerEnabled: async () => {},
     removePlugin: async () => {},

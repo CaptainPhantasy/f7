@@ -34,6 +34,7 @@ import type {
   McpTestResult,
   PluginCommandDef,
   PluginInfo,
+  InstallPluginsResult,
   PluginSummary,
   ReloadSummary,
   RenameSessionInput,
@@ -379,6 +380,10 @@ export class FloydHarness {
 
   async installPlugin(source: string): Promise<PluginSummary> {
     return this.rpc.installPlugin(source);
+  }
+
+  async installAllPlugins(source: string): Promise<InstallPluginsResult> {
+    return this.rpc.installAllPlugins(source);
   }
 
   async setPluginEnabled(id: string, enabled: boolean): Promise<void> {

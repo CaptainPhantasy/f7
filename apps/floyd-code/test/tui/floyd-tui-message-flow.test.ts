@@ -265,6 +265,23 @@ function makeSession(overrides: Record<string, unknown> = {}) {
       hasErrors: false,
       source: 'local-path',
     })),
+    installAllPlugins: vi.fn(async () => ({
+      installed: [
+        {
+      id: 'demo',
+      displayName: 'Demo',
+      version: '1.0.0',
+      enabled: true,
+      state: 'ok',
+      skillCount: 1,
+      mcpServerCount: 0,
+      enabledMcpServerCount: 0,
+      hasErrors: false,
+      source: 'local-path',
+      },
+      ],
+      skipped: [],
+    })),
     setPluginEnabled: vi.fn(async () => {}),
     setPluginMcpServerEnabled: vi.fn(async () => {}),
     removePlugin: vi.fn(async () => {}),
@@ -6971,10 +6988,11 @@ command = "vim"
 
     await vi.waitFor(() => {
       expect(stripSgr(renderTranscript(driver))).toContain(
-        'Usage: /plugins install <local-path-or-zip-url>',
+        'Usage: /plugins install <GitHub-url',
       );
     });
     expect(session.installPlugin).not.toHaveBeenCalled();
+    expect(session.installAllPlugins).not.toHaveBeenCalled();
   });
 
   it('installs from a positional source on /plugins install after trusting it', async () => {
@@ -6993,7 +7011,7 @@ command = "vim"
     confirm.handleInput('\r');
 
     await vi.waitFor(() => {
-      expect(session.installPlugin).toHaveBeenCalledWith(
+      expect(session.installAllPlugins).toHaveBeenCalledWith(
         resolve('/tmp/proj-a', './plugins/floyd-datasource'),
       );
     });
@@ -7001,18 +7019,23 @@ command = "vim"
 
   it('shows a quota note after installing a quota-consuming official plugin', async () => {
     const session = makeSession({
-      installPlugin: vi.fn(async () => ({
-        id: 'floyd-datasource',
-        displayName: 'Floyd Datasource',
-        version: '3.3.0',
-        enabled: true,
-        state: 'ok',
-        skillCount: 0,
-        mcpServerCount: 1,
-        enabledMcpServerCount: 1,
-        hasErrors: false,
-        source: 'zip-url',
-        originalSource: 'https://code.floyd.com/floyd-code/plugins/official/floyd-datasource.zip',
+      installAllPlugins: vi.fn(async () => ({
+        installed: [
+          {
+            id: 'floyd-datasource',
+            displayName: 'Floyd Datasource',
+            version: '3.3.0',
+            enabled: true,
+            state: 'ok',
+            skillCount: 0,
+            mcpServerCount: 1,
+            enabledMcpServerCount: 1,
+            hasErrors: false,
+            source: 'zip-url',
+            originalSource: 'https://code.floyd.com/floyd-code/plugins/official/floyd-datasource.zip',
+          },
+        ],
+        skipped: [],
       })),
     });
     const { driver } = await makeDriver(session);
@@ -7030,17 +7053,22 @@ command = "vim"
 
   it('does not show the quota note for a same-id fork installed from a local path', async () => {
     const session = makeSession({
-      installPlugin: vi.fn(async () => ({
-        id: 'floyd-datasource',
-        displayName: 'Floyd Datasource',
-        version: '3.3.0',
-        enabled: true,
-        state: 'ok',
-        skillCount: 0,
-        mcpServerCount: 1,
-        enabledMcpServerCount: 1,
-        hasErrors: false,
-        source: 'local-path',
+      installAllPlugins: vi.fn(async () => ({
+        installed: [
+          {
+            id: 'floyd-datasource',
+            displayName: 'Floyd Datasource',
+            version: '3.3.0',
+            enabled: true,
+            state: 'ok',
+            skillCount: 0,
+            mcpServerCount: 1,
+            enabledMcpServerCount: 1,
+            hasErrors: false,
+            source: 'local-path',
+          },
+        ],
+        skipped: [],
       })),
     });
     const { driver } = await makeDriver(session);
@@ -7083,6 +7111,7 @@ command = "vim"
       expect(driver.state.editorContainer.children[0]).toBe(driver.state.editor);
     });
     expect(session.installPlugin).not.toHaveBeenCalled();
+    expect(session.installAllPlugins).not.toHaveBeenCalled();
   });
 
   it('loads a local plugin marketplace file and installs from it', async () => {
@@ -7120,7 +7149,7 @@ command = "vim"
     panel.handleInput('\r');
 
     await vi.waitFor(() => {
-      expect(session.installPlugin).toHaveBeenCalledWith(
+      expect(session.installAllPlugins).toHaveBeenCalledWith(
         'https://code.floyd.com/floyd-code/plugins/official/floyd-datasource.zip',
       );
     });
@@ -7153,10 +7182,10 @@ command = "vim"
       'utf8',
     );
     process.env['FLOYD_CODE_PLUGIN_MARKETPLACE_URL'] = marketplacePath;
-    const installPlugin = vi.fn(async () => {
+    const installAllPlugins = vi.fn(async () => {
       throw new Error('install failed');
     });
-    const session = makeSession({ installPlugin });
+    const session = makeSession({ installAllPlugins });
     const { driver } = await makeDriver(session);
 
     driver.handleUserInput('/plugins marketplace');
@@ -7219,7 +7248,7 @@ command = "vim"
     confirm.handleInput('\r');
 
     await vi.waitFor(() => {
-      expect(session.installPlugin).toHaveBeenCalledWith(join(marketplaceDir, 'superpowers'));
+      expect(session.installAllPlugins).toHaveBeenCalledWith(join(marketplaceDir, 'superpowers'));
     });
   });
 
@@ -7240,10 +7269,10 @@ command = "vim"
       }),
       'utf8',
     );
-    const installPlugin = vi.fn(async () => {
+    const installAllPlugins = vi.fn(async () => {
       throw new Error('install failed');
     });
-    const session = makeSession({ installPlugin });
+    const session = makeSession({ installAllPlugins });
     const { driver } = await makeDriver(session);
 
     driver.handleUserInput(`/plugins marketplace ${marketplacePath}`);
@@ -7329,7 +7358,7 @@ command = "vim"
       confirm.handleInput('\r');
 
       await vi.waitFor(() => {
-        expect(session.installPlugin).toHaveBeenCalledWith(
+        expect(session.installAllPlugins).toHaveBeenCalledWith(
           resolve(import.meta.dirname, '../../../../plugins/official/floyd-datasource'),
         );
       });

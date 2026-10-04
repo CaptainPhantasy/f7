@@ -9,7 +9,7 @@ Run `/plugins` in the TUI to open the plugin manager. It is a single panel with 
 - **Installed**: Manage installed plugins
 - **Official**: Floyd-maintained marketplace plugins
 - **Curated**: Third-party plugins from Floyd partners in the default marketplace
-- **Custom**: Install from a URL
+- **Custom**: Install from a GitHub repo URL, zip URL, or local folder
 
 Common keys:
 
@@ -30,7 +30,7 @@ You can also use slash commands directly:
 | --- | --- |
 | `/plugins` | Open the interactive plugin manager |
 | `/plugins list` | List installed plugins |
-| `/plugins install <path-or-url>` | Install from a local directory, zip URL, or GitHub repository URL |
+| `/plugins install <source>[#entry]` | Install from a local directory, zip URL, or GitHub repository URL. Floyd, Claude Code, Gemini CLI, and bare skills formats are accepted and translated automatically; `#entry` installs one plugin from a pack |
 | `/plugins marketplace [source]` | Browse the official marketplace, or pass a custom marketplace JSON path or URL |
 | `/plugins info <id>` | View plugin details and diagnostics |
 | `/plugins enable <id>` | Enable a plugin |
@@ -51,11 +51,24 @@ Use `/plugins install <url>` to install directly from a GitHub repository. Four 
 
 Network requests only go through `github.com` redirects and `codeload.github.com` downloads; `api.github.com` is not called.
 
+### What Floyd can install
+
+Floyd accepts more than its own plugin format. For every source — a GitHub repository URL, a zip URL, or a local folder — the installer inspects the target and translates it into a Floyd plugin when needed:
+
+- **Floyd plugins**: a `floyd.plugin.json` (or `.floyd-plugin/plugin.json`) manifest is used as-is.
+- **Claude Code plugins**: a `.claude-plugin/plugin.json` manifest is translated into a Floyd plugin. Name, description, version, author, skills, commands, agents, hooks, and MCP servers are mapped; Claude-only fields are skipped and noted in the plugin details.
+- **Claude Code packs**: a `.claude-plugin/marketplace.json` catalog installs every folder-based entry as its own Floyd plugin. Entries that point at other repositories are not installed; Floyd prints a ready-to-run `/plugins install` command for each. Add `#name` to the source to install a single entry, for example `/plugins install https://github.com/<owner>/<repo>#entry-name`.
+- **Gemini CLI extensions**: a `gemini-extension.json` manifest is translated, including MCP servers. TOML command files under `commands/` become Floyd command files, and the extension's context file (`GEMINI.md` by default) becomes system-prompt instructions.
+- **Bare skills folders**: no manifest at all. If the folder contains skills (`SKILL.md` files), a `commands/` directory, or an `agents/` directory, Floyd generates a manifest from what it finds — this covers repositories that ship skills for any tool following the open [Agent Skills](./skills.md) format.
+
+Translated plugins say where they came from in their details (for example, "adapted from Claude Code"), and Floyd remembers the original URL so update checks keep working. A source that matches none of these shapes is never turned away: Floyd sweeps the whole folder for usable pieces — skills and command files anywhere in it — installs what it finds, and reports exactly what landed. If there is truly nothing usable, Floyd says so plainly and lists what the folder holds.
+
 ### Notes
 
 - Plugin changes apply after `/reload` or in new sessions. After installing, enabling/disabling, or removing a plugin, run `/reload` or `/new`; the current session will not update.
 - Local installations are copied to `$FLOYD_CODE_HOME/plugins/managed/<id>/`, and the CLI always runs from this managed copy. Editing the original source directory after installation has no effect; you must reinstall.
 - Removing a plugin only deletes the installation record; the managed copy and original source files remain on disk.
+- Translating a Claude Code plugin, pack, Gemini CLI extension, or skills folder works on a copy; the original folder is never modified.
 - Plugins are currently installed per-user and apply to all projects; project-level installation scope is not yet supported.
 
 ### Custom marketplace JSON

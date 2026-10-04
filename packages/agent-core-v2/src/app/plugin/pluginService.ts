@@ -24,6 +24,7 @@ import {
 import type {
   EnabledPluginSessionStart,
   EnabledPluginSystemPrompt,
+  InstallPluginsResult,
   PluginCommandDef,
   PluginInfo,
   PluginAgentRoot,
@@ -98,6 +99,34 @@ export class PluginService extends Service implements IPluginService {
         mutation: { kind: 'install', id: record.id },
       });
       return { result: info, notification };
+    });
+  }
+
+  installAllPlugins(input: InstallPluginInput): Promise<InstallPluginsResult> {
+    return this.runNotifiedMutation(async () => {
+      const result = await this.manager.installAll(input.source);
+      const installed = result.installed
+        .map((record) => this.manager.info(record.id))
+        .filter((info): info is PluginInfo => info !== undefined);
+      if (installed.length === 0 && result.report === undefined) {
+        throw new BugIndicatingError('installAll finished without installing any plugin');
+      }
+      const findings = installed.flatMap((info) =>
+        (info.diagnostics ?? [])
+          .filter((d) => d.severity === 'warn')
+          .map((d) => `${info.id}: ${d.message}`),
+      );
+      const report =
+        result.report === undefined && findings.length === 0
+          ? undefined
+          : [result.report, ...findings].filter((part) => part !== undefined).join(' ');
+      const notification = await this.reloadAndNotify({
+        mutation:
+          installed.length > 0
+            ? { kind: 'install', id: installed[0]!.id }
+            : { kind: 'install', id: 'none' },
+      });
+      return { result: { installed, skipped: result.skipped, report }, notification };
     });
   }
 

@@ -52,6 +52,7 @@ import type {
 } from '@legacy-ai/agent-core-v2/app/mcpManagement/mcpManagement';
 import type { AnonymousProviderInput, GenerateEvent, GenerateInput, GenerateParams, ProviderInput } from './kosong-types.js';
 import type {
+  InstallPluginsResult,
   PluginCommandDef,
   PluginInfo,
   PluginSummary,
@@ -236,6 +237,7 @@ export interface GlobalPluginsFacade {
   list(): Promise<readonly PluginSummary[]>;
   info(id: string): Promise<PluginInfo>;
   install(source: string): Promise<PluginSummary>;
+  installAll(source: string): Promise<InstallPluginsResult>;
   setEnabled(input: { id: string; enabled: boolean }): Promise<void>;
   setMcpServerEnabled(input: { id: string; server: string; enabled: boolean }): Promise<void>;
   remove(id: string): Promise<void>;
@@ -551,6 +553,10 @@ export function createGlobalFacade(scoped: ScopedCaller, scopedStream: ScopedStr
       info: (id) => call('pluginService', 'getPluginInfo', [{ id }]) as Promise<PluginInfo>,
       install: (source) =>
         call('pluginService', 'installPlugin', [{ source }]) as Promise<PluginSummary>,
+      installAll: (source) =>
+        call('pluginService', 'installAllPlugins', [
+          { source },
+        ]) as Promise<InstallPluginsResult>,
       setEnabled: (input) => call('pluginService', 'setPluginEnabled', [input]) as Promise<void>,
       setMcpServerEnabled: (input) =>
         call('pluginService', 'setPluginMcpServerEnabled', [input]) as Promise<void>,

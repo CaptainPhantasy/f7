@@ -907,7 +907,8 @@ describe('plugins selector dialogs', () => {
   it('installs from a URL typed on the Custom tab', () => {
     const { panel, onSelect } = makePanel({ initialTab: 'custom' });
     const out = strip(renderRaw(panel));
-    expect(out).toContain('Install from a GitHub URL');
+    expect(out).toContain('Install a Floyd, Claude Code, Gemini, or bare skills plugin');
+    expect(out).toContain('GitHub repo URL, zip URL, or absolute local path');
     expect(out).toContain('╭');
 
     for (const ch of 'https://github.com/owner/repo') {

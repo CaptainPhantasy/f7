@@ -1,4 +1,5 @@
-import { cp, mkdir, mkdtemp, realpath, rename, rm, stat } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readdir, realpath, rename, rm, stat } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -10,6 +11,19 @@ import { BugIndicatingError, Error2, ErrorCodes, PluginErrors } from '#/errors';
 import type { McpServerConfig } from '#/mcpCore/config-schema';
 
 import { downloadZip, extractZip } from './archive';
+import {
+  collectLoosePieces,
+  detectForeignPlugin,
+  sanitizePluginName,
+  selectClaudePackEntries,
+  setPluginNameInManifest,
+  synthesizeFromClaudePlugin,
+  synthesizeFromFolders,
+  synthesizeFromGeminiExtension,
+  synthesizeFromLoosePieces,
+  synthesizeFromPackEntry,
+  type SynthOutcome,
+} from './adapt';
 import { loadPluginCommand } from './commands';
 import { resolveGithubCommitSha, resolveGithubSource } from './github-resolver';
 import { parseManifest, type ParsedManifestResult } from './manifest';
@@ -20,10 +34,13 @@ import {
   normalizePluginId,
   type EnabledPluginSessionStart,
   type EnabledPluginSystemPrompt,
+  type PluginAdaptedFrom,
   type PluginCapabilityState,
   type PluginCommandDef,
+  type PluginDiagnostic,
   type PluginGithubMetadata,
   type PluginInfo,
+  type PluginInstallSkip,
   type PluginMcpServerEntry,
   type PluginMcpServerInfo,
   type PluginRecord,
@@ -41,6 +58,12 @@ export interface PluginManagerOptions {
 interface ManagedPluginCopy {
   readonly root: string;
   readonly previousRoot?: string;
+}
+
+export interface PluginManagerInstallAllResult {
+  readonly installed: readonly PluginRecord[];
+  readonly skipped: readonly PluginInstallSkip[];
+  readonly report?: string;
 }
 
 export class PluginManager {
@@ -71,22 +94,34 @@ export class PluginManager {
   }
 
   async install(source: string): Promise<PluginRecord> {
-    const resolved = resolveInstallSource(source);
+    const result = await this.installAll(source);
+    const first = result.installed[0];
+    if (first === undefined) {
+      throw new Error2(ErrorCodes.PLUGIN_LOAD_FAILED, `Nothing was installed from ${source}`);
+    }
+    return first;
+  }
 
-    let sourceRoot: string;
-    let originalSource: string;
+  async installAll(source: string): Promise<PluginManagerInstallAllResult> {
+    const trimmed = source.trim();
+    const { base, fragment } = splitSourceFragment(trimmed);
+    const resolved = resolveInstallSource(base);
+
     let sourceType: PluginSource;
+    let sourceRoot: string;
+    let localRealRoot: string | undefined;
     let zipTmpDir: string | undefined;
-    let managedCopy: ManagedPluginCopy | undefined;
+    let stagedDir: string | undefined;
     let github: PluginGithubMetadata | undefined;
+    const installed: PluginRecord[] = [];
+    const skipped: PluginInstallSkip[] = [];
 
     try {
       if (resolved.kind === 'local-path') {
-        sourceRoot = await normalizeInstallRoot(resolved.path);
-        originalSource = resolved.path;
         sourceType = 'local-path';
+        sourceRoot = await normalizeInstallRoot(resolved.path);
+        localRealRoot = sourceRoot;
       } else {
-        originalSource = source.trim();
         sourceType = resolved.kind === 'github' ? 'github' : 'zip-url';
         const zipUrl =
           resolved.kind === 'github'
@@ -114,21 +149,166 @@ export class PluginManager {
         sourceRoot = await extractZip(buffer, zipTmpDir);
       }
 
-      const parsed = await parseManifest(sourceRoot);
-      if (parsed.manifest === undefined) {
-        const msg =
-          parsed.diagnostics.find((d) => d.severity === 'error')?.message ?? 'no manifest';
-        throw new Error2(
-          ErrorCodes.PLUGIN_LOAD_FAILED,
-          sourceType === 'local-path'
-            ? `Cannot install plugin at ${sourceRoot}: ${msg}`
-            : `Cannot install plugin from ${originalSource}: ${msg}`,
-          { details: { sourceType } },
+      const missing = (await parseManifest(sourceRoot)).diagnostics.find(
+        (d) => d.severity === 'error',
+      );
+      if (missing === undefined) {
+        installed.push(
+          await this.publishRecord({
+            root: sourceRoot,
+            sourceType,
+            originalSource: trimmed,
+            github,
+          }),
         );
+        return { installed, skipped };
       }
 
-      const id = normalizePluginId(parsed.manifest.name);
-      managedCopy = await copyPluginToManagedRoot(this.floydHomeDir, id, sourceRoot);
+      const foreign = await detectForeignPlugin(sourceRoot);
+      if (sourceType === 'local-path') {
+        stagedDir = await mkdtemp(path.join(tmpdir(), 'floyd-plugin-stage-'));
+        const staged = path.join(stagedDir, 'plugin');
+        await cp(sourceRoot, staged, { recursive: true });
+        sourceRoot = staged;
+      }
+
+      if (foreign?.kind === 'claude-plugin') {
+        const synth = await synthesizeFromClaudePlugin(sourceRoot, foreign.path);
+        installed.push(
+          await this.publishRecord({
+            root: sourceRoot,
+            sourceType,
+            originalSource: trimmed,
+            github,
+            adaptedFrom: 'claude-code',
+            extraDiagnostics: synth.diagnostics,
+          }),
+        );
+        return { installed, skipped };
+      }
+      if (foreign?.kind === 'gemini-extension') {
+        const synth = await synthesizeFromGeminiExtension(sourceRoot, foreign.path);
+        installed.push(
+          await this.publishRecord({
+            root: sourceRoot,
+            sourceType,
+            originalSource: trimmed,
+            github,
+            adaptedFrom: 'gemini-cli',
+            extraDiagnostics: synth.diagnostics,
+          }),
+        );
+        return { installed, skipped };
+      }
+      if (foreign?.kind === 'claude-pack') {
+        const selection = await selectClaudePackEntries(sourceRoot, foreign.path, fragment);
+        skipped.push(...selection.skipped);
+        const seen = new Set<string>();
+        for (const entry of selection.entries) {
+          const synth = await synthesizeFromPackEntry(sourceRoot, entry);
+          let name = (await parseManifest(entry.dir)).manifest?.name ?? sanitizePluginName(entry.name);
+          if (seen.has(name)) {
+            name = sanitizePluginName(`${name}-${nextNameSuffix(name, seen)}`);
+            await setPluginNameInManifest(entry.dir, name);
+          }
+          seen.add(name);
+          installed.push(
+            await this.publishRecord({
+              root: entry.dir,
+              sourceType,
+              originalSource: `${base}#${entry.name}`,
+              github,
+              adaptedFrom: 'claude-code-pack',
+              extraDiagnostics: synth.diagnostics,
+            }),
+          );
+        }
+        if (installed.length === 0) {
+          throw new Error2(
+            ErrorCodes.PLUGIN_LOAD_FAILED,
+            `Cannot install plugin from ${trimmed}: ${missing.message}`,
+            { details: { sourceType } },
+          );
+        }
+        return { installed, skipped };
+      }
+
+      const fallback = await this.installBestEffort({
+        sourceRoot,
+        sourceType,
+        originalSource: trimmed,
+        github,
+      });
+      if (fallback !== undefined) {
+        installed.push(fallback);
+        return { installed, skipped };
+      }
+      return {
+        installed,
+        skipped,
+        report: await describeNothingInstallable(
+          sourceRoot,
+          sourceType === 'local-path' ? (localRealRoot ?? sourceRoot) : trimmed,
+        ),
+      };
+    } finally {
+      if (zipTmpDir !== undefined) {
+        await rm(zipTmpDir, { recursive: true, force: true });
+      }
+      if (stagedDir !== undefined) {
+        await rm(stagedDir, { recursive: true, force: true });
+      }
+    }
+  }
+
+  private async installBestEffort(input: {
+    readonly sourceRoot: string;
+    readonly sourceType: PluginSource;
+    readonly originalSource: string;
+    readonly github?: PluginGithubMetadata;
+  }): Promise<PluginRecord | undefined> {
+    let synth: SynthOutcome | undefined;
+    try {
+      synth = await synthesizeFromFolders(input.sourceRoot, {});
+    } catch {
+      synth = undefined;
+    }
+    if (synth === undefined) {
+      const pieces = await collectLoosePieces(input.sourceRoot);
+      if (pieces === undefined) return undefined;
+      synth = await synthesizeFromLoosePieces(input.sourceRoot, pieces);
+    }
+    return this.publishRecord({
+      root: input.sourceRoot,
+      sourceType: input.sourceType,
+      originalSource: input.originalSource,
+      github: input.github,
+      adaptedFrom: 'skills',
+      extraDiagnostics: synth.diagnostics,
+    });
+  }
+
+  private async publishRecord(input: {
+    readonly root: string;
+    readonly sourceType: PluginSource;
+    readonly originalSource: string;
+    readonly github?: PluginGithubMetadata;
+    readonly adaptedFrom?: PluginAdaptedFrom;
+    readonly extraDiagnostics?: readonly PluginDiagnostic[];
+  }): Promise<PluginRecord> {
+    const parsed = await parseManifest(input.root);
+    if (parsed.manifest === undefined) {
+      const msg = parsed.diagnostics.find((d) => d.severity === 'error')?.message ?? 'no manifest';
+      throw new Error2(
+        ErrorCodes.PLUGIN_LOAD_FAILED,
+        `Cannot install plugin from ${input.originalSource}: ${msg}`,
+        { details: { sourceType: input.sourceType } },
+      );
+    }
+    const id = normalizePluginId(parsed.manifest.name);
+    let managedCopy: ManagedPluginCopy | undefined;
+    try {
+      managedCopy = await copyPluginToManagedRoot(this.floydHomeDir, id, input.root);
       const normalizedRoot = managedCopy.root;
       const managedParsed = await parseManifest(normalizedRoot);
       const existing = this.records.get(id);
@@ -139,11 +319,13 @@ export class PluginManager {
         enabled: existing?.enabled ?? true,
         installedAt: existing?.installedAt ?? now,
         updatedAt: now,
-        originalSource,
-        source: sourceType,
+        originalSource: input.originalSource,
+        source: input.sourceType,
         capabilities: existing?.capabilities,
-        github,
+        github: input.github,
+        adaptedFrom: input.adaptedFrom,
         parsed: managedParsed,
+        extraDiagnostics: input.extraDiagnostics,
         discoverSkills: this.discoverSkills,
       });
       const next = new Map(this.records);
@@ -174,10 +356,6 @@ export class PluginManager {
         }
       }
       throw error;
-    } finally {
-      if (zipTmpDir !== undefined) {
-        await rm(zipTmpDir, { recursive: true, force: true });
-      }
     }
   }
 
@@ -411,6 +589,7 @@ export class PluginManager {
       originalSource: record.originalSource,
       capabilities: record.capabilities,
       github: record.github,
+      adaptedFrom: record.adaptedFrom,
     }));
     await writeInstalled(this.floydHomeDir, { version: 1, plugins: installed });
   }
@@ -500,11 +679,42 @@ function explicitGithubRef(record: PluginRecord): PluginGithubMetadata['ref'] | 
       : undefined;
   if (record.originalSource === undefined) return fallback;
   try {
-    const source = resolveInstallSource(record.originalSource);
+    const source = resolveInstallSource(splitSourceFragment(record.originalSource).base);
     return source.kind === 'github' ? source.ref : fallback;
   } catch {
     return fallback;
   }
+}
+
+function splitSourceFragment(source: string): { base: string; fragment?: string } {
+  const idx = source.indexOf('#');
+  if (idx === -1) return { base: source };
+  const base = source.slice(0, idx);
+  const fragment = source.slice(idx + 1);
+  if (fragment.length === 0) return { base: source };
+  if (source.startsWith('http://') || source.startsWith('https://')) return { base, fragment };
+  if (existsSync(base)) return { base, fragment };
+  return { base: source };
+}
+
+function nextNameSuffix(name: string, seen: ReadonlySet<string>): number {
+  let suffix = 2;
+  while (seen.has(`${name}-${suffix}`)) suffix += 1;
+  return suffix;
+}
+
+async function describeNothingInstallable(root: string, source: string): Promise<string> {
+  let names: readonly string[] = [];
+  try {
+    names = (await readdir(root, { withFileTypes: true })).map((entry) => entry.name).slice(0, 8);
+  } catch {
+    names = [];
+  }
+  const listing = names.length > 0 ? names.join(', ') : 'an empty folder';
+  return (
+    `Nothing installable in ${source}: no plugin name-tags from any tool, no skills, no ` +
+    `commands, no agents. The folder holds: ${listing}.`
+  );
 }
 
 function pluginNotFound(id: string): Error2 {
@@ -588,12 +798,15 @@ async function recordFrom(input: {
   originalSource?: string;
   capabilities?: PluginCapabilityState;
   github?: PluginGithubMetadata;
+  adaptedFrom?: PluginAdaptedFrom;
   source?: PluginSource;
   parsed: ParsedManifestResult;
+  extraDiagnostics?: readonly PluginDiagnostic[];
   discoverSkills: (roots: readonly SkillRoot[]) => Promise<SkillDiscoveryResult>;
 }): Promise<PluginRecord> {
   const { parsed } = input;
-  const hasError = parsed.diagnostics.some((d) => d.severity === 'error');
+  const diagnostics = [...parsed.diagnostics, ...(input.extraDiagnostics ?? [])];
+  const hasError = diagnostics.some((d) => d.severity === 'error');
   return {
     id: input.id,
     root: input.root,
@@ -605,12 +818,13 @@ async function recordFrom(input: {
     originalSource: input.originalSource,
     capabilities: input.capabilities,
     github: input.github,
+    adaptedFrom: input.adaptedFrom,
     skillCount: await countDiscoveredPluginSkills(input.id, parsed.manifest, input.discoverSkills),
     manifest: parsed.manifest,
     manifestKind: parsed.manifestKind,
     manifestPath: parsed.manifestPath,
     shadowedManifestPath: parsed.shadowedManifestPath,
-    diagnostics: parsed.diagnostics,
+    diagnostics,
     skillInstructions: parsed.manifest?.skillInstructions,
   };
 }
@@ -631,6 +845,7 @@ function recordToSummary(record: PluginRecord): PluginSummary {
     source: record.source,
     originalSource: record.originalSource,
     github: record.github,
+    adaptedFrom: record.adaptedFrom,
   };
 }
 

@@ -25,6 +25,7 @@ export const pluginSummarySchema = z.object({
   source: z.enum(['local-path', 'zip-url', 'github']),
   originalSource: z.string().optional(),
   github: pluginGithubMetadataSchema.optional(),
+  adaptedFrom: z.enum(['claude-code', 'claude-code-pack', 'gemini-cli', 'skills']).optional(),
 });
 export type PluginSummaryWire = z.infer<typeof pluginSummarySchema>;
 
@@ -37,6 +38,19 @@ export const installPluginRequestSchema = z.object({
   source: z.string().min(1),
 });
 export type InstallPluginRequest = z.infer<typeof installPluginRequestSchema>;
+
+export const installPluginsResultSchema = z.object({
+  installed: z.array(pluginSummarySchema),
+  skipped: z.array(
+    z.object({
+      name: z.string(),
+      reason: z.string(),
+      installCommand: z.string().optional(),
+    }),
+  ),
+  report: z.string().optional(),
+});
+export type InstallPluginsResultWire = z.infer<typeof installPluginsResultSchema>;
 
 export const pluginMarketplaceEntrySchema = z.object({
   id: z.string(),

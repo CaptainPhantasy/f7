@@ -4,6 +4,7 @@ import { isAbsolute, join, resolve } from 'node:path';
 import {
   log,
   type CapabilityStatus,
+  type InstallPluginsResult,
   type PluginInfo,
   type PluginSummary,
   type Session,
@@ -75,6 +76,7 @@ type PluginApi = Pick<
   Session,
   | 'listPlugins'
   | 'installPlugin'
+  | 'installAllPlugins'
   | 'setPluginEnabled'
   | 'setPluginMcpServerEnabled'
   | 'removePlugin'
@@ -92,6 +94,7 @@ async function resolvePluginApi(host: SlashCommandHost): Promise<PluginApi> {
   return {
     listPlugins: () => host.harness.listPlugins(),
     installPlugin: (source) => host.harness.installPlugin(source),
+    installAllPlugins: (source) => host.harness.installAllPlugins(source),
     setPluginEnabled: (id, enabled) => host.harness.setPluginEnabled(id, enabled),
     setPluginMcpServerEnabled: (id, server, enabled) =>
       host.harness.setPluginMcpServerEnabled(id, server, enabled),
@@ -119,7 +122,9 @@ export async function handlePluginsCommand(host: SlashCommandHost, rawArgs: stri
     if (sub === 'install') {
       const source = rest.join(' ').trim();
       if (source.length === 0) {
-        host.showError('Usage: /plugins install <local-path-or-zip-url>');
+        host.showError(
+          'Usage: /plugins install <GitHub-url | zip-url | local-path>[#pack-entry] — Floyd, Claude Code, Gemini, and bare skills folders are accepted',
+        );
         return;
       }
       if (!(await confirmInstallTrust(host, source, isOfficialPluginSource(source)))) {
@@ -624,7 +629,7 @@ async function installFromPanel(
   if (official) {
     panel.setInstalling(truncateForStatus(label));
   } else {
-    host.showStatus(`Installing or updating ${label} from marketplace…`);
+    host.showStatus(`Installing or updating ${label}…`);
   }
   host.state.ui.requestRender();
   try {
@@ -804,10 +809,10 @@ async function installPluginFromSource(
 ): Promise<void> {
   const session = await resolvePluginApi(host);
   const beforeList = await session.listPlugins();
-  const summary = await session.installPlugin(
+  const result = await session.installAllPlugins(
     resolvePluginInstallSource(source, host.state.appState.workDir),
   );
-  showPluginInstallResult(host, beforeList, summary);
+  showPluginInstallResult(host, beforeList, result);
 }
 
 const PLUGIN_RELOAD_HINT = 'Run /new or /reload to apply plugin changes.';
@@ -828,22 +833,46 @@ const PLUGIN_QUOTA_NOTE = 'Note: This plugin consumes your quota.';
 function showPluginInstallResult(
   host: SlashCommandHost,
   beforeList: readonly PluginSummary[],
-  summary: PluginSummary,
+  result: InstallPluginsResult,
 ): void {
-  const previous = beforeList.find((entry) => entry.id === summary.id);
-  const serverWord = summary.mcpServerCount === 1 ? 'server' : 'servers';
-  const mcpHint =
-    summary.mcpServerCount > 0
-      ? ` Declares ${summary.mcpServerCount} MCP ${serverWord}; enabled by default and configurable from /plugins.`
-      : '';
-  const action = describeInstallAction(previous, summary);
-  host.showStatus(`${action} (${summary.id}).${mcpHint}`);
+  for (const summary of result.installed) {
+    const previous = beforeList.find((entry) => entry.id === summary.id);
+    const serverWord = summary.mcpServerCount === 1 ? 'server' : 'servers';
+    const mcpHint =
+      summary.mcpServerCount > 0
+        ? ` Declares ${summary.mcpServerCount} MCP ${serverWord}; enabled by default and configurable from /plugins.`
+        : '';
+    const action = describeInstallAction(previous, summary);
+    const adapted = adaptedPhrase(summary.adaptedFrom);
+    host.showStatus(`${action}${adapted} (${summary.id}).${mcpHint}`);
+  }
+  for (const skip of result.skipped) {
+    host.showStatus(
+      `Skipped ${skip.name}: ${skip.reason}` +
+        (skip.installCommand === undefined ? '' : ` Install it with: ${skip.installCommand}`),
+      'warning',
+    );
+  }
+  if (result.report !== undefined) {
+    host.showStatus(result.report, 'warning');
+  }
   host.showStatus(PLUGIN_RELOAD_HINT, 'warning');
   // Gate on provenance, not just the id: a local/GitHub fork whose manifest
   // reuses a billed plugin's id is not the official quota-consuming build.
-  if (QUOTA_CONSUMING_PLUGIN_IDS.includes(summary.id) && isOfficialPluginInstall(summary)) {
+  const quotaSummary = result.installed.find(
+    (summary) => QUOTA_CONSUMING_PLUGIN_IDS.includes(summary.id) && isOfficialPluginInstall(summary),
+  );
+  if (quotaSummary !== undefined) {
     host.showStatus(PLUGIN_QUOTA_NOTE, 'warning');
   }
+}
+
+function adaptedPhrase(from: PluginSummary['adaptedFrom']): string {
+  if (from === 'claude-code') return ' (adapted from Claude Code)';
+  if (from === 'claude-code-pack') return ' (adapted from a Claude Code pack)';
+  if (from === 'gemini-cli') return ' (adapted from Gemini CLI)';
+  if (from === 'skills') return ' (from a skills folder)';
+  return '';
 }
 
 function describeInstallAction(

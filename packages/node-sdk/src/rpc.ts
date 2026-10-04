@@ -54,6 +54,7 @@ import type {
   McpTestResult,
   PermissionMode,
   PluginInfo,
+  InstallPluginsResult,
   PluginSummary,
   ReloadSummary,
   CompactOptions,
@@ -448,6 +449,8 @@ export abstract class SDKRpcClientBase {
   abstract listPlugins(): Promise<readonly PluginSummary[]>;
 
   abstract installPlugin(source: string): Promise<PluginSummary>;
+
+  abstract installAllPlugins(source: string): Promise<InstallPluginsResult>;
 
   abstract setPluginEnabled(id: string, enabled: boolean): Promise<void>;
 

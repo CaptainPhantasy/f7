@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -346,5 +346,238 @@ describe('PluginManager', () => {
       plugins: Array<{ id: string; enabled: boolean }>;
     };
     expect(stored.plugins).toEqual([expect.objectContaining({ id: 'demo', enabled: false })]);
+  });
+
+  it('installs a Claude Code plugin by translating its manifest', async () => {
+    const sourceRoot = await mkdtemp(join(tmpdir(), 'claude-plugin-source-'));
+    try {
+      await mkdir(join(sourceRoot, '.claude-plugin'), { recursive: true });
+      await mkdir(join(sourceRoot, 'commands'), { recursive: true });
+      await writeFile(
+        join(sourceRoot, '.claude-plugin', 'plugin.json'),
+        JSON.stringify({
+          name: 'Legacy Tool',
+          version: '1.2.3',
+          description: 'A Claude plugin',
+          author: { name: 'Ada', email: 'ada@example.com', url: 'https://example.com/ada' },
+          keywords: ['demo'],
+          commands: './commands',
+          hooks: { Stop: [{ matcher: 'Bash', hooks: [{ type: 'command', command: 'echo hi' }] }] },
+          mcpServers: { srv: { command: 'node server.js' } },
+          lspServers: { unused: {} },
+        }),
+        'utf8',
+      );
+      await writeFile(
+        join(sourceRoot, 'commands', 'run.md'),
+        '---\ndescription: Run\n---\n\nBody',
+        'utf8',
+      );
+      const manager = new PluginManager({ floydHomeDir: home });
+
+      const record = await manager.installAll(sourceRoot).then((result) => result.installed[0]!);
+
+      expect(record.id).toBe('legacy-tool');
+      expect(record.adaptedFrom).toBe('claude-code');
+      expect(record.manifest?.version).toBe('1.2.3');
+      expect(record.manifest?.author).toEqual({ name: 'Ada', email: 'ada@example.com' });
+      expect(record.manifest?.interface?.websiteURL).toBe('https://example.com/ada');
+      expect(record.manifest?.hooks).toEqual([
+        { event: 'Stop', matcher: 'Bash', command: 'echo hi' },
+      ]);
+      expect(Object.keys(record.manifest?.mcpServers ?? {})).toEqual(['srv']);
+      expect(record.diagnostics.some((d) => d.message.includes('lspServers'))).toBe(true);
+      expect(record.originalSource).toBe(sourceRoot);
+      await expect(access(join(sourceRoot, 'floyd.plugin.json'))).rejects.toThrow();
+    } finally {
+      await rm(sourceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('installs every local entry of a Claude pack and reports skipped external ones', async () => {
+    const sourceRoot = await mkdtemp(join(tmpdir(), 'claude-pack-source-'));
+    try {
+      await mkdir(join(sourceRoot, '.claude-plugin'), { recursive: true });
+      await mkdir(join(sourceRoot, 'plugins', 'one', '.claude-plugin'), { recursive: true });
+      await mkdir(join(sourceRoot, 'plugins', 'two', 'commands'), { recursive: true });
+      await writeFile(
+        join(sourceRoot, '.claude-plugin', 'marketplace.json'),
+        JSON.stringify({
+          name: 'pack',
+          plugins: [
+            { name: 'one', source: './plugins/one', description: 'First' },
+            { name: 'two', source: './plugins/two', version: '0.2.0' },
+            { name: 'ext', source: { source: 'github', repo: 'owner/external' } },
+          ],
+        }),
+        'utf8',
+      );
+      await writeFile(
+        join(sourceRoot, 'plugins', 'one', '.claude-plugin', 'plugin.json'),
+        JSON.stringify({ name: 'Pack One', description: 'Inner tag' }),
+        'utf8',
+      );
+      await writeFile(
+        join(sourceRoot, 'plugins', 'two', 'commands', 'go.md'),
+        '---\ndescription: Go\n---\n\nBody',
+        'utf8',
+      );
+      const manager = new PluginManager({ floydHomeDir: home });
+
+      const result = await manager.installAll(sourceRoot);
+
+      expect(result.installed.map((record) => record.id)).toEqual(['pack-one', 'two']);
+      expect(result.installed[0]!.adaptedFrom).toBe('claude-code-pack');
+      expect(result.installed[0]!.originalSource).toBe(`${sourceRoot}#one`);
+      expect(result.installed[0]!.manifest?.description).toBe('Inner tag');
+      expect(result.installed[1]!.manifest?.version).toBe('0.2.0');
+      expect(result.skipped).toEqual([
+        {
+          name: 'ext',
+          reason: 'pack entry points at another repository',
+          installCommand: '/plugins install https://github.com/owner/external',
+        },
+      ]);
+    } finally {
+      await rm(sourceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('installs a single pack entry picked with #name', async () => {
+    const sourceRoot = await mkdtemp(join(tmpdir(), 'claude-pack-pick-'));
+    try {
+      await mkdir(join(sourceRoot, '.claude-plugin'), { recursive: true });
+      await mkdir(join(sourceRoot, 'plugins', 'a'), { recursive: true });
+      await mkdir(join(sourceRoot, 'plugins', 'b'), { recursive: true });
+      await writeFile(
+        join(sourceRoot, '.claude-plugin', 'marketplace.json'),
+        JSON.stringify({
+          name: 'pack',
+          plugins: [
+            { name: 'a', source: './plugins/a' },
+            { name: 'b', source: './plugins/b' },
+          ],
+        }),
+        'utf8',
+      );
+      await writeFile(join(sourceRoot, 'plugins', 'a', 'SKILL.md'), '---\nname: a\n---\n\nA', 'utf8');
+      await writeFile(join(sourceRoot, 'plugins', 'b', 'SKILL.md'), '---\nname: b\n---\n\nB', 'utf8');
+      const manager = new PluginManager({ floydHomeDir: home });
+
+      const result = await manager.installAll(`${sourceRoot}#b`);
+
+      expect(result.installed.map((record) => record.id)).toEqual(['b']);
+      expect(result.installed[0]!.adaptedFrom).toBe('claude-code-pack');
+    } finally {
+      await rm(sourceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('generates a manifest for a bare skills folder', async () => {
+    const sourceRoot = await mkdtemp(join(tmpdir(), 'skills-folder-'));
+    try {
+      await mkdir(join(sourceRoot, 'skills', 'alpha'), { recursive: true });
+      await writeFile(
+        join(sourceRoot, 'skills', 'alpha', 'SKILL.md'),
+        '---\nname: alpha\ndescription: Alpha skill\n---\n\nDo alpha things.',
+        'utf8',
+      );
+      const manager = new PluginManager({ floydHomeDir: home });
+
+      const result = await manager.installAll(sourceRoot);
+
+      expect(result.installed).toHaveLength(1);
+      expect(result.installed[0]!.adaptedFrom).toBe('skills');
+      expect(result.installed[0]!.skillCount).toBe(1);
+      expect(result.installed[0]!.manifest?.skills).toEqual([expect.stringContaining('skills')]);
+      await expect(access(join(sourceRoot, 'floyd.plugin.json'))).rejects.toThrow();
+    } finally {
+      await rm(sourceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('installs a Gemini CLI extension', async () => {
+    const sourceRoot = await mkdtemp(join(tmpdir(), 'gemini-extension-'));
+    try {
+      await mkdir(join(sourceRoot, 'commands'), { recursive: true });
+      await writeFile(
+        join(sourceRoot, 'gemini-extension.json'),
+        JSON.stringify({
+          name: 'Gem Tool',
+          version: '3.1.0',
+          mcpServers: { helper: { command: 'node helper.js --port 9' } },
+        }),
+        'utf8',
+      );
+      await writeFile(
+        join(sourceRoot, 'GEMINI.md'),
+        'Extension instructions live here.',
+        'utf8',
+      );
+      await writeFile(
+        join(sourceRoot, 'commands', 'deploy.toml'),
+        'description = "Deploy it"\nprompt = """Run the deploy steps."""\n',
+        'utf8',
+      );
+      const manager = new PluginManager({ floydHomeDir: home });
+
+      const result = await manager.installAll(sourceRoot);
+
+      expect(result.installed).toHaveLength(1);
+      const record = result.installed[0]!;
+      expect(record.id).toBe('gem-tool');
+      expect(record.adaptedFrom).toBe('gemini-cli');
+      expect(record.manifest?.version).toBe('3.1.0');
+      expect(record.manifest?.systemPrompt).toContain('Extension instructions');
+      expect(record.manifest?.mcpServers?.['helper']).toMatchObject({
+        transport: 'stdio',
+        command: 'node',
+        args: ['helper.js', '--port', '9'],
+      });
+      expect(record.manifest?.commands?.[0]?.name).toBe('deploy');
+    } finally {
+      await rm(sourceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('sweeps unknown shapes for loose skills and commands instead of refusing', async () => {
+    const sourceRoot = await mkdtemp(join(tmpdir(), 'loose-pieces-'));
+    try {
+      await mkdir(join(sourceRoot, 'packs', 'deep'), { recursive: true });
+      await writeFile(join(sourceRoot, 'tools.md'), '---\ndescription: Tools\n---\n\nBody', 'utf8');
+      await writeFile(
+        join(sourceRoot, 'packs', 'deep', 'SKILL.md'),
+        '---\nname: deep\ndescription: Deep skill\n---\n\nDo deep things.',
+        'utf8',
+      );
+      const manager = new PluginManager({ floydHomeDir: home });
+
+      const result = await manager.installAll(sourceRoot);
+
+      expect(result.report).toBeUndefined();
+      expect(result.installed).toHaveLength(1);
+      const record = result.installed[0]!;
+      expect(record.adaptedFrom).toBe('skills');
+      expect(record.skillCount).toBe(1);
+      expect(record.manifest?.commands).toHaveLength(1);
+    } finally {
+      await rm(sourceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('reports a folder that holds nothing installable instead of throwing', async () => {
+    const sourceRoot = await mkdtemp(join(tmpdir(), 'nothing-inside-'));
+    try {
+      await writeFile(join(sourceRoot, 'README.md'), 'nothing usable', 'utf8');
+      const manager = new PluginManager({ floydHomeDir: home });
+
+      const result = await manager.installAll(sourceRoot);
+
+      expect(result.installed).toEqual([]);
+      expect(result.report).toContain('Nothing installable');
+      expect(result.report).toContain('README.md');
+    } finally {
+      await rm(sourceRoot, { recursive: true, force: true });
+    }
   });
 });

@@ -7,6 +7,7 @@ import type { McpServerConfig } from '#/mcpCore/config-schema';
 import type {
   EnabledPluginSessionStart,
   EnabledPluginSystemPrompt,
+  InstallPluginsResult,
   PluginAgentRoot,
   PluginCommandDef,
   PluginInfo,
@@ -46,6 +47,7 @@ export interface IPluginService {
 
   listPlugins(): Promise<readonly PluginSummary[]>;
   installPlugin(input: InstallPluginInput): Promise<PluginSummary>;
+  installAllPlugins(input: InstallPluginInput): Promise<InstallPluginsResult>;
   setPluginEnabled(input: SetPluginEnabledInput): Promise<void>;
   setPluginMcpServerEnabled(input: SetPluginMcpServerEnabledInput): Promise<void>;
   removePlugin(input: RemovePluginInput): Promise<void>;

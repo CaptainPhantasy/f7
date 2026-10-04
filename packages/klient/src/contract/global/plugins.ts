@@ -134,6 +134,19 @@ export const pluginSummarySchema = z.object({
   source: pluginSourceSchema,
   originalSource: z.string().optional(),
   github: pluginGithubMetadataSchema.optional(),
+  adaptedFrom: z.enum(['claude-code', 'claude-code-pack', 'gemini-cli', 'skills']).optional(),
+});
+
+export const pluginInstallSkipSchema = z.object({
+  name: z.string(),
+  reason: z.string(),
+  installCommand: z.string().optional(),
+});
+
+export const installPluginsResultSchema = z.object({
+  installed: z.array(pluginSummarySchema),
+  skipped: z.array(pluginInstallSkipSchema),
+  report: z.string().optional(),
 });
 
 export const pluginInfoSchema = pluginSummarySchema.extend({
@@ -198,6 +211,7 @@ export const getPluginInfoInputSchema = z.object({
 export const pluginsContract = {
   listPlugins: { input: z.tuple([]), output: z.array(pluginSummarySchema) },
   installPlugin: { input: z.tuple([installPluginInputSchema]), output: pluginSummarySchema },
+  installAllPlugins: { input: z.tuple([installPluginInputSchema]), output: installPluginsResultSchema },
   setPluginEnabled: { input: z.tuple([setPluginEnabledInputSchema]), output: noResult },
   setPluginMcpServerEnabled: {
     input: z.tuple([setPluginMcpServerEnabledInputSchema]),

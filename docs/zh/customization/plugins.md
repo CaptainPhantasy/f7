@@ -9,7 +9,7 @@ Plugins 把可复用的 Floyd Code CLI 能力打包成可安装单元：可以�
 - **Installed**：管理已安装的 plugin
 - **Official**：Floyd 官方 marketplace plugin
 - **Curated**：默认 marketplace 中来自 Floyd 合作伙伴的第三方 plugin
-- **Custom**：从 URL 安装
+- **Custom**：从 GitHub 仓库 URL、zip URL 或本地目录安装
 
 面板内按键：
 
@@ -30,7 +30,7 @@ Plugins 把可复用的 Floyd Code CLI 能力打包成可安装单元：可以�
 | --- | --- |
 | `/plugins` | 打开交互式 plugin 管理器 |
 | `/plugins list` | 列出已安装 plugins |
-| `/plugins install <path-or-url>` | 从本地目录、zip URL 或 GitHub 仓库 URL 安装 |
+| `/plugins install <source>[#entry]` | 从本地目录、zip URL 或 GitHub 仓库 URL 安装。Floyd、Claude Code、Gemini CLI 与纯 skills 目录四种格式都可接受并自动转换；`#entry` 用于安装 pack 中的单个 plugin |
 | `/plugins marketplace [source]` | 浏览官方 marketplace，或传入自定义 marketplace JSON 的路径或 URL |
 | `/plugins info <id>` | 查看 plugin 详情和 diagnostics |
 | `/plugins enable <id>` | 启用 plugin |
@@ -51,11 +51,24 @@ Plugins 把可复用的 Floyd Code CLI 能力打包成可安装单元：可以�
 
 网络请求只走 `github.com` 重定向和 `codeload.github.com` 下载，不调用 `api.github.com`。
 
+### Floyd 能安装什么
+
+Floyd 接受的不只是自己的 plugin 格式。对每个来源——GitHub 仓库 URL、zip URL 或本地目录——安装器会先识别目标，需要时自动转换成 Floyd plugin：
+
+- **Floyd plugin**：有 `floyd.plugin.json`（或 `.floyd-plugin/plugin.json`）manifest 的按原样安装。
+- **Claude Code plugin**：`.claude-plugin/plugin.json` manifest 会被转换成 Floyd plugin。name、description、version、author、skills、commands、agents、hooks 和 MCP servers 都会映射；Claude 专属字段会跳过，并在 plugin 详情中给出说明。
+- **Claude Code pack**：`.claude-plugin/marketplace.json` 目录会把其中每个本地条目各安装为一个独立 plugin。指向其他仓库的条目不会被安装，Floyd 会为它们打印一条可直接执行的 `/plugins install` 命令。在来源后加 `#name` 可只安装单个条目，例如 `/plugins install https://github.com/<owner>/<repo>#entry-name`。
+- **Gemini CLI extension**：`gemini-extension.json` manifest 会被转换，MCP servers 一并映射。`commands/` 下的 TOML 命令文件会变成 Floyd 命令文件，extension 的上下文文件（默认 `GEMINI.md`）会变成系统提示词指令。
+- **纯 skills 目录**：完全没有 manifest。只要目录里有 skills（`SKILL.md` 文件）、`commands/` 或 `agents/` 目录，Floyd 会根据找到的内容生成 manifest——这覆盖了所有按开放 [Agent Skills](./skills.md) 格式提供 skills 的仓库。
+
+转换后的 plugin 会在详情中标注来源（例如"adapted from Claude Code"），Floyd 也会记住原始 URL，更新检查照常工作。以上格式都不匹配的来源也不会被拒之门外：Floyd 会扫描整个文件夹，找出可用的部分——任意位置的 skills 和命令文件——能装多少装多少，并如实报告装了什么。如果确实毫无可用内容，Floyd 会直说，并列出文件夹里有什么。
+
 ### 注意事项
 
 - 安装、启用/禁用、移除 plugin 后，当前会话不会更新，运行 `/reload` 或 `/new` 后生效。
 - 本地安装会被拷贝到 `$FLOYD_CODE_HOME/plugins/managed/<id>/`，CLI 始终从这份托管副本运行。安装后编辑原始源目录不会生效，需重新安装。
 - 移除 plugin 只会删除安装记录，托管副本和原始源文件仍保留在磁盘上。
+- 转换 Claude Code plugin、pack、Gemini CLI extension 或 skills 目录时始终在副本上进行，原始目录不会被修改。
 - Plugin 目前按用户安装，对所有项目生效，暂不支持项目级安装范围。
 
 ### 自定义 marketplace JSON

@@ -369,13 +369,11 @@ describe('PluginManager consumption plane', () => {
     const manager = new PluginManager({ floydHomeDir: home });
     await manager.load();
 
-    let message = '';
-    await manager.install(source).catch((error: Error) => {
-      message = error.message;
-    });
+    const result = await manager.installAll(source);
 
-    expect(message).toContain(`Cannot install plugin from ${source}:`);
-    expect(message).not.toContain('floyd-plugin-zip');
+    expect(result.installed).toEqual([]);
+    expect(result.report).toContain(`Nothing installable in ${source}`);
+    expect(result.report).not.toContain('floyd-plugin-zip');
     await rm(home, { recursive: true, force: true });
     await rm(sourceRoot, { recursive: true, force: true });
     await rm(isolated, { recursive: true, force: true });
@@ -391,7 +389,7 @@ describe('PluginManager consumption plane', () => {
     const manager = new PluginManager({ floydHomeDir: home });
     await manager.load();
 
-    await expect(manager.install(source)).rejects.toThrow();
+    await manager.installAll(source);
 
     expect(await zipTempLeftovers(isolated)).toEqual([]);
     await rm(home, { recursive: true, force: true });
@@ -405,12 +403,10 @@ describe('PluginManager consumption plane', () => {
     const manager = new PluginManager({ floydHomeDir: home });
     await manager.load();
 
-    let message = '';
-    await manager.install(sourceRoot).catch((error: Error) => {
-      message = error.message;
-    });
+    const result = await manager.installAll(sourceRoot);
 
-    expect(message).toContain(`Cannot install plugin at ${await realpath(sourceRoot)}`);
+    expect(result.installed).toEqual([]);
+    expect(result.report).toContain(`Nothing installable in ${await realpath(sourceRoot)}`);
     await rm(sourceRoot, { recursive: true, force: true });
   });
 

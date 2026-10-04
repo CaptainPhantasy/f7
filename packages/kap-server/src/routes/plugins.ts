@@ -22,6 +22,7 @@ import { defineRoute } from '../middleware/defineRoute';
 import { ErrorCode } from '../protocol/error-codes';
 import {
   installPluginRequestSchema,
+  installPluginsResultSchema,
   listPluginsResponseSchema,
   pluginMarketplaceResponseSchema,
   pluginIdParamSchema,
@@ -279,6 +280,36 @@ export function registerPluginsRoutes(
     installRoute.path,
     installRoute.options,
     installRoute.handler as Parameters<PluginsRouteHost['post']>[2],
+  );
+
+  const installAllRoute = defineRoute(
+    {
+      method: 'POST',
+      path: '/plugins/install-all',
+      body: installPluginRequestSchema,
+      success: { data: installPluginsResultSchema },
+      errors: {
+        [ErrorCode.VALIDATION_FAILED]: {},
+        [ErrorCode.FS_PATH_NOT_FOUND]: {},
+      },
+      description:
+        'Install every plugin found in a local path, zip URL, or GitHub repo (Floyd, Claude Code, Gemini CLI, or bare skills folders); #name picks one',
+      tags: ['plugins'],
+      operationId: 'installAllPlugins',
+    },
+    async (req, reply) => {
+      try {
+        const result = await core.accessor.get(IPluginService).installAllPlugins(req.body);
+        reply.send(okEnvelope(result, req.id));
+      } catch (error) {
+        reply.send(mapPluginError(error, req.id));
+      }
+    },
+  );
+  app.post(
+    installAllRoute.path,
+    installAllRoute.options,
+    installAllRoute.handler as Parameters<PluginsRouteHost['post']>[2],
   );
 
   const actionRoute = defineRoute(

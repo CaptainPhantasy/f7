@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { SessionRail } from '../sessions/SessionRail';
 import { ZipDropOverlay } from '../shared/ZipDropOverlay';
+import { GlyphMascot } from '../glyph/GlyphMascot';
 import { useTheme, type ThemeChoice, type ResolvedTheme } from '../../hooks/useTheme';
 
 interface AppShellProps {
@@ -17,7 +18,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex h-full flex-col">
       <header className="flex h-10 shrink-0 items-center justify-between border-b border-border bg-surface-1 px-4">
         <Link to="/" className="flex items-center gap-2">
-          <LogoMark />
+          <GlyphMascot height={16} />
           <span className="font-mono text-[12px] uppercase tracking-[0.12em] text-fg-0">
             floyd <span className="text-fg-2">vis</span>
           </span>
@@ -73,17 +74,6 @@ function ThemeToggle({
       {choice === 'auto' ? <AutoIcon /> : resolved === 'light' ? <SunIcon /> : <MoonIcon />}
       <span className="tabular">{label}</span>
     </button>
-  );
-}
-
-function LogoMark() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-      <rect x="1" y="1" width="6" height="6" fill="var(--color-cat-conversation)" />
-      <rect x="9" y="1" width="6" height="6" fill="var(--color-cat-subagent)" />
-      <rect x="1" y="9" width="6" height="6" fill="var(--color-cat-ephemeral)" />
-      <rect x="9" y="9" width="6" height="6" fill="var(--color-cat-approval)" />
-    </svg>
   );
 }
 

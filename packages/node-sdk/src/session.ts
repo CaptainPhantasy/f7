@@ -23,6 +23,7 @@ import type {
   McpStartupMetrics,
   PermissionMode,
   PluginInfo,
+  InstallPluginsResult,
   PluginSummary,
   PromptInput,
   PromptSkillActivation,
@@ -630,6 +631,11 @@ export class Session {
   async installPlugin(source: string): Promise<PluginSummary> {
     this.ensureOpen();
     return this.rpc.installPlugin(source);
+  }
+
+  async installAllPlugins(source: string): Promise<InstallPluginsResult> {
+    this.ensureOpen();
+    return this.rpc.installAllPlugins(source);
   }
 
   async setPluginEnabled(id: string, enabled: boolean): Promise<void> {

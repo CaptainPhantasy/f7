@@ -305,6 +305,7 @@ import type {
   OAuthRefreshOutcome,
   PluginCommandDef,
   PluginInfo,
+  InstallPluginsResult,
   PluginSummary,
   ReloadSummary,
   RenameSessionInput,
@@ -845,6 +846,10 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
 
   override async installPlugin(source: string): Promise<PluginSummary> {
     return this.klient.global.plugins.install(source);
+  }
+
+  override async installAllPlugins(source: string): Promise<InstallPluginsResult> {
+    return this.klient.global.plugins.installAll(source);
   }
 
   override async setPluginEnabled(id: string, enabled: boolean): Promise<void> {

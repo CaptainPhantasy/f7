@@ -95,6 +95,19 @@ export interface PluginCommandEntry {
 export type PluginManifestKind = 'floyd-plugin-root' | 'floyd-plugin-dir';
 export type PluginSource = 'local-path' | 'zip-url' | 'github';
 export type PluginState = 'ok' | 'error';
+export type PluginAdaptedFrom = 'claude-code' | 'claude-code-pack' | 'gemini-cli' | 'skills';
+
+export interface PluginInstallSkip {
+  readonly name: string;
+  readonly reason: string;
+  readonly installCommand?: string;
+}
+
+export interface InstallPluginsResult {
+  readonly installed: readonly PluginSummary[];
+  readonly skipped: readonly PluginInstallSkip[];
+  readonly report?: string;
+}
 
 export interface PluginGithubRef {
   readonly kind: 'branch' | 'tag' | 'sha';
@@ -119,6 +132,7 @@ export interface PluginRecord {
   readonly originalSource?: string;
   readonly capabilities?: PluginCapabilityState;
   readonly github?: PluginGithubMetadata;
+  readonly adaptedFrom?: PluginAdaptedFrom;
   readonly skillInstructions?: string;
   readonly skillCount: number;
   readonly manifest?: PluginManifest;
@@ -143,6 +157,7 @@ export interface PluginSummary {
   readonly source: PluginSource;
   readonly originalSource?: string;
   readonly github?: PluginGithubMetadata;
+  readonly adaptedFrom?: PluginAdaptedFrom;
 }
 
 export interface PluginInfo extends PluginSummary {

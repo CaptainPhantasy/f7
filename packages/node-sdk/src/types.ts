@@ -86,6 +86,8 @@ export type {
   GoalToolResult,
 } from '@legacy-ai/agent-core-v2/features/goal/types';
 export type {
+  InstallPluginsResult,
+  PluginAdaptedFrom,
   PluginCommandDef,
   PluginGithubMetadata,
   PluginGithubRef,
