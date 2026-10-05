@@ -138,12 +138,17 @@ export const catalogModelItemSchema = z.object({
   max_context_size: z.number().int().min(1),
   capabilities: z.array(z.string()).optional(),
   reasoning: z.boolean(),
+  cost: z.record(z.string(), z.unknown()).optional(),
+  last_updated: z.string().optional(),
+  source: z.string().optional(),
 });
 export type CatalogModelItem = z.infer<typeof catalogModelItemSchema>;
 
 export const catalogProviderItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  doc: z.string().optional(),
+  requires_account: z.boolean().optional(),
   wire_type: providerWireTypeSchema.nullable(),
   base_url: z.string().nullable(),
   guessed: z.boolean(),

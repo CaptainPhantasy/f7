@@ -6,6 +6,10 @@ import { wireHasProtocolThinkingDisable } from '#/llm-adapter/model/thinking';
 export interface ModelsDevModelEntry {
   readonly id?: string;
   readonly name?: string;
+  readonly cost?: Readonly<Record<string, unknown>>;
+  readonly last_updated?: string;
+  readonly source?: string;
+  readonly kind?: string;
   readonly family?: string;
   readonly limit?: { readonly context?: number; readonly input?: number; readonly output?: number };
   readonly tool_call?: boolean;
@@ -34,6 +38,8 @@ export interface ModelsDevModelProviderOverride {
 export interface ModelsDevProviderEntry {
   readonly id?: string;
   readonly name?: string;
+  readonly doc?: string;
+  readonly requires_account?: boolean;
   readonly api?: string;
   readonly env?: readonly string[];
   readonly npm?: string;
@@ -46,6 +52,9 @@ export type ModelsDevCatalog = Record<string, ModelsDevProviderEntry>;
 export interface ModelsDevModel {
   readonly id: string;
   readonly name?: string;
+  readonly cost?: Readonly<Record<string, unknown>>;
+  readonly lastUpdated?: string;
+  readonly source?: string;
   readonly maxOutputSize?: number;
   readonly reasoningKey?: string;
   readonly supportEfforts?: readonly string[];
@@ -78,6 +87,7 @@ function hasEmbeddingMarker(value: string | undefined): boolean {
 }
 
 function isUsableChatModel(model: ModelsDevModelEntry): boolean {
+  if (model.kind !== undefined && ['embedding', 'speech', 'music'].includes(model.kind)) return false;
   const outputModalities = model.modalities?.output;
   if (outputModalities !== undefined && !outputModalities.includes('text')) return false;
   if (model.status === 'deprecated' || model.status === 'alpha') return false;
@@ -202,6 +212,9 @@ export function modelsDevModelToCapability(model: ModelsDevModelEntry): ModelsDe
   return {
     id: model.id,
     name: typeof model.name === 'string' && model.name.length > 0 ? model.name : undefined,
+    cost: model.cost,
+    lastUpdated: model.last_updated,
+    source: model.source,
     maxOutputSize: typeof output === 'number' && output > 0 ? output : undefined,
     reasoningKey: modelsDevReasoningKey(model.interleaved),
     supportEfforts: thinking.efforts,

@@ -82,7 +82,8 @@ export const FEEDBACK_ISSUE_URL = `${FLOYD_CODE_REPOSITORY_URL}/issues`;
 // Entry page offered to signed-out users. This build has no hosted account
 // console, so it points at the project repository.
 export function floydCodeSignupUrl(): string {
-  return FLOYD_CODE_REPOSITORY_URL;
+  const base = (process.env.FLOYD_CODE_BASE_URL ?? '').replace(/\/+$/, '');
+  return base.length === 0 ? FLOYD_CODE_REPOSITORY_URL : `${base}/account`;
 }
 
 // Sent in the feedback `version` field so the backend can distinguish this
@@ -145,7 +146,8 @@ export function floydCodeInstallPs1Url(): string {
 // Official download page, referenced by prompt copy that steers users away
 // from third-party install sources.
 export function floydCodeOfficialInstallUrl(): string {
-  return FLOYD_CODE_REPOSITORY_URL;
+  const base = floydCodeCdnBase();
+  return base.length === 0 ? FLOYD_CODE_REPOSITORY_URL : base;
 }
 
 // Install commands, split by platform. Use these for prompt copy and spawn calls only; do not assemble the strings elsewhere.

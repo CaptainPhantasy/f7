@@ -4,6 +4,9 @@ import type { ProviderCatalogItem } from '#/llm-adapter/model/catalog';
 export interface ModelsDevModelItem {
   readonly id: string;
   readonly name?: string;
+  readonly cost?: Readonly<Record<string, unknown>>;
+  readonly last_updated?: string;
+  readonly source?: string;
   readonly max_context_size: number;
   readonly capabilities?: readonly string[];
   readonly reasoning: boolean;
@@ -12,6 +15,8 @@ export interface ModelsDevModelItem {
 export interface ModelsDevProviderItem {
   readonly id: string;
   readonly name: string;
+  readonly doc?: string;
+  readonly requires_account?: boolean;
   readonly wire_type: string | null;
   readonly base_url: string | null;
   readonly guessed: boolean;

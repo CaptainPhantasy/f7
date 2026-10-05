@@ -14,6 +14,7 @@ import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
 import { Error2 } from '#/_base/errors/errors';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IConfigService } from '#/app/config/config';
+import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IModelCatalog } from '#/llm-adapter/model/catalog';
 import { type ModelsSection } from '#/llm-adapter/model/model';
 import { type ProviderConfig, type ProvidersSection } from '#/llm-adapter/provider/provider';
@@ -58,19 +59,27 @@ export class ModelsDevImportService implements IModelsDevImportService {
     @IKosongConfigService private readonly kosongConfig: IKosongConfigService,
     @IModelCatalog private readonly modelCatalog: IModelCatalog,
     @IAgentIdentity private readonly identity: IAgentIdentity,
+    @IBootstrapService private readonly bootstrap: IBootstrapService,
   ) {}
+
+  private directoryUrl(): string {
+    const configured = this.bootstrap.getEnv('FLOYD_CODE_CATALOG_URL')?.trim();
+    if (configured) return configured;
+    const base = this.bootstrap.getEnv('FLOYD_CODE_BASE_URL')?.trim().replace(/\/+$/, '');
+    return base ? `${base}/catalog/api.json` : 'https://models.dev/api.json';
+  }
 
   private async outboundUserAgent(): Promise<string> {
     return (await this.identity.resolved()).outboundUserAgent;
   }
 
   async listModelsDevProviders(): Promise<ModelsDevProviderItem[]> {
-    const catalog = await getModelsDevCatalog(await this.outboundUserAgent());
+    const catalog = await getModelsDevCatalog(await this.outboundUserAgent(), this.directoryUrl());
     return Object.entries(catalog).map(([id, entry]) => toModelsDevProviderItem(id, entry));
   }
 
   async getModelsDevProvider(catalogId: string): Promise<ModelsDevProviderItem> {
-    const catalog = await getModelsDevCatalog(await this.outboundUserAgent());
+    const catalog = await getModelsDevCatalog(await this.outboundUserAgent(), this.directoryUrl());
     const entry = modelsDevEntry(catalog, catalogId);
     if (entry === undefined) {
       throw new Error2(
@@ -112,7 +121,7 @@ export class ModelsDevImportService implements IModelsDevImportService {
     options: ImportModelsDevProviderOptions,
   ): Promise<ImportModelsDevProviderResult> {
     const { catalogId } = options;
-    const catalog = await getModelsDevCatalog(await this.outboundUserAgent());
+    const catalog = await getModelsDevCatalog(await this.outboundUserAgent(), this.directoryUrl());
     const entry = modelsDevEntry(catalog, catalogId);
     if (entry === undefined) {
       throw new Error2(

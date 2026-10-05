@@ -32,8 +32,8 @@ interface ModelsDevCacheEntry {
   readonly fetchedAt: number;
 }
 
-let cache: ModelsDevCacheEntry | undefined;
-let inFlight: Promise<ModelsDevCatalog> | undefined;
+const cacheByUrl = new Map<string, ModelsDevCacheEntry>();
+const pendingByUrl = new Map<string, Promise<ModelsDevCatalog>>();
 let builtInMemo: ModelsDevCatalog | undefined | null = null;
 let fetchImpl: typeof fetch = fetch;
 let nowImpl: () => number = Date.now;
@@ -47,8 +47,8 @@ export function setModelsDevUpstreamForTest(options: {
 }
 
 export function resetModelsDevUpstreamForTest(): void {
-  cache = undefined;
-  inFlight = undefined;
+  cacheByUrl.clear();
+  pendingByUrl.clear();
   builtInMemo = null;
   fetchImpl = fetch;
   nowImpl = Date.now;
@@ -58,19 +58,22 @@ export function upstreamFetch(): typeof fetch {
   return fetchImpl;
 }
 
-export async function getModelsDevCatalog(userAgent: string): Promise<ModelsDevCatalog> {
+export async function getModelsDevCatalog(userAgent: string, url = MODELS_DEV_URL): Promise<ModelsDevCatalog> {
   const now = nowImpl();
+  const cache = cacheByUrl.get(url);
   if (cache !== undefined && now - cache.fetchedAt < CACHE_TTL_MS) return cache.catalog;
-  inFlight ??= fetchAndCache(userAgent).finally(() => {
-    inFlight = undefined;
-  });
+  let inFlight = pendingByUrl.get(url);
+  if (inFlight === undefined) {
+    inFlight = fetchAndCache(userAgent, url).finally(() => pendingByUrl.delete(url));
+    pendingByUrl.set(url, inFlight);
+  }
   return inFlight;
 }
 
-async function fetchAndCache(userAgent: string): Promise<ModelsDevCatalog> {
+async function fetchAndCache(userAgent: string, url: string): Promise<ModelsDevCatalog> {
   const now = nowImpl();
   try {
-    const res = await fetchImpl(MODELS_DEV_URL, {
+    const res = await fetchImpl(url, {
       headers: { Accept: 'application/json', 'User-Agent': userAgent },
       signal: AbortSignal.timeout(UPSTREAM_FETCH_TIMEOUT_MS),
     });
@@ -83,13 +86,15 @@ async function fetchAndCache(userAgent: string): Promise<ModelsDevCatalog> {
     if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
       throw new Error2(CoreErrors.codes.INTERNAL, 'unexpected catalog payload shape');
     }
-    cache = { catalog: payload as ModelsDevCatalog, fetchedAt: now };
+    const cache = { catalog: payload as ModelsDevCatalog, fetchedAt: now };
+    cacheByUrl.set(url, cache);
     return cache.catalog;
   } catch (error) {
+    const cache = cacheByUrl.get(url);
     if (cache !== undefined) return cache.catalog;
     const builtIn = builtInCatalog();
     if (builtIn !== undefined) {
-      cache = { catalog: builtIn, fetchedAt: now };
+      cacheByUrl.set(url, { catalog: builtIn, fetchedAt: now });
       return builtIn;
     }
     throw new Error2(
@@ -130,6 +135,9 @@ function toModelItem(model: ModelsDevModel): ModelsDevModelItem {
     id: model.id,
     max_context_size: model.capability.max_context_tokens,
     reasoning: model.capability.thinking,
+    cost: model.cost,
+    last_updated: model.lastUpdated,
+    source: model.source,
   };
 }
 
@@ -144,6 +152,8 @@ export function toModelsDevProviderItem(
     name: entry.name || id,
     env_key: entry.env?.[0] ?? null,
     models,
+    doc: entry.doc,
+    requires_account: entry.requires_account,
   };
   switch (resolution.kind) {
     case 'ok':

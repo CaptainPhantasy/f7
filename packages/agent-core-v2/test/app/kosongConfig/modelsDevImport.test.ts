@@ -134,6 +134,7 @@ function createHost(
   sections: Record<string, unknown> = {},
   identitySlug?: string,
   hostHeaders: Record<string, string> = HOST_HEADERS,
+  env: NodeJS.ProcessEnv = {},
 ): {
   config: StubConfigService;
   imports: IModelsDevImportService;
@@ -143,7 +144,7 @@ function createHost(
     [IConfigService, config],
     [IKosongConfigService, stubKosongConfig()],
     [IModelCatalog, stubModelCatalog()],
-    [IBootstrapService, stubBootstrap('/home', {}, { requestHeaders: hostHeaders })],
+    [IBootstrapService, stubBootstrap('/home', env, { requestHeaders: hostHeaders })],
     [IAgentIdentity, stubAgentIdentity({ slug: identitySlug, hostRequestHeaders: hostHeaders })],
   ]);
   return { config, imports: host.app.accessor.get(IModelsDevImportService) };
@@ -190,6 +191,55 @@ describe('IModelsDevImportService', () => {
       wire_type: null,
       base_url: null,
       reject_reason: 'proprietary-sdk',
+    });
+  });
+
+  it('uses the company directory configured for this application', async () => {
+    const seen: string[] = [];
+    setModelsDevUpstreamForTest({
+      fetchImpl: (async (url: string | URL | Request) => {
+        seen.push(typeof url === 'string' ? url : url instanceof URL ? url.href : url.url);
+        return new Response(JSON.stringify(CATALOG), { headers: { 'content-type': 'application/json' } });
+      }) as typeof fetch,
+    });
+    const { imports } = createHost({}, undefined, HOST_HEADERS, {
+      FLOYD_CODE_BASE_URL: 'https://company.example/',
+    });
+    await imports.listModelsDevProviders();
+    expect(seen).toEqual(['https://company.example/catalog/api.json']);
+  });
+
+  it('offers text models without treating speech, music or matching models as chat', async () => {
+    setModelsDevUpstreamForTest({ fetchImpl: fetchJson({
+      company: {
+        id: 'company', type: 'openai', api: 'https://company.example/v1',
+        models: {
+          chat: { id: 'chat', kind: 'coding', limit: { context: 8192 } },
+          speech: { id: 'speech', kind: 'speech', limit: { context: 8192 }, modalities: { output: ['text'] } },
+          music: { id: 'music', kind: 'music', limit: { context: 8192 } },
+          compare: { id: 'compare', kind: 'embedding', limit: { context: 8192 } },
+        },
+      },
+    }) });
+    const { imports } = createHost();
+    const entry = await imports.getModelsDevProvider('company');
+    expect(entry.models.map((model) => model.id)).toEqual(['chat']);
+  });
+
+  it('retains provider sources and model prices and update dates', async () => {
+    setModelsDevUpstreamForTest({ fetchImpl: fetchJson({
+      example: {
+        ...CATALOG.openai, id: 'example', doc: 'https://provider.example/prices',
+        models: { coding: {
+          id: 'coding', name: 'Coding model', limit: {context: 8192},
+          cost: {input: 2, output: 8, cache_read: 0.5}, last_updated: '2026-10-01',
+        } },
+      },
+    }) });
+    const { imports } = createHost();
+    expect(await imports.getModelsDevProvider('example')).toMatchObject({
+      doc: 'https://provider.example/prices',
+      models: [{ id: 'coding', cost: {input: 2, output: 8, cache_read: 0.5}, last_updated: '2026-10-01' }],
     });
   });
 
