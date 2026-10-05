@@ -332,6 +332,19 @@ class PlatformTest(unittest.TestCase):
             self.assertEqual(usage['usages']['limit_month_total']['used_ratio'], 1)
             self.assertEqual(self.request('/v1/chat/completions', 'POST', body, token['access_token'])[0], 429)
             self.assertEqual(len(calls), 2)
+            with self.app.PLATFORM.database() as conn:
+                conn.execute('UPDATE users SET monthly_request_limit=3 WHERE id=?', (member['user']['id'],))
+                conn.execute('INSERT INTO provider_settings VALUES(?,?,?,?,?,?,?,?)',
+                    ('company-local', 'Local models', 'http://127.0.0.1:' + str(provider.server_port),
+                     'openai', '', 1, json.dumps(models), self.app.now()))
+            native = {'model': 'company-local/coding', 'messages': [{'role': 'user', 'content': 'hello'}],
+                      'thinking': {'type': 'disabled'}, 'max_completion_tokens': 128, 'stream': True}
+            self.assertEqual(self.request('/v1/chat/completions', 'POST', native, token['access_token'])[0], 200)
+            forwarded = calls[-1][1]
+            self.assertNotIn('thinking', forwarded)
+            self.assertNotIn('max_completion_tokens', forwarded)
+            self.assertFalse(forwarded['chat_template_kwargs']['enable_thinking'])
+            self.assertEqual(forwarded['max_tokens'], 128)
         finally:
             provider.shutdown()
             provider.server_close()

@@ -94,6 +94,13 @@ class ModelAccess:
         if path.removeprefix('/v1') != endpoint:
             self.platform.fail(400, 'This provider needs a different request format.', 'wrong_format')
         body['model'] = model_id
+        if provider_id == 'company-local' and endpoint == '/chat/completions':
+            thinking = body.pop('thinking', None)
+            if isinstance(thinking, dict) and thinking.get('type') in ['enabled', 'disabled']:
+                body['chat_template_kwargs'] = {**(body.get('chat_template_kwargs') or {}),
+                                                'enable_thinking': thinking['type'] == 'enabled'}
+            if 'max_completion_tokens' in body:
+                body.setdefault('max_tokens', body.pop('max_completion_tokens'))
         if endpoint == '/embeddings' and 'input' not in body:
             self.platform.fail(400, 'Enter the text to compare.', 'missing_input')
         if body.get('stream') and provider['protocol'] == 'openai':
