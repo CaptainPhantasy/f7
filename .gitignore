@@ -43,3 +43,9 @@ handover.md
 *-mockup.html
 *-demo.html
 *-demos.html
+
+# Private settings and credentials
+.env*
+credentials/
+*.pem
+*.key

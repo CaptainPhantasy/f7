@@ -43,7 +43,8 @@ class SharedTools:
         process = None
         try:
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                       stderr=subprocess.DEVNULL, text=True, start_new_session=True)
+                                       stderr=subprocess.DEVNULL, text=True, start_new_session=True,
+                                       env={**os.environ, 'FLOYD_COMPANY_GATEWAY_ROOT': config.get('company_gateway_root', '')})
             raw, _ = process.communicate(json.dumps({'method': method, 'arguments': arguments}), timeout=50)
             if process.returncode != 0 or len(raw) > 8 * 1024 * 1024:
                 raise ValueError('Gateway did not return a complete result.')

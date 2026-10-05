@@ -13,7 +13,6 @@ import uuid
 from pathlib import Path
 
 
-SPEECH_MODEL = '/home/douglas/models-library/imported/handy-computer/nemotron-3.5-asr-streaming-0.6b-gguf/nemotron-3.5-asr-streaming-0.6b-F32.gguf'
 SCHEMAS = {
     'speech-transcribe': {'name': 'Turn a recording into text', 'inputSchema': {
         'type': 'object', 'properties': {'audio_base64': {'type': 'string'},
@@ -68,6 +67,10 @@ class MediaTools:
             self.platform.fail(400, 'Choose a recording smaller than 22 MB.')
         if not isinstance(language, str) or not re.fullmatch(r'[a-zA-Z]{2,3}(?:-[a-zA-Z]{2,4})?', language):
             self.platform.fail(400, 'Choose a language such as en-US.')
+        settings = self.platform.config()
+        speech_model, speech_command = settings.get('speech_model'), settings.get('speech_command')
+        if not speech_model or not speech_command:
+            self.platform.fail(503, 'The recording tool has not been set up.')
         if not self.speech_capacity.acquire(blocking=False):
             self.platform.fail(429, 'Recording tools are busy. Try again shortly.')
         try:
@@ -78,9 +81,9 @@ class MediaTools:
                 subprocess.run(['/usr/bin/ffmpeg', '-nostdin', '-v', 'error', '-protocol_whitelist', 'file,pipe',
                     '-i', str(original), '-t', '300', '-ac', '1', '-ar', '16000', '-y', str(wav)],
                     check=True, timeout=15, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                subprocess.run(['/srv/organized/services/floyd-transcribe/bin/transcribe-cli', '-q',
+                subprocess.run([speech_command, '-q',
                     '--backend', 'cpu', '--threads', '6', '--timestamps', 'none', '--language', language,
-                    '-m', SPEECH_MODEL, '--output', str(output), str(wav)], check=True, timeout=45,
+                    '-m', speech_model, '--output', str(output), str(wav)], check=True, timeout=45,
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 text = output.read_text().strip()
                 return {'text': text, 'model': 'Nemotron 3.5 Speech', 'truncated_after_seconds': 300}

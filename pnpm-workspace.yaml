@@ -13,3 +13,7 @@ overrides:
   "ssh2@1.17.0>cpu-features": "-"
   "ssh2@1.17.0>nan": "-"
   "floyd-code>tailwindcss": "4.1.18"
+
+# This one dependency supplies the native command window on Linux.
+onlyBuiltDependencies:
+  - node-pty@1.1.0

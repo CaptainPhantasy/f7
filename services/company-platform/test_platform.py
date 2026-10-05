@@ -156,6 +156,22 @@ class PlatformTest(unittest.TestCase):
         finally:
             connection.close()
 
+    def test_download_link_uses_only_private_setting(self):
+        self.assertEqual(self.request('/downloads')[0], 503)
+        config = json.loads((self.home / 'config.json').read_text())
+        config['company_download_url'] = 'https://downloads.example.test/code'
+        (self.home / 'config.json').write_text(json.dumps(config))
+        import http.client
+        connection = http.client.HTTPConnection('127.0.0.1', self.server.server_port, timeout=5)
+        try:
+            connection.request('GET', '/downloads?url=https://wrong.example.test')
+            response = connection.getresponse()
+            self.assertEqual(response.status, 303)
+            self.assertEqual(response.getheader('Location'), config['company_download_url'])
+            response.read()
+        finally:
+            connection.close()
+
     def test_media_tools_require_a_member_and_reject_unsafe_input(self):
         body = {'id': 'speech-transcribe', 'arguments': {'audio_base64': 'bad', 'filename': '../recording.wav'}}
         self.assertEqual(self.request('/company/tools/call', 'POST', body)[0], 401)

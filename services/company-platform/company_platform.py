@@ -90,7 +90,7 @@ class CompanyPlatform:
                     conn.execute('ALTER TABLE ' + table + ' ADD COLUMN device_code TEXT')
             conn.execute('DELETE FROM web_sessions WHERE expires_at < ?', (self.app.now(),))
             conn.execute("UPDATE usage_events SET outcome='interrupted' WHERE outcome='in_progress'")
-            company_base = self.config().get('company_model_base', 'http://100.78.109.105:8090/v1')
+            company_base = self.config().get('company_model_base', '')
             if company_base:
                 conn.execute('INSERT OR IGNORE INTO provider_settings(id,name,base_url,protocol,updated_at) VALUES(?,?,?,?,?)',
                              ('company-local', 'Company models on inference', company_base, 'openai', self.app.now()))
@@ -513,8 +513,9 @@ class CompanyPlatform:
             previous = json.loads(row['models_json'])
             upstream = self.catalog()['providers'].get(id_, {}).get('models', {})
             settings = {}
-            settings_path = Path(self.config().get('company_model_settings', '/srv/organized/services/llama-swap/config/config.yaml'))
-            if id_ == 'company-local' and settings_path.exists():
+            settings_file = self.config().get('company_model_settings')
+            settings_path = Path(settings_file) if settings_file else None
+            if id_ == 'company-local' and settings_path is not None and settings_path.exists():
                 import yaml
                 settings = yaml.safe_load(settings_path.read_text()).get('models', {})
             models = {}
@@ -602,6 +603,12 @@ class CompanyPlatform:
         return result
 
     def route(self, handler, method, path, query):
+        if path == '/downloads' and method == 'GET':
+            address = self.config().get('company_download_url', '')
+            parsed = urllib.parse.urlsplit(address)
+            if parsed.scheme not in ['http', 'https'] or not parsed.netloc or parsed.username or parsed.password:
+                self.fail(503, 'The company download address has not been set.')
+            return 303, {}, 'json', {'Location': address}
         media = self.media.route(handler, method, path)
         if media is not None:
             return media

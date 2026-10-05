@@ -71,6 +71,7 @@ export interface WsConnectionV1Options {
   readonly broadcaster: SessionEventBroadcaster;
   readonly connectionRegistry: IConnectionRegistry;
   readonly validateCredential?: CredentialValidator;
+  readonly prepareSession?: (sessionId: string) => Promise<boolean>;
   readonly resolveTerminalService?: (sessionId: string) => Promise<ISessionTerminalService>;
   readonly remoteAddress: string | null;
   readonly userAgent: string | null;
@@ -91,6 +92,7 @@ export class WsConnectionV1 implements BroadcastTarget {
   private readonly socket: WebSocket;
   private readonly broadcaster: SessionEventBroadcaster;
   private readonly validateCredential?: CredentialValidator;
+  private readonly prepareSession?: WsConnectionV1Options['prepareSession'];
   private readonly resolveTerminalService?: WsConnectionV1Options['resolveTerminalService'];
   private readonly terminalServices = new Map<string, ISessionTerminalService>();
   private readonly maxBufferSize: number;
@@ -121,6 +123,7 @@ export class WsConnectionV1 implements BroadcastTarget {
     this.socket = opts.socket;
     this.broadcaster = opts.broadcaster;
     this.validateCredential = opts.validateCredential;
+    this.prepareSession = opts.prepareSession;
     this.resolveTerminalService = opts.resolveTerminalService;
     this.logger = opts.logger;
     this.maxBufferSize = opts.maxBufferSize ?? DEFAULT_MAX_BUFFER_SIZE;
@@ -426,6 +429,12 @@ export class WsConnectionV1 implements BroadcastTarget {
     },
   ): Promise<void> {
     const { accepted, resyncRequired, serverCursors, notFound } = collectors;
+    if (this.prepareSession !== undefined && !(await this.prepareSession(sid))) {
+      if (notFound !== undefined) notFound.push(sid);
+      else resyncRequired.push(sid);
+      return;
+    }
+    if (this.closed) return;
     const ok = await this.broadcaster.subscribe(sid, this, filter, transcriptGrades, {
       deferTranscriptReset: cursor !== undefined,
       transcriptSince,

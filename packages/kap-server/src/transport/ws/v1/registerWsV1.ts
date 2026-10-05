@@ -32,6 +32,7 @@ export function registerWsV1(core: Scope, opts: RegisterWsV1Options): WebSocketS
       broadcaster,
       connectionRegistry: registry,
       validateCredential: opts.validateCredential,
+      prepareSession: async (sessionId) => (await resumeSessionById(core.accessor, sessionId)) !== undefined,
       resolveTerminalService: async (sessionId) => {
         const session = await resumeSessionById(core.accessor, sessionId);
         if (session === undefined) throw new Error2(ErrorCodes.SESSION_NOT_FOUND, `session ${sessionId} does not exist`);

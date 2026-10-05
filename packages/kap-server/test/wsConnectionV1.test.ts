@@ -88,6 +88,41 @@ function makeConn(socket: FakeSocket, opts: Partial<WsConnectionV1Options> = {})
   });
 }
 
+describe('WsConnectionV1 reopened conversations', () => {
+  it('opens a saved conversation before attaching the page after restart', async () => {
+    const socket = new FakeSocket();
+    let ready = false;
+    const broadcaster = makeBroadcaster();
+    const subscribe = vi.spyOn(broadcaster, 'subscribe').mockImplementation(async () => ready);
+    const prepareSession = vi.fn(async (id: string) => {
+      expect(id).toBe('saved-conversation');
+      ready = true;
+      return true;
+    });
+    const conn = makeConn(socket, { broadcaster, prepareSession } as Partial<WsConnectionV1Options>);
+    socket.emit('message', JSON.stringify({ type: 'subscribe', id: 'reopen', payload: { session_ids: ['saved-conversation'] } }));
+    await vi.waitFor(() => {
+      expect(socket.frames()).toContainEqual(expect.objectContaining({ id: 'reopen', payload: expect.objectContaining({ accepted: ['saved-conversation'] }) }));
+    });
+    expect(prepareSession).toHaveBeenCalledTimes(1);
+    expect(subscribe).toHaveBeenCalledTimes(1);
+    conn.close();
+  });
+
+  it('keeps an absent conversation out of the subscription', async () => {
+    const socket = new FakeSocket();
+    const broadcaster = makeBroadcaster();
+    const subscribe = vi.spyOn(broadcaster, 'subscribe');
+    const conn = makeConn(socket, { broadcaster, prepareSession: async () => false } as Partial<WsConnectionV1Options>);
+    socket.emit('message', JSON.stringify({ type: 'subscribe_v2', id: 'missing', payload: { session_id: 'gone', transcript: { '*': 'delta' } } }));
+    await vi.waitFor(() => {
+      expect(socket.frames()).toContainEqual(expect.objectContaining({ id: 'missing', payload: expect.objectContaining({ accepted: [], not_found: ['gone'] }) }));
+    });
+    expect(subscribe).not.toHaveBeenCalled();
+    conn.close();
+  });
+});
+
 describe('WsConnectionV1 terminals', () => {
   function setup() {
     const socket = new FakeSocket();

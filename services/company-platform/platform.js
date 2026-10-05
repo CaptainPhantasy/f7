@@ -1,5 +1,5 @@
 'use strict';
-const main = document.querySelector('#main');
+const main = document.getElementById('main');
 let csrf = '';
 let noticeTimer;
 const el = (tag, text, cls) => { const n = document.createElement(tag); if (text !== undefined)
@@ -7,12 +7,12 @@ const el = (tag, text, cls) => { const n = document.createElement(tag); if (text
     n.className = cls; return n; };
 const add = (parent, ...children) => { parent.append(...children.filter(Boolean)); return parent; };
 const link = (text, href, cls) => { const n = el('a', text, cls); n.href = href; return n; };
-function tell(text) { const n = document.querySelector('#notice'); n.textContent = text; clearTimeout(noticeTimer); noticeTimer = setTimeout(() => { n.textContent = ''; }, 10000); }
+function tell(text) { const n = document.getElementById('notice'); n.textContent = text; clearTimeout(noticeTimer); noticeTimer = setTimeout(() => { n.textContent = ''; }, 10000); }
 function button(text, action, cls) { const n = el('button', text, cls); n.type = 'button'; n.onclick = async () => { n.disabled = true; try {
     await action();
 }
-catch (error) {
-    tell(error.message);
+catch (e) {
+    tell(e.message);
 }
 finally {
     n.disabled = false;
@@ -63,7 +63,7 @@ catch (error) {
 finally {
     submit.disabled = false;
 } }; s.append(form); }
-async function home() { title('Your coding platform', 'Use Floyd Code on your own computer, with your own files and settings. Shared company services live on inference.'); const s = section('Get started'); add(s, link('Install Floyd Code', 'https://inference.tail58d565.ts.net:8444/code', 'button'), el('p', 'Already have an account? Sign in to approve devices and manage your access.'), link('Open my account', '/account', 'button secondary')); const g = el('div', undefined, 'grid'); add(g, add(el('div', undefined, 'card'), el('h3', 'Provider choice'), el('p', 'Use your own model provider, or company-provided models.')), add(el('div', undefined, 'card'), el('h3', 'Personal work'), el('p', 'Your projects and saved conversations belong in your own computer account.'))); main.append(g); }
+async function home() { title('Your coding platform', 'Use Floyd Code on your own computer, with your own files and settings. Shared company services live on inference.'); const s = section('Get started'); add(s, link('Install Floyd Code', '/downloads', 'button'), el('p', 'Already have an account? Sign in to approve devices and manage your access.'), link('Open my account', '/account', 'button secondary')); const g = el('div', undefined, 'grid'); add(g, add(el('div', undefined, 'card'), el('h3', 'Provider choice'), el('p', 'Use your own model provider, or company-provided models.')), add(el('div', undefined, 'card'), el('h3', 'Personal work'), el('p', 'Your projects and saved conversations belong in your own computer account.'))); main.append(g); }
 async function loadDirectory(parent, owner = false) { const s = section('Providers and models', parent); const status = el('p', 'Loading the saved directory…'); s.append(status); if (owner)
     add(s, button('Refresh provider information', async () => { await api('/admin/api/catalog/refresh', 'POST', {}); await renderDirectory(); tell('Provider information refreshed.'); })); const controls = el('div'); const content = el('div'); add(s, controls, content); async function renderDirectory() { try {
     const [info, providers] = await Promise.all([api('/catalog/info'), api('/catalog/api.json')]);
@@ -77,7 +77,7 @@ async function loadDirectory(parent, owner = false) { const s = section('Provide
     const select = el('select');
     select.id = 'provider-choice';
     add(controls, label, select);
-    const entries = Object.entries(providers).toSorted((a, b) => (a[1].name || a[0]).localeCompare(b[1].name || b[0]));
+    const entries = Object.entries(providers).sort((a, b) => (a[1].name || a[0]).localeCompare(b[1].name || b[0]));
     function choices() { const previous = select.value; select.replaceChildren(); const term = search.value.toLowerCase().trim(); for (const [id, p] of entries) {
         if (term && !JSON.stringify({ id, name: p.name, models: p.models }).toLowerCase().includes(term))
             continue;
@@ -151,7 +151,7 @@ finally {
     const row = el('tr');
     add(row, el('td', user.username), el('td', user.enabled ? 'Enabled' : 'Disabled'), el('td', date(user.last_login_at)), actions);
     tbody.append(row);
-} add(table, thead, tbody); area.replaceChildren(table); } await listUsers(); const devices = (await api('/admin/api/devices?status=pending')).devices; if (devices.length > 0) {
+} add(table, thead, tbody); area.replaceChildren(table); } await listUsers(); const devices = (await api('/admin/api/devices?status=pending')).devices; if (devices.length) {
     const d = el('section');
     d.append(el('h3', 'Waiting devices'));
     for (const device of devices) {
@@ -287,7 +287,7 @@ catch (error) {
 }
 finally {
     submit.disabled = false;
-} }; approve.append(f); const s = section('Your devices'); const devices = (await api('/account/api/devices')).devices; if (devices.length === 0)
+} }; approve.append(f); const s = section('Your devices'); const devices = (await api('/account/api/devices')).devices; if (!devices.length)
     s.append(el('p', 'No devices have been approved yet.')); for (const device of devices) {
     const row = el('div', undefined, 'card');
     add(row, el('strong', device.platform || device.user_code), el('p', device.status + ' · ' + date(device.created_at)));
@@ -358,19 +358,19 @@ async function sharedTools() {
             found.replaceChildren();
             for (const item of result.matches || []) {
                 const row = el('div', undefined, 'card');
-                const id = (item.server + '-' + item.tool).replaceAll(/[^a-zA-Z0-9_-]/g, '-').slice(0,64);
+                const id = (item.server + '-' + item.tool).replace(/[^a-zA-Z0-9_-]/g, '-').slice(0,64);
                 add(row, el('strong', item.tool), el('p', item.description || ''), button('Enable for all members', async () => {
                     await api('/admin/api/tools', 'POST', {id, name: item.tool, server: item.server, tool: item.tool, enabled: true});
                     tell('Company tool enabled.');
                 })); found.append(row);
             }
-            if (found.children.length === 0) found.append(el('p', 'No matching tools.'));
+            if (!found.children.length) found.append(el('p', 'No matching tools.'));
         } catch (error) { tell(error.message); }
         finally { submit.disabled = false; }
     };
     const feedback = section('Member reports');
     const reports = (await api('/admin/api/feedback')).feedback;
-    if (reports.length === 0) feedback.append(el('p', 'No reports yet.'));
+    if (!reports.length) feedback.append(el('p', 'No reports yet.'));
     for (const report of reports) {
         const box = el('details');
         add(box, el('summary', (report.username || 'Member') + ' · ' + date(report.created_at)), el('pre', JSON.stringify(report.body, null, 2)));
