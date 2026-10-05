@@ -573,11 +573,23 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     );
   });
 
-  app.addHook('onClose', async () => {
+  app.addHook('preClose', async () => {
     connectionRegistry.closeAll('server shutting down');
-    wssV1.close();
-    wssDebug?.close();
-    wssV3.close();
+    const servers = wssDebug === undefined ? [wssV1, wssV3] : [wssV1, wssV3, wssDebug];
+    await Promise.all(servers.map(async (server) => {
+      for (const client of server.clients) client.close(1001, 'server shutting down');
+      const closed = new Promise<void>((resolve) => { server.once('close', resolve); });
+      const timer = setTimeout(() => {
+        for (const client of server.clients) client.terminate();
+      }, 3000);
+      timer.unref();
+      server.close();
+      try {
+        await closed;
+      } finally {
+        clearTimeout(timer);
+      }
+    }));
     wsV3Hub.dispose();
     await broadcaster.close();
   });

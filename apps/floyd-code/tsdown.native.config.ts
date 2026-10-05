@@ -45,6 +45,7 @@ export default defineConfig({
   plugins: [rawTextPlugin()],
   alias: {
     '@': resolve(appRoot, 'src'),
+    'node-pty': resolve(appRoot, 'src/native/node-pty.ts'),
   },
   define: {
     [BUILT_IN_CATALOG_DEFINE]: builtInCatalogDefine(),

@@ -79,10 +79,9 @@ export const OAUTH_LOGIN_REQUIRED_CODE = ErrorCodes.AUTH_LOGIN_REQUIRED;
 const FLOYD_CODE_REPOSITORY_URL = 'https://github.com/CaptainPhantasy/f7';
 
 export const FEEDBACK_ISSUE_URL = `${FLOYD_CODE_REPOSITORY_URL}/issues`;
-// Entry page offered to signed-out users. This build has no hosted account
-// console, so it points at the project repository.
+// Entry page offered to signed-out users at the configured company address.
 export function floydCodeSignupUrl(): string {
-  const base = (process.env.FLOYD_CODE_BASE_URL ?? '').replace(/\/+$/, '');
+  const base = (process.env['FLOYD_CODE_BASE_URL'] ?? '').replace(/\/+$/, '');
   return base.length === 0 ? FLOYD_CODE_REPOSITORY_URL : `${base}/account`;
 }
 

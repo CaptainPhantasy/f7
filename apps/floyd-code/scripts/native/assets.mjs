@@ -204,7 +204,7 @@ async function collectPackageFiles({
   return sorted;
 }
 
-async function packageManifestEntries({ packageName, packageRoot, files, target }) {
+async function packageManifestEntries({ packageName, packageRoot, files, target, executableFileRelatives }) {
   const root = `node_modules/${packageName}`;
   const entries = [];
   const assets = {};
@@ -218,6 +218,7 @@ async function packageManifestEntries({ packageName, packageRoot, files, target 
       assetKey,
       relativePath,
       sha256: sha256(sourceBytes),
+      mode: executableFileRelatives.includes(packageRelativePath) ? 0o755 : undefined,
     });
     assets[assetKey] = file;
   }
@@ -268,6 +269,7 @@ export async function collectNativeAssets({ appRoot, target }) {
       packageRoot,
       files,
       target,
+      executableFileRelatives: dep.executableFileRelatives,
     });
     manifestPackages.push(result.packageManifest);
     Object.assign(assets, result.assets);

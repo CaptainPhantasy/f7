@@ -1,4 +1,4 @@
-import type { Scope } from '@legacy-ai/agent-core-v2';
+import { Error2, ErrorCodes, ISessionTerminalService, resumeSessionById, type Scope } from '@legacy-ai/agent-core-v2';
 import { WebSocketServer } from 'ws';
 
 import type { CredentialValidator } from '../../../services/auth/credentials';
@@ -23,7 +23,6 @@ export interface RegisterWsV1Options {
 }
 
 export function registerWsV1(core: Scope, opts: RegisterWsV1Options): WebSocketServer {
-  void core;
   const wss = new WebSocketServer({ noServer: true, handleProtocols: selectWsBearerProtocol });
   const { registry, broadcaster } = opts;
 
@@ -33,6 +32,11 @@ export function registerWsV1(core: Scope, opts: RegisterWsV1Options): WebSocketS
       broadcaster,
       connectionRegistry: registry,
       validateCredential: opts.validateCredential,
+      resolveTerminalService: async (sessionId) => {
+        const session = await resumeSessionById(core.accessor, sessionId);
+        if (session === undefined) throw new Error2(ErrorCodes.SESSION_NOT_FOUND, `session ${sessionId} does not exist`);
+        return session.accessor.get(ISessionTerminalService);
+      },
       remoteAddress: req.socket.remoteAddress ?? null,
       userAgent: req.headers['user-agent'] ?? null,
       logger: opts.logger,

@@ -12,8 +12,29 @@ import {
   getNativeCacheBase,
   getNativePackageRoot,
 } from './native-assets';
+import { spawn } from './node-pty';
 
-const smokePackages = ['@mariozechner/clipboard', '@legacy-ai/pi-tui'];
+const smokePackages = ['@mariozechner/clipboard', '@legacy-ai/pi-tui', 'node-pty'];
+
+async function smokeTerminal(): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const marker = 'FLOYD_NATIVE_TERMINAL_READY';
+    const terminal = process.platform === 'win32'
+      ? spawn('cmd.exe', ['/d', '/s', '/c', `echo ${marker}`], { cols: 80, rows: 24 })
+      : spawn('/bin/sh', ['-c', `printf '${marker}\\n'`], { cols: 80, rows: 24 });
+    let output = '';
+    const timeout = setTimeout(() => {
+      terminal.kill();
+      reject(new Error('The portable command window did not finish its test command.'));
+    }, 10_000);
+    terminal.onData((data) => { output += data; });
+    terminal.onExit(({ exitCode }) => {
+      clearTimeout(timeout);
+      if (exitCode === 0 && output.includes(marker)) resolve();
+      else reject(new Error(`The portable command window failed: ${exitCode}`));
+    });
+  });
+}
 
 function smokePiTuiNativeLoad(): void {
   const platform = process.platform;
@@ -113,10 +134,11 @@ async function runSmoke(): Promise<void> {
     }
   }
   smokePiTuiNativeLoad();
+  await smokeTerminal();
   await smokeMinidbWorker();
   await smokeSearchWorker();
   process.stdout.write(
-    `Native asset smoke passed: ${manifest.target}; MiniDb worker build passed; search worker ready\n`,
+    `Native asset smoke passed: ${manifest.target}; command window passed; MiniDb worker build passed; search worker ready\n`,
   );
 }
 

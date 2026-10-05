@@ -1,8 +1,15 @@
 import {
+  terminalAttachMessageSchema,
+  terminalCloseMessageSchema,
+  terminalDetachMessageSchema,
+  terminalInputMessageSchema,
+  terminalResizeMessageSchema,
   unsubscribeV2PayloadSchema,
   WS_PROTOCOL_VERSION,
   type SessionCursor,
 } from '../../../protocol/ws-control';
+import type { ISessionTerminalService } from '@legacy-ai/agent-core-v2';
+import { z } from 'zod';
 import {
   detachGrades,
   transcriptSubscribeV2PayloadSchema,
@@ -34,6 +41,14 @@ import {
 
 const DEFAULT_MAX_BUFFER_SIZE = 1000;
 
+const terminalControlSchema = z.discriminatedUnion('type', [
+  terminalAttachMessageSchema,
+  terminalDetachMessageSchema,
+  terminalInputMessageSchema,
+  terminalResizeMessageSchema,
+  terminalCloseMessageSchema,
+]);
+
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 10_000;
 const HEARTBEAT_MISS_LIMIT = 2;
 
@@ -56,6 +71,7 @@ export interface WsConnectionV1Options {
   readonly broadcaster: SessionEventBroadcaster;
   readonly connectionRegistry: IConnectionRegistry;
   readonly validateCredential?: CredentialValidator;
+  readonly resolveTerminalService?: (sessionId: string) => Promise<ISessionTerminalService>;
   readonly remoteAddress: string | null;
   readonly userAgent: string | null;
   readonly logger?: JournalLogger;
@@ -75,6 +91,8 @@ export class WsConnectionV1 implements BroadcastTarget {
   private readonly socket: WebSocket;
   private readonly broadcaster: SessionEventBroadcaster;
   private readonly validateCredential?: CredentialValidator;
+  private readonly resolveTerminalService?: WsConnectionV1Options['resolveTerminalService'];
+  private readonly terminalServices = new Map<string, ISessionTerminalService>();
   private readonly maxBufferSize: number;
   private readonly flushIntervalMs: number;
   private readonly maxBatchSize: number;
@@ -103,6 +121,7 @@ export class WsConnectionV1 implements BroadcastTarget {
     this.socket = opts.socket;
     this.broadcaster = opts.broadcaster;
     this.validateCredential = opts.validateCredential;
+    this.resolveTerminalService = opts.resolveTerminalService;
     this.logger = opts.logger;
     this.maxBufferSize = opts.maxBufferSize ?? DEFAULT_MAX_BUFFER_SIZE;
     this.flushIntervalMs = opts.flushIntervalMs ?? DEFAULT_FLUSH_INTERVAL_MS;
@@ -173,6 +192,13 @@ export class WsConnectionV1 implements BroadcastTarget {
       case 'unsubscribe':
         this.enqueueControl(() => this.onUnsubscribe(frame));
         return;
+      case 'terminal_attach':
+      case 'terminal_detach':
+      case 'terminal_input':
+      case 'terminal_resize':
+      case 'terminal_close':
+        this.enqueueControl(() => this.onTerminalControl(frame));
+        return;
       default:
         return;
     }
@@ -181,6 +207,58 @@ export class WsConnectionV1 implements BroadcastTarget {
   private enqueueControl(task: () => Promise<void>): void {
     this.controlQueue = this.controlQueue.then(task).catch(() => {
     });
+  }
+
+  private async onTerminalControl(frame: InboundFrame): Promise<void> {
+    if (this.closed || !(await this.authorize(frame))) return;
+    const parsed = terminalControlSchema.safeParse(frame);
+    if (!parsed.success) {
+      this.sendImmediateFrame(buildAck(frame.id ?? '', 1, `invalid ${frame.type} payload`, {}));
+      return;
+    }
+    try {
+      if (this.resolveTerminalService === undefined) throw new Error('Terminal access is unavailable.');
+      const { session_id, terminal_id } = parsed.data.payload;
+      let service = this.terminalServices.get(session_id);
+      if (service === undefined) {
+        service = await this.resolveTerminalService(session_id);
+        if (this.closed) return;
+        this.terminalServices.set(session_id, service);
+      }
+      let response: Record<string, unknown>;
+      switch (parsed.data.type) {
+        case 'terminal_attach': {
+          const { replayed } = await service.attach(terminal_id, {
+            id: this.id,
+            send: (output) => this.sendSubscribedFrame(output),
+          }, { sinceSeq: parsed.data.payload.since_seq });
+          if (this.closed) {
+            service.detach(terminal_id, this.id);
+            return;
+          }
+          response = { attached: true, replayed };
+          break;
+        }
+        case 'terminal_detach':
+          service.detach(terminal_id, this.id);
+          response = { detached: true };
+          break;
+        case 'terminal_input':
+          await service.write(terminal_id, parsed.data.payload.data);
+          response = { accepted: true };
+          break;
+        case 'terminal_resize':
+          await service.resize(terminal_id, parsed.data.payload.cols, parsed.data.payload.rows);
+          response = { resized: true };
+          break;
+        case 'terminal_close':
+          response = await service.close(terminal_id);
+          break;
+      }
+      this.sendImmediateFrame(buildAck(parsed.data.id, 0, 'success', response));
+    } catch (error) {
+      this.sendImmediateFrame(buildAck(frame.id ?? '', 1, error instanceof Error ? error.message : 'Terminal request failed.', {}));
+    }
   }
 
   private onHeartbeat(): void {
@@ -491,6 +569,8 @@ export class WsConnectionV1 implements BroadcastTarget {
     if (this.heartbeatTimer !== undefined) clearInterval(this.heartbeatTimer);
     this.outbound = [];
     this.broadcaster.removeGlobalTarget(this);
+    for (const service of this.terminalServices.values()) service.detachAllForSink(this.id);
+    this.terminalServices.clear();
     for (const sid of this.subscriptions.keys()) this.broadcaster.unsubscribe(sid, this);
   }
 }

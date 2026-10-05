@@ -58,6 +58,8 @@ export function isSupportedTarget(target) {
  *           (used by 'js-and-native-file' and 'native-file-only';
  *           native-files mode auto-scans *.node). 'native-file-only' collects
  *           package.json + these .node files but skips the package entry JS.
+ * @property {(target: string) => string[]} [executableFileRelatives]
+ *           — helper programs extracted with executable permissions
  */
 
 /** @type {readonly NativeDepDescriptor[]} */
@@ -85,6 +87,27 @@ export const nativeDeps = Object.freeze([
     parent: null,
     nativeFileRelatives: (target) => piTuiNativeFileByTarget[target] ?? [],
   },
+  {
+    id: 'terminal-host',
+    name: () => '@legacy-ai/agent-core-v2',
+    collect: 'virtual',
+    parent: null,
+  },
+  {
+    id: 'terminal',
+    name: () => 'node-pty',
+    collect: 'js-and-native-file',
+    parent: 'terminal-host',
+    nativeFileRelatives: (target) => {
+      if (target.startsWith('linux-')) return ['build/Release/pty.node', 'build/Release/spawn-helper'];
+      const root = `prebuilds/${target}`;
+      if (target.startsWith('darwin-')) return [`${root}/pty.node`, `${root}/spawn-helper`];
+      return ['pty.node', 'conpty.node', 'conpty_console_list.node', 'winpty-agent.exe', 'winpty.dll',
+        'conpty/OpenConsole.exe', 'conpty/conpty.dll'].map((file) => `${root}/${file}`);
+    },
+    executableFileRelatives: (target) => target.startsWith('linux-') ? ['build/Release/spawn-helper']
+      : target.startsWith('darwin-') ? [`prebuilds/${target}/spawn-helper`] : [],
+  },
 ]);
 
 /**
@@ -100,6 +123,7 @@ export function resolveTargetDeps(target) {
       ...d,
       resolvedName: d.name(target),
       nativeFileRelatives: d.nativeFileRelatives?.(target) ?? [],
+      executableFileRelatives: d.executableFileRelatives?.(target) ?? [],
       parentName: d.parent ? nativeDeps.find((p) => p.id === d.parent)?.name(target) ?? null : null,
     }));
 }

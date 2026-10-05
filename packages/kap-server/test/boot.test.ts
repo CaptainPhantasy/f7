@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { Writable } from 'node:stream';
 
 import { pino } from 'pino';
+import { WebSocket } from 'ws';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -20,7 +21,7 @@ import {
 import { listLiveServerInstances } from '../src/instanceRegistry';
 import { listenWithPortRetry, type RunningServer, startServer } from '../src/start';
 import { TEST_HOST_IDENTITY } from './helpers/hostIdentity';
-import { authedFetch } from './helpers/auth';
+import { authedFetch, authHeaders } from './helpers/auth';
 
 describe('server-v2 boot', () => {
   let server: RunningServer | undefined;
@@ -34,6 +35,30 @@ describe('server-v2 boot', () => {
     if (home !== undefined) {
       await rm(home, { recursive: true, force: true });
       home = undefined;
+    }
+  });
+
+  it('closes live page connections before waiting for server shutdown', async () => {
+    home = await mkdtemp(join(tmpdir(), 'floyd-server-close-ws-'));
+    server = await startServer({ hostIdentity: TEST_HOST_IDENTITY, host: '127.0.0.1', port: 0, homeDir: home, logLevel: 'silent' });
+    const sockets = ['/api/v1/ws', '/api/v3/ws'].map((path) => new WebSocket(`ws://127.0.0.1:${server!.port}${path}`, { headers: authHeaders(server!) }));
+    await Promise.all(sockets.map((socket) => new Promise<void>((resolve, reject) => {
+      socket.once('open', resolve);
+      socket.once('error', reject);
+    })));
+    const closed: number[] = [];
+    for (const socket of sockets) socket.once('close', (code) => closed.push(code));
+    let finished = false;
+    const closing = server.close().then(() => { finished = true; });
+    try {
+      await vi.waitFor(() => {
+        expect(closed).toEqual([1001, 1001]);
+        expect(finished).toBe(true);
+      }, { timeout: 3500 });
+    } finally {
+      for (const socket of sockets) socket.terminate();
+      await closing;
+      server = undefined;
     }
   });
 

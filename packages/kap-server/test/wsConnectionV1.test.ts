@@ -1,4 +1,5 @@
 import type { WebSocket } from 'ws';
+import type { ISessionTerminalService } from '@legacy-ai/agent-core-v2';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IConnectionRegistry } from '../src/transport/ws/connectionRegistry';
@@ -86,6 +87,94 @@ function makeConn(socket: FakeSocket, opts: Partial<WsConnectionV1Options> = {})
     ...opts,
   });
 }
+
+describe('WsConnectionV1 terminals', () => {
+  function setup() {
+    const socket = new FakeSocket();
+    const service = {
+      attach: vi.fn(async (_id, sink) => {
+        sink.send({ type: 'terminal_output', seq: 1, payload: { data: 'ready' } });
+        return { replayed: 1 };
+      }),
+      detach: vi.fn(),
+      detachAllForSink: vi.fn(),
+      write: vi.fn(async () => {}),
+      resize: vi.fn(async () => {}),
+      close: vi.fn(async () => ({ closed: true as const })),
+    };
+    const resolveTerminalService = vi.fn(async () => service as unknown as ISessionTerminalService);
+    const conn = makeConn(socket, { resolveTerminalService });
+    const send = (type: string, extra: Record<string, unknown> = {}) => socket.emit('message', JSON.stringify({
+      type, id: type, payload: { session_id: 'session-a', terminal_id: 'terminal-a', ...extra },
+    }));
+    const ack = (id: string) => socket.frames().find((frame) => (frame as { id?: string }).id === id);
+    return { socket, service, resolveTerminalService, conn, send, ack };
+  }
+
+  it('delivers output, handles input and size changes, and detaches without closing the shell', async () => {
+    const { socket, service, resolveTerminalService, conn, send, ack } = setup();
+    send('terminal_attach', { since_seq: 7 });
+    await vi.waitFor(() => expect(ack('terminal_attach')).toMatchObject({ code: 0, payload: { attached: true, replayed: 1 } }));
+    expect(service.attach).toHaveBeenCalledWith('terminal-a', expect.objectContaining({ id: conn.id }), { sinceSeq: 7 });
+    expect(socket.frames()).toContainEqual({ type: 'terminal_output', seq: 1, payload: { data: 'ready' } });
+    send('terminal_input', { data: 'pwd\n' });
+    send('terminal_resize', { cols: 120, rows: 40 });
+    send('terminal_detach');
+    await vi.waitFor(() => expect(ack('terminal_detach')).toMatchObject({ code: 0, payload: { detached: true } }));
+    expect(service.write).toHaveBeenCalledWith('terminal-a', 'pwd\n');
+    expect(service.resize).toHaveBeenCalledWith('terminal-a', 120, 40);
+    expect(service.detach).toHaveBeenCalledWith('terminal-a', conn.id);
+    expect(resolveTerminalService).toHaveBeenCalledTimes(1);
+    conn.close();
+    expect(service.detachAllForSink).toHaveBeenCalledWith(conn.id);
+    expect(service.close).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid input without resolving or writing to a terminal', async () => {
+    const { resolveTerminalService, conn, send, ack } = setup();
+    send('terminal_resize', { cols: -1, rows: 0 });
+    send('terminal_input', { data: 42 });
+    await vi.waitFor(() => expect(ack('terminal_input')).toMatchObject({ code: 1 }));
+    expect(ack('terminal_resize')).toMatchObject({ code: 1 });
+    expect(resolveTerminalService).not.toHaveBeenCalled();
+    conn.close();
+  });
+
+  it('reports missing terminals and still handles a later close request', async () => {
+    const { service, conn, send, ack } = setup();
+    service.write.mockRejectedValueOnce(new Error('missing terminal'));
+    send('terminal_input', { data: 'pwd\n' });
+    send('terminal_close');
+    await vi.waitFor(() => expect(ack('terminal_close')).toMatchObject({ code: 0, payload: { closed: true } }));
+    expect(ack('terminal_input')).toMatchObject({ code: 1, msg: 'missing terminal' });
+    expect(service.close).toHaveBeenCalledWith('terminal-a');
+    conn.close();
+  });
+
+  it('does not attach after the connection closes during session loading', async () => {
+    const { service, resolveTerminalService, conn, send } = setup();
+    let finish!: (service: ISessionTerminalService) => void;
+    resolveTerminalService.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+    send('terminal_attach');
+    await vi.waitFor(() => expect(resolveTerminalService).toHaveBeenCalledOnce());
+    conn.close();
+    finish(service as unknown as ISessionTerminalService);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(service.attach).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid sign-in before resolving a terminal', async () => {
+    const socket = new FakeSocket();
+    const resolveTerminalService = vi.fn();
+    makeConn(socket, { validateCredential: async () => false, resolveTerminalService });
+    socket.emit('message', JSON.stringify({ type: 'terminal_input', id: 'unauthorized', payload: {
+      session_id: 'session-a', terminal_id: 'terminal-a', data: 'pwd\n', token: 'invalid',
+    } }));
+    await vi.waitFor(() => expect(socket.frames()).toContainEqual(expect.objectContaining({ id: 'unauthorized', code: 40112 })));
+    expect(resolveTerminalService).not.toHaveBeenCalled();
+    expect(socket.closeCalls).toHaveLength(1);
+  });
+});
 
 function delta(
   sessionId: string,

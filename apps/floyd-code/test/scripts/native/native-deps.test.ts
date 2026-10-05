@@ -1,4 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+
+import { collectNativeAssets } from '../../../scripts/native/assets.mjs';
 
 import {
   nativeDeps,
@@ -83,6 +88,25 @@ describe('resolveTargetDeps', () => {
 });
 
 describe('nativeDeps registry shape', () => {
+  it.skipIf(process.platform === 'win32')('packages the command-window helper with permission to execute it', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'floyd-terminal-assets-'));
+    try {
+      writeFileSync(join(folder, 'package.json'), '{}');
+      symlinkSync(resolve(import.meta.dirname, '../../../node_modules'), join(folder, 'node_modules'), 'dir');
+      const workers = join(folder, 'dist-native/intermediates');
+      mkdirSync(workers, { recursive: true });
+      writeFileSync(join(workers, 'text-build-worker.mjs'), 'export {};');
+      writeFileSync(join(workers, 'search-worker.mjs'), 'export {};');
+      const { manifest } = await collectNativeAssets({ appRoot: folder, target: `${process.platform}-${process.arch}` });
+      const terminal = manifest.packages.find((pkg) => pkg.name === 'node-pty');
+      expect(terminal).toBeDefined();
+      expect(terminal?.files.some((file) => file.relativePath.endsWith('/pty.node'))).toBe(true);
+      expect(terminal?.files.find((file) => file.relativePath.endsWith('/spawn-helper'))?.mode).toBe(0o755);
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  });
+
   it('has clipboard host (collect=js-only)', () => {
     const host = nativeDeps.find((d) => d.id === 'clipboard-host');
     expect(host?.collect).toBe('js-only');
