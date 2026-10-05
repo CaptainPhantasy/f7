@@ -99,14 +99,13 @@ export const nativeDeps = Object.freeze([
     collect: 'js-and-native-file',
     parent: 'terminal-host',
     nativeFileRelatives: (target) => {
-      if (target.startsWith('linux-')) return ['build/Release/pty.node', 'build/Release/spawn-helper'];
+      if (target.startsWith('linux-')) return ['build/Release/pty.node'];
       const root = `prebuilds/${target}`;
       if (target.startsWith('darwin-')) return [`${root}/pty.node`, `${root}/spawn-helper`];
       return ['pty.node', 'conpty.node', 'conpty_console_list.node', 'winpty-agent.exe', 'winpty.dll',
         'conpty/OpenConsole.exe', 'conpty/conpty.dll'].map((file) => `${root}/${file}`);
     },
-    executableFileRelatives: (target) => target.startsWith('linux-') ? ['build/Release/spawn-helper']
-      : target.startsWith('darwin-') ? [`prebuilds/${target}/spawn-helper`] : [],
+    executableFileRelatives: (target) => target.startsWith('darwin-') ? [`prebuilds/${target}/spawn-helper`] : [],
   },
 ]);
 

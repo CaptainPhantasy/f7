@@ -101,7 +101,11 @@ describe('nativeDeps registry shape', () => {
       const terminal = manifest.packages.find((pkg) => pkg.name === 'node-pty');
       expect(terminal).toBeDefined();
       expect(terminal?.files.some((file) => file.relativePath.endsWith('/pty.node'))).toBe(true);
-      expect(terminal?.files.find((file) => file.relativePath.endsWith('/spawn-helper'))?.mode).toBe(0o755);
+      if (process.platform === 'darwin') {
+        expect(terminal?.files.find((file) => file.relativePath.endsWith('/spawn-helper'))?.mode).toBe(0o755);
+      } else {
+        expect(terminal?.files.some((file) => file.relativePath.endsWith('/spawn-helper'))).toBe(false);
+      }
     } finally {
       rmSync(folder, { recursive: true, force: true });
     }
