@@ -120,6 +120,42 @@ class PlatformTest(unittest.TestCase):
         finally:
             connection.close()
 
+    def test_unused_request_body_does_not_break_company_tools(self):
+        import http.client
+        _, member_headers = self.member('kept-connection-member')
+        _, token = self.device(member_headers)
+        connection = http.client.HTTPConnection('127.0.0.1', self.server.server_port, timeout=5)
+        try:
+            connection.request('POST', '/client_configs', json.dumps({'name': 'survey_popup'}),
+                               {'Content-Type': 'application/json'})
+            first = connection.getresponse()
+            first.read()
+            self.assertEqual(first.status, 404)
+            connection.request('GET', '/company/tools', headers={'Authorization': 'Bearer ' + token['access_token']})
+            second = connection.getresponse()
+            raw = second.read()
+            self.assertEqual(second.status, 200, raw)
+            self.assertIn('tools', json.loads(raw))
+        finally:
+            connection.close()
+
+    def test_denied_request_body_does_not_break_next_request(self):
+        import http.client
+        connection = http.client.HTTPConnection('127.0.0.1', self.server.server_port, timeout=5)
+        try:
+            connection.request('POST', '/company/tools/call', json.dumps({'id': 'web-search', 'arguments': {}}),
+                               {'Content-Type': 'application/json'})
+            first = connection.getresponse()
+            first.read()
+            self.assertEqual(first.status, 401)
+            connection.request('GET', '/healthz')
+            second = connection.getresponse()
+            raw = second.read()
+            self.assertEqual(second.status, 200, raw)
+            self.assertEqual(json.loads(raw), {'ok': True})
+        finally:
+            connection.close()
+
     def test_media_tools_require_a_member_and_reject_unsafe_input(self):
         body = {'id': 'speech-transcribe', 'arguments': {'audio_base64': 'bad', 'filename': '../recording.wav'}}
         self.assertEqual(self.request('/company/tools/call', 'POST', body)[0], 401)

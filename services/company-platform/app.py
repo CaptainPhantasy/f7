@@ -646,11 +646,18 @@ class Handler(BaseHTTPRequestHandler):
     def read_body(self) -> bytes:
         if hasattr(self, "_body"):
             return self._body
+        if self.headers.get('Transfer-Encoding'):
+            raise ApiError(400, {"error": "bad_length", "error_description": "Use a fixed request size."})
+        if len(self.headers.get_all('Content-Length', [])) > 1:
+            raise ApiError(400, {"error": "bad_length", "error_description": "Invalid request size."})
         try:
             length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             raise ApiError(400, {"error": "bad_length", "error_description": "Invalid request size."})
-        if length <= 0:
+        if length < 0:
+            raise ApiError(400, {"error": "bad_length", "error_description": "Invalid request size."})
+        if length == 0:
+            self._body = b""
             return b""
         if length > 32 * 1024 * 1024:
             raise ApiError(413, {"error": "too_large", "error_description": "Body too large."})
@@ -682,6 +689,11 @@ class Handler(BaseHTTPRequestHandler):
         path = parsed.path.rstrip("/") or "/"
         query = parse_qs(parsed.query)
         try:
+            try:
+                self.read_body()
+            except Exception:
+                self.close_connection = True
+                raise
             status, payload, kind, extra = self.route(method, path, query)
         except ApiError as exc:
             status, payload, kind, extra = exc.status, exc.payload, "json", {}
@@ -693,6 +705,8 @@ class Handler(BaseHTTPRequestHandler):
                 "json",
                 {},
             )
+        if self.close_connection:
+            extra = {**extra, 'Connection': 'close'}
         if kind == "sent":
             return
         if kind == "html":
