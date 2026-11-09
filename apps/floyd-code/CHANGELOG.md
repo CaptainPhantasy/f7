@@ -1,5 +1,27 @@
 # @legacy-ai/floyd-code
 
+## 2.0.4
+
+### Patch Changes
+
+- Reopen a saved conversation before attaching the page, so the first reply after restarting the app is displayed. Company addresses and optional tool paths move into private settings, and only the required command-window dependency is built on Linux.
+
+## 2.0.3
+
+### Patch Changes
+
+- Fix the command window in portable installations.
+- Fix page reconnection after a restart.
+- Keep company requests from corrupting the next connection.
+- Package the Linux command window without the Mac helper.
+
+## 2.0.2
+
+### Patch Changes
+
+- Use the company account and download pages and show current model names, prices, addresses, and update dates.
+- Honor local model thinking settings in the company platform.
+
 ## 2.0.1
 
 ### Patch Changes
